@@ -1,1 +1,1 @@
-# manta-indexer
+# event-watcher
