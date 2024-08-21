@@ -14,15 +14,19 @@ parent:
   <a href="https://github.com/eniac-x-labs/manta-indexer/blob/main/LICENSE">
     <img alt="License: Apache-2.0" src="https://img.shields.io/github/license/eniac-x-labs/manta-indexer.svg" />
   </a>
+  <a href="https://pkg.go.dev/github.com/eniac-x-labs/manta-indexer">
+    <img alt="GoDoc" src="https://godoc.org/github.com/eniac-x-labs/manta-indexer?status.svg" />
+  </a>
 </div>
 
-Manta Indexer  Project
+Manta Indexer Project
 
-## Installation
+**Tips**: need [Go 1.18+](https://golang.org/dl/)
 
-For prerequisites and detailed build instructions please read the [Installation](https://github.com/eniac-x-labs/manta-indexer/) instructions. Once the dependencies are installed, run:
+## Install
 
-```
+### Install dependencies
+```bash
 go mod tidy
 ```
 
@@ -40,7 +44,6 @@ make test
 ```
 make 
 ```
-
 
 ## Community
 
