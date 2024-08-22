@@ -47,16 +47,44 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 		return err
 	}
 	for _, eventItem := range contractEventList {
+		// OperatorAndStakeReward
+		rlpLog := eventItem.RLPLog
 		if eventItem.EventSignature.String() == rm.RmAbi.Events["OperatorAndStakeReward"].ID.String() {
-
+			operatorAndStakeRewardEvent, err := rm.RmFilter.ParseOperatorAndStakeReward(*rlpLog)
+			if err != nil {
+				log.Error("parse operator and stake reward event fail", "err", err)
+				return err
+			}
+			log.Info("parse operator and stake reward success",
+				"strategy", operatorAndStakeRewardEvent.Strategy.String(),
+				"operator", operatorAndStakeRewardEvent.Operator.String(),
+				"stakerFee", operatorAndStakeRewardEvent.StakerFee.String(),
+				"operatorFee", operatorAndStakeRewardEvent.OperatorFee.String())
 		}
 
+		// OperatorClaimReward
 		if eventItem.EventSignature.String() == rm.RmAbi.Events["OperatorClaimReward"].ID.String() {
-
+			operatorClaimRewardEvent, err := rm.RmFilter.ParseOperatorClaimReward(*rlpLog)
+			if err != nil {
+				log.Error("parse operator claim reward event fail", "err", err)
+				return err
+			}
+			log.Info("parse operator claim reward success",
+				"operator", operatorClaimRewardEvent.Operator.String(),
+				"amount", operatorClaimRewardEvent.Amount.String())
 		}
 
+		// StakeHolderClaimReward
 		if eventItem.EventSignature.String() == rm.RmAbi.Events["StakeHolderClaimReward"].ID.String() {
-
+			stakeHolderClaimRewardEvent, err := rm.RmFilter.ParseStakeHolderClaimReward(*rlpLog)
+			if err != nil {
+				log.Error("parse stake holder claim reward event fail", "err", err)
+				return err
+			}
+			log.Info("parse stake holder claim reward success",
+				"stakeHolder", stakeHolderClaimRewardEvent.StakeHolder.String(),
+				"strategy", stakeHolderClaimRewardEvent.Strategy.String(),
+				"amount", stakeHolderClaimRewardEvent.Amount.String())
 		}
 	}
 	return nil

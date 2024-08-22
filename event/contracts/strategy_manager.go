@@ -48,8 +48,21 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 	}
 	for _, eventItem := range contractEventList {
 		// emit Deposit(staker, weth, strategy, shares);
-		if eventItem.EventSignature.String() == sm.SmAbi.Events["Deposit"].ID.String() {
+		rlpLog := eventItem.RLPLog
 
+		// Deposit
+		if eventItem.EventSignature.String() == sm.SmAbi.Events["Deposit"].ID.String() {
+			depositEvent, err := sm.SmFilter.ParseDeposit(*rlpLog)
+			if err != nil {
+				log.Error("parse deposit event fail", "err", err)
+				return err
+			}
+
+			log.Info("parse deposit event success",
+				"staker", depositEvent.Staker.String(),
+				// "mantaToken", depositEvent.MantaToken.String(),
+				"strategy", depositEvent.Strategy.String(),
+				"shares", depositEvent.Shares.String())
 		}
 	}
 
