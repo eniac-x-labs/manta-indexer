@@ -3,11 +3,11 @@ package event
 import (
 	"context"
 	"fmt"
-	"github.com/eniac-x-labs/manta-indexer/database/event"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"math/big"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/ethereum/go-ethereum/log"
 
@@ -15,6 +15,7 @@ import (
 	"github.com/eniac-x-labs/manta-indexer/common/tasks"
 	"github.com/eniac-x-labs/manta-indexer/database"
 	"github.com/eniac-x-labs/manta-indexer/database/common"
+	"github.com/eniac-x-labs/manta-indexer/database/event"
 	"github.com/eniac-x-labs/manta-indexer/event/contracts"
 )
 
