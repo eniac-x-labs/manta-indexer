@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/google/uuid"
-
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	common2 "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/google/uuid"
 
 	"github.com/eniac-x-labs/manta-indexer/bindings/rm"
 	"github.com/eniac-x-labs/manta-indexer/config"
@@ -54,8 +53,18 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 	}
 
 	operatorAndStakeRewardList := make([]event.OperatorAndStakeReward, 0, len(contractEventList))
+	operatorClaimRewardList := make([]event.OperatorClaimReward, 0, len(contractEventList))
+	stakeHolderClaimRewardList := make([]event.StakeHolderClaimReward, 0, len(contractEventList))
+
 	for _, eventItem := range contractEventList {
 		rlpLog := eventItem.RLPLog
+
+		header, err := rm.db.Blocks.BlockHeader(eventItem.BlockHash)
+		if err != nil {
+			log.Error("db Blocks BlockHeader by BlockHash fail", "err", err)
+			return err
+		}
+
 		if eventItem.EventSignature.String() == rm.RmAbi.Events["OperatorAndStakeReward"].ID.String() {
 			operatorAndStakeRewardEvent, err := rm.RmFilter.ParseOperatorAndStakeReward(*rlpLog)
 			if err != nil {
@@ -67,12 +76,6 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 				"operator", operatorAndStakeRewardEvent.Operator.String(),
 				"stakerFee", operatorAndStakeRewardEvent.StakerFee.String(),
 				"operatorFee", operatorAndStakeRewardEvent.OperatorFee.String())
-
-			header, err := rm.db.Blocks.BlockHeader(eventItem.BlockHash)
-			if err != nil {
-				log.Error("db Blocks BlockHeader by BlockHash fail", "err", err)
-				return err
-			}
 
 			temp := event.OperatorAndStakeReward{
 				GUID:        uuid.New(),
@@ -89,7 +92,6 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 			operatorAndStakeRewardList = append(operatorAndStakeRewardList, temp)
 		}
 
-		// OperatorClaimReward
 		if eventItem.EventSignature.String() == rm.RmAbi.Events["OperatorClaimReward"].ID.String() {
 			operatorClaimRewardEvent, err := rm.RmFilter.ParseOperatorClaimReward(*rlpLog)
 			if err != nil {
@@ -99,9 +101,20 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 			log.Info("parse operator claim reward success",
 				"operator", operatorClaimRewardEvent.Operator.String(),
 				"amount", operatorClaimRewardEvent.Amount.String())
+
+			temp := event.OperatorClaimReward{
+				GUID:      uuid.New(),
+				BlockHash: eventItem.BlockHash,
+				Number:    header.Number,
+				TxHash:    eventItem.TransactionHash,
+				Operator:  operatorClaimRewardEvent.Operator,
+				Amount:    operatorClaimRewardEvent.Amount,
+				IsHandle:  0,
+				Timestamp: eventItem.Timestamp,
+			}
+			operatorClaimRewardList = append(operatorClaimRewardList, temp)
 		}
 
-		// StakeHolderClaimReward
 		if eventItem.EventSignature.String() == rm.RmAbi.Events["StakeHolderClaimReward"].ID.String() {
 			stakeHolderClaimRewardEvent, err := rm.RmFilter.ParseStakeHolderClaimReward(*rlpLog)
 			if err != nil {
@@ -112,6 +125,19 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 				"stakeHolder", stakeHolderClaimRewardEvent.StakeHolder.String(),
 				"strategy", stakeHolderClaimRewardEvent.Strategy.String(),
 				"amount", stakeHolderClaimRewardEvent.Amount.String())
+
+			temp := event.StakeHolderClaimReward{
+				GUID:        uuid.New(),
+				BlockHash:   eventItem.BlockHash,
+				Number:      header.Number,
+				TxHash:      eventItem.TransactionHash,
+				StakeHolder: stakeHolderClaimRewardEvent.StakeHolder,
+				Strategy:    stakeHolderClaimRewardEvent.Strategy,
+				Amount:      stakeHolderClaimRewardEvent.Amount,
+				IsHandle:    0,
+				Timestamp:   eventItem.Timestamp,
+			}
+			stakeHolderClaimRewardList = append(stakeHolderClaimRewardList, temp)
 		}
 	}
 
@@ -119,6 +145,12 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 	if _, err := retry.Do[interface{}](rm.rmCtx, 10, retryStrategy, func() (interface{}, error) {
 		if err := rm.db.Transaction(func(tx *database.DB) error {
 			if err := tx.OperatorAndStakeReward.StoreOperatorAndStakeReward(operatorAndStakeRewardList); err != nil {
+				return err
+			}
+			if err := tx.OperatorClaimReward.StoreOperatorClaimReward(operatorClaimRewardList); err != nil {
+				return err
+			}
+			if err := tx.StakeHolderClaimReward.StoreStakeHolderClaimReward(stakeHolderClaimRewardList); err != nil {
 				return err
 			}
 			return nil
