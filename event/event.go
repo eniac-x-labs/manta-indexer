@@ -33,13 +33,34 @@ type EventProcessor struct {
 	resourceCtx       context.Context
 	resourceCancel    context.CancelFunc
 	tasks             tasks.Group
-	dtManager         *contracts.DelegationManager
+	delegationManager *contracts.DelegationManager
+	rewardManager     *contracts.RewardManager
+	strategyManager   *contracts.StrategyManager
 	LatestBlockHeader *common.BlockHeader
 }
 
 func NewEventProcessor(db *database.DB, eventBlocksConfig *EventProcessorConfig, shutdown context.CancelCauseFunc) (*EventProcessor, error) {
-	LatestBlockHeader, err := db.EventBlocks.LatestEventBlockHeader()
+	delegationManager, err := contracts.NewDelegationManager(db)
 	if err != nil {
+		log.Error("new delegation manager fail", "err", err)
+		return nil, err
+	}
+
+	rewardManager, err := contracts.NewRewardManager(db)
+	if err != nil {
+		log.Error("new reward manager fail", "err", err)
+		return nil, err
+	}
+
+	strategyManager, err := contracts.NewStrategyManager(db)
+	if err != nil {
+		log.Error("new strategy manager fail", "err", err)
+		return nil, err
+	}
+
+	latestBlockHeader, err := db.EventBlocks.LatestEventBlockHeader()
+	if err != nil {
+		log.Error("get latest event block header fail", "err", err)
 		return nil, err
 	}
 
@@ -53,7 +74,10 @@ func NewEventProcessor(db *database.DB, eventBlocksConfig *EventProcessorConfig,
 		tasks: tasks.Group{HandleCrit: func(err error) {
 			shutdown(fmt.Errorf("critical error in bridge processor: %w", err))
 		}},
-		LatestBlockHeader: LatestBlockHeader,
+		delegationManager: delegationManager,
+		rewardManager:     rewardManager,
+		strategyManager:   strategyManager,
+		LatestBlockHeader: latestBlockHeader,
 	}, nil
 }
 
@@ -115,12 +139,28 @@ func (ep *EventProcessor) processEvent() error {
 		eventBlocks = append(eventBlocks, evBlock)
 	}
 
-	dtManager, err := contracts.NewDelegationManager(ep.db, fromHeight, toHeight)
-	dtManager.ProcessDelegationRegister()
+	log.Info("Parse contract event start", "fromHeight", fromHeight.String(), "toHeight", toHeight.String())
 
 	if err := ep.db.Transaction(func(tx *database.DB) error {
-		log.Info("handle event from to end", "fromHeight", fromHeight, "toHeight", toHeight)
-		err := ep.db.EventBlocks.StoreEventBlocks(eventBlocks)
+		err := ep.delegationManager.ProcessDelegationEvent(fromHeight, toHeight)
+		if err != nil {
+			log.Error("process delegation event fail", "err", err)
+			return err
+		}
+
+		err = ep.rewardManager.ProcessRewardManager(fromHeight, toHeight)
+		if err != nil {
+			log.Error("process reward manager event fail", "err", err)
+			return err
+		}
+
+		err = ep.strategyManager.ProcessStrategyManager(fromHeight, toHeight)
+		if err != nil {
+			log.Error("process strategy manager event fail", "err", err)
+			return err
+		}
+
+		err = ep.db.EventBlocks.StoreEventBlocks(eventBlocks)
 		if err != nil {
 			log.Error("store event block fail", "err", err)
 			return err

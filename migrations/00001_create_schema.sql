@@ -50,6 +50,230 @@ CREATE INDEX IF NOT EXISTS event_blocks_timestamp ON event_blocks(timestamp);
 CREATE INDEX IF NOT EXISTS event_blocks_number ON event_blocks(number);
 
 
+CREATE TABLE IF NOT EXISTS operator_registered (
+    guid                        VARCHAR PRIMARY KEY,
+    block_hash                  VARCHAR NOT NULL,
+    number                      UINT256 NOT NULL,
+    tx_hash                     VARCHAR NOT NULL UNIQUE,
+    operator                    VARCHAR NOT NULL,
+    earnings_receiver           VARCHAR NOT NULL,
+    delegation_approver         VARCHAR NOT NULL,
+    staker_optout_window_blocks UINT256 NOT NULL,
+    timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+);
+CREATE INDEX IF NOT EXISTS operator_registered_timestamp ON operator_registered(timestamp);
+CREATE INDEX IF NOT EXISTS operator_registered_number ON operator_registered(number);
+CREATE INDEX IF NOT EXISTS operator_registered_operator ON operator_registered(operator);
+
+
+CREATE TABLE IF NOT EXISTS operator_modified (
+    guid                        VARCHAR PRIMARY KEY,
+    block_hash                  VARCHAR NOT NULL,
+    number                      UINT256 NOT NULL,
+    tx_hash                     VARCHAR NOT NULL UNIQUE,
+    operator                    VARCHAR NOT NULL,
+    earnings_receiver           VARCHAR NOT NULL,
+    delegation_approver         VARCHAR NOT NULL,
+    staker_optout_window_blocks UINT256 NOT NULL,
+    timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+);
+CREATE INDEX IF NOT EXISTS operator_modified_timestamp ON operator_modified(timestamp);
+CREATE INDEX IF NOT EXISTS operator_modified_number ON operator_modified(number);
+CREATE INDEX IF NOT EXISTS operator_modified_operator ON operator_modified(operator);
+
+
+CREATE TABLE IF NOT EXISTS operator_node_url_update (
+     guid                        VARCHAR PRIMARY KEY,
+     block_hash                  VARCHAR NOT NULL,
+     number                      UINT256 NOT NULL,
+     tx_hash                     VARCHAR NOT NULL UNIQUE,
+     operator                    VARCHAR NOT NULL,
+     metadata_uri                VARCHAR NOT NULL,
+     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+);
+CREATE INDEX IF NOT EXISTS operator_node_url_update_timestamp ON operator_node_url_update(timestamp);
+CREATE INDEX IF NOT EXISTS operator_node_url_update_number ON operator_node_url_update(number);
+CREATE INDEX IF NOT EXISTS operator_node_url_update_operator ON operator_node_url_update(operator);
+
+
+CREATE TABLE IF NOT EXISTS operator_shares_increased (
+    guid                        VARCHAR PRIMARY KEY,
+    block_hash                  VARCHAR NOT NULL,
+    number                      UINT256 NOT NULL,
+    tx_hash                     VARCHAR NOT NULL UNIQUE,
+    operator                    VARCHAR NOT NULL,
+    staker                      VARCHAR NOT NULL,
+    strategy                    VARCHAR NOT NULL,
+    shares                      UINT256 NOT NULL,
+    timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+);
+CREATE INDEX IF NOT EXISTS operator_shares_increased_timestamp ON operator_shares_increased(timestamp);
+CREATE INDEX IF NOT EXISTS operator_shares_increased_number ON operator_shares_increased(number);
+CREATE INDEX IF NOT EXISTS operator_shares_increased_operator ON operator_shares_increased(operator);
+
+
+CREATE TABLE IF NOT EXISTS operator_shares_decreased (
+     guid                        VARCHAR PRIMARY KEY,
+     block_hash                  VARCHAR NOT NULL,
+     number                      UINT256 NOT NULL,
+     tx_hash                     VARCHAR NOT NULL UNIQUE,
+     operator                    VARCHAR NOT NULL,
+     staker                      VARCHAR NOT NULL,
+     strategy                    VARCHAR NOT NULL,
+     shares                      UINT256 NOT NULL,
+     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+);
+CREATE INDEX IF NOT EXISTS operator_shares_decreased_timestamp ON operator_shares_decreased(timestamp);
+CREATE INDEX IF NOT EXISTS operator_shares_decreased_number ON operator_shares_decreased(number);
+CREATE INDEX IF NOT EXISTS operator_shares_decreased_operator ON operator_shares_decreased(operator);
+
+CREATE TABLE IF NOT EXISTS staker_delegated (
+    guid                        VARCHAR PRIMARY KEY,
+    block_hash                  VARCHAR NOT NULL,
+    number                      UINT256 NOT NULL,
+    tx_hash                     VARCHAR NOT NULL UNIQUE,
+    operator                    VARCHAR NOT NULL,
+    staker                      VARCHAR NOT NULL,
+    timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+);
+CREATE INDEX IF NOT EXISTS staker_delegated_timestamp ON staker_delegated(timestamp);
+CREATE INDEX IF NOT EXISTS staker_delegated_number ON staker_delegated(number);
+CREATE INDEX IF NOT EXISTS staker_delegated_operator ON staker_delegated(operator);
+
+CREATE TABLE IF NOT EXISTS staker_undelegated (
+    guid                        VARCHAR PRIMARY KEY,
+    block_hash                  VARCHAR NOT NULL,
+    number                      UINT256 NOT NULL,
+    tx_hash                     VARCHAR NOT NULL UNIQUE,
+    operator                    VARCHAR NOT NULL,
+    staker                      VARCHAR NOT NULL,
+    timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+);
+CREATE INDEX IF NOT EXISTS staker_undelegated_timestamp ON staker_undelegated(timestamp);
+CREATE INDEX IF NOT EXISTS staker_undelegated_number ON staker_undelegated(number);
+CREATE INDEX IF NOT EXISTS staker_undelegated_operator ON staker_undelegated(operator);
+
+CREATE TABLE IF NOT EXISTS withdrawal_queued (
+    guid                        VARCHAR PRIMARY KEY,
+    block_hash                  VARCHAR NOT NULL,
+    number                      UINT256 NOT NULL,
+    tx_hash                     VARCHAR NOT NULL UNIQUE,
+    withdrawal_root             VARCHAR NOT NULL,
+    staker                      VARCHAR NOT NULL,
+    delegated_to                VARCHAR NOT NULL,
+    withdrawer                  VARCHAR NOT NULL,
+    nonce                       UINT256 NOT NULL,
+    start_block                 UINT256 NOT NULL,
+    strategies                  VARCHAR NOT NULL,
+    shares                      VARCHAR NOT NULL,
+    timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+);
+CREATE INDEX IF NOT EXISTS withdrawal_queued_number ON withdrawal_queued(number);
+CREATE INDEX IF NOT EXISTS withdrawal_queued_staker ON withdrawal_queued(staker);
+
+CREATE TABLE IF NOT EXISTS withdrawal_migrated (
+    guid                        VARCHAR PRIMARY KEY,
+    block_hash                  VARCHAR NOT NULL,
+    number                      UINT256 NOT NULL,
+    tx_hash                     VARCHAR NOT NULL UNIQUE,
+    old_withdrawal_root         VARCHAR NOT NULL,
+    new_withdrawal_root         VARCHAR NOT NULL,
+    timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+);
+CREATE INDEX IF NOT EXISTS withdrawal_migrated_timestamp ON withdrawal_migrated(timestamp);
+CREATE INDEX IF NOT EXISTS withdrawal_migrated_number ON withdrawal_migrated(number);
+CREATE INDEX IF NOT EXISTS withdrawal_completed_old_withdrawal_root ON withdrawal_migrated(old_withdrawal_root);
+
+
+CREATE TABLE IF NOT EXISTS min_withdrawal_delay_blocks_set (
+    guid                        VARCHAR PRIMARY KEY,
+    block_hash                  VARCHAR NOT NULL,
+    number                      UINT256 NOT NULL,
+    tx_hash                     VARCHAR NOT NULL UNIQUE,
+    previous_value              UINT256 NOT NULL,
+    new_value                   UINT256 NOT NULL,
+    timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+);
+CREATE INDEX IF NOT EXISTS min_withdrawal_delay_blocks_set_timestamp ON min_withdrawal_delay_blocks_set(timestamp);
+CREATE INDEX IF NOT EXISTS min_withdrawal_delay_blocks_set_number ON min_withdrawal_delay_blocks_set(number);
+
+
+CREATE TABLE IF NOT EXISTS strategy_withdrawal_delay_blocks_set (
+    guid                        VARCHAR PRIMARY KEY,
+    block_hash                  VARCHAR NOT NULL,
+    number                      UINT256 NOT NULL,
+    tx_hash                     VARCHAR NOT NULL UNIQUE,
+    strategy                    VARCHAR NOT NULL,
+    previous_value              UINT256 NOT NULL,
+    new_value                   UINT256 NOT NULL,
+    timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+);
+CREATE INDEX IF NOT EXISTS strategy_withdrawal_delay_blocks_set_timestamp ON strategy_withdrawal_delay_blocks_set(timestamp);
+CREATE INDEX IF NOT EXISTS strategy_withdrawal_delay_blocks_set_number ON strategy_withdrawal_delay_blocks_set(number);
+CREATE INDEX IF NOT EXISTS strategy_withdrawal_delay_blocks_set_strategy ON strategy_withdrawal_delay_blocks_set(strategy);
+
+
+CREATE TABLE IF NOT EXISTS strategy_deposit (
+    guid                        VARCHAR PRIMARY KEY,
+    block_hash                  VARCHAR NOT NULL,
+    number                      UINT256 NOT NULL,
+    tx_hash                     VARCHAR NOT NULL UNIQUE,
+    staker                      VARCHAR NOT NULL,
+    manta_token                 VARCHAR NOT NULL,
+    strategy                    VARCHAR NOT NULL,
+    shares                      UINT256 NOT NULL,
+    timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+);
+CREATE INDEX IF NOT EXISTS strategy_deposit_timestamp ON strategy_deposit(timestamp);
+CREATE INDEX IF NOT EXISTS strategy_deposit_number ON strategy_deposit(number);
+CREATE INDEX IF NOT EXISTS strategy_deposit_strategy ON strategy_deposit(strategy);
+
+
+CREATE TABLE IF NOT EXISTS operator_and_stake_reward (
+    guid                        VARCHAR PRIMARY KEY,
+    block_hash                  VARCHAR NOT NULL,
+    number                      UINT256 NOT NULL,
+    tx_hash                     VARCHAR NOT NULL UNIQUE,
+    strategy                    VARCHAR NOT NULL,
+    operator                    VARCHAR NOT NULL,
+    staker_fee                  UINT256 NOT NULL,
+    operator_fee                UINT256 NOT NULL,
+    timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+);
+CREATE INDEX IF NOT EXISTS operator_and_stake_reward_timestamp ON operator_and_stake_reward(timestamp);
+CREATE INDEX IF NOT EXISTS operator_and_stake_reward_number ON operator_and_stake_reward(number);
+CREATE INDEX IF NOT EXISTS operator_and_stake_reward_strategy ON operator_and_stake_reward(strategy);
+
+
+CREATE TABLE IF NOT EXISTS operator_claim_reward (
+    guid                        VARCHAR PRIMARY KEY,
+    block_hash                  VARCHAR NOT NULL,
+    number                      UINT256 NOT NULL,
+    tx_hash                     VARCHAR NOT NULL UNIQUE,
+    operator                    VARCHAR NOT NULL,
+    amount                      UINT256 NOT NULL,
+    timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+);
+CREATE INDEX IF NOT EXISTS operator_claim_reward_timestamp ON operator_claim_reward(timestamp);
+CREATE INDEX IF NOT EXISTS operator_claim_reward_number ON operator_claim_reward(number);
+CREATE INDEX IF NOT EXISTS operator_claim_reward_operator ON operator_claim_reward(operator);
+
+
+CREATE TABLE IF NOT EXISTS stake_holder_claim_reward (
+    guid                        VARCHAR PRIMARY KEY,
+    block_hash                  VARCHAR NOT NULL,
+    number                      UINT256 NOT NULL,
+    tx_hash                     VARCHAR NOT NULL UNIQUE,
+    stake_holder                VARCHAR NOT NULL,
+    strategy                    VARCHAR NOT NULL,
+    amount                      UINT256 NOT NULL,
+    timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+);
+CREATE INDEX IF NOT EXISTS stake_holder_claim_reward_timestamp ON stake_holder_claim_reward(timestamp);
+CREATE INDEX IF NOT EXISTS stake_holder_claim_reward_number ON stake_holder_claim_reward(number);
+CREATE INDEX IF NOT EXISTS stake_holder_claim_reward_stake_holder ON stake_holder_claim_reward(stake_holder);
+
+
 CREATE TABLE IF NOT EXISTS operator (
     guid                        VARCHAR PRIMARY KEY,
     block_hash                  VARCHAR NOT NULL,
