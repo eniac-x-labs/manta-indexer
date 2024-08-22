@@ -81,7 +81,7 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 				Number:     header.Number,
 				TxHash:     eventItem.TransactionHash,
 				Staker:     depositEvent.Staker,
-				MantaToken: depositEvent.Weth, // 假设 MantaToken 是 Weth
+				MantaToken: depositEvent.Weth,
 				Strategy:   depositEvent.Strategy,
 				Shares:     depositEvent.Shares,
 				IsHandle:   0,
