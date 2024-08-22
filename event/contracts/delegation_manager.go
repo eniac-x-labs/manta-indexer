@@ -300,7 +300,7 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 			log.Info("parse min withdrawal delay blocks set success",
 				"previousValue", minWithdrawalDelayBlocksSetEvent.PreviousValue,
 				"newValue", minWithdrawalDelayBlocksSetEvent.NewValue)
-			minWithdrawalDelayBlocksSets = append(minWithdrawalDelayBlocksSets, event.MinWithdrawalDelayBlocksSet{
+			temp := event.MinWithdrawalDelayBlocksSet{
 				GUID:          uuid.New(),
 				BlockHash:     eventItem.BlockHash,
 				Number:        header.Number,
@@ -309,7 +309,9 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 				NewValue:      minWithdrawalDelayBlocksSetEvent.NewValue,
 				IsHandle:      0,
 				Timestamp:     eventItem.Timestamp,
-			})
+			}
+
+			minWithdrawalDelayBlocksSets = append(minWithdrawalDelayBlocksSets, temp)
 		}
 
 		// StrategyWithdrawalDelayBlocksSet
@@ -421,22 +423,22 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 
 func addressListToString(addressList []common2.Address) string {
 	if len(addressList) == 0 {
-		return "地址切片为空"
+		return "addressList is empty"
 	}
 	var result []string
 	for _, addr := range addressList {
-		result = append(result, addr.Hex()) // 将地址转换为十六进制字符串
+		result = append(result, addr.Hex())
 	}
 	return strings.Join(result, ",")
 }
 
 func bigIntListToString(bigIntList []*big.Int) string {
 	if len(bigIntList) == 0 {
-		return "地址切片为空"
+		return "bigIntList is empty"
 	}
 	var result []string
 	for _, bi := range bigIntList {
-		result = append(result, bi.String()) // 将 big.Int 转换为字符串
+		result = append(result, bi.String())
 	}
 	return strings.Join(result, ",")
 }
