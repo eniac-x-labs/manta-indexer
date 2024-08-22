@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS operator_registered (
     earnings_receiver           VARCHAR NOT NULL,
     delegation_approver         VARCHAR NOT NULL,
     staker_optout_window_blocks UINT256 NOT NULL,
+    is_handle                   SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
 CREATE INDEX IF NOT EXISTS operator_registered_timestamp ON operator_registered(timestamp);
@@ -75,6 +76,7 @@ CREATE TABLE IF NOT EXISTS operator_modified (
     earnings_receiver           VARCHAR NOT NULL,
     delegation_approver         VARCHAR NOT NULL,
     staker_optout_window_blocks UINT256 NOT NULL,
+    is_handle                   SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
 CREATE INDEX IF NOT EXISTS operator_modified_timestamp ON operator_modified(timestamp);
@@ -89,6 +91,7 @@ CREATE TABLE IF NOT EXISTS operator_node_url_update (
      tx_hash                     VARCHAR NOT NULL UNIQUE,
      operator                    VARCHAR NOT NULL,
      metadata_uri                VARCHAR NOT NULL,
+     is_handle                   SMALLINT NOT NULL DEFAULT 0,
      timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
 CREATE INDEX IF NOT EXISTS operator_node_url_update_timestamp ON operator_node_url_update(timestamp);
@@ -105,6 +108,7 @@ CREATE TABLE IF NOT EXISTS operator_shares_increased (
     staker                      VARCHAR NOT NULL,
     strategy                    VARCHAR NOT NULL,
     shares                      UINT256 NOT NULL,
+    is_handle                   SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
 CREATE INDEX IF NOT EXISTS operator_shares_increased_timestamp ON operator_shares_increased(timestamp);
@@ -121,6 +125,7 @@ CREATE TABLE IF NOT EXISTS operator_shares_decreased (
      staker                      VARCHAR NOT NULL,
      strategy                    VARCHAR NOT NULL,
      shares                      UINT256 NOT NULL,
+     is_handle                   SMALLINT NOT NULL DEFAULT 0,
      timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
 CREATE INDEX IF NOT EXISTS operator_shares_decreased_timestamp ON operator_shares_decreased(timestamp);
@@ -134,6 +139,7 @@ CREATE TABLE IF NOT EXISTS staker_delegated (
     tx_hash                     VARCHAR NOT NULL UNIQUE,
     operator                    VARCHAR NOT NULL,
     staker                      VARCHAR NOT NULL,
+    is_handle                   SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
 CREATE INDEX IF NOT EXISTS staker_delegated_timestamp ON staker_delegated(timestamp);
@@ -147,6 +153,7 @@ CREATE TABLE IF NOT EXISTS staker_undelegated (
     tx_hash                     VARCHAR NOT NULL UNIQUE,
     operator                    VARCHAR NOT NULL,
     staker                      VARCHAR NOT NULL,
+    is_handle                   SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
 CREATE INDEX IF NOT EXISTS staker_undelegated_timestamp ON staker_undelegated(timestamp);
@@ -166,6 +173,7 @@ CREATE TABLE IF NOT EXISTS withdrawal_queued (
     start_block                 UINT256 NOT NULL,
     strategies                  VARCHAR NOT NULL,
     shares                      VARCHAR NOT NULL,
+    is_handle                   SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
 CREATE INDEX IF NOT EXISTS withdrawal_queued_number ON withdrawal_queued(number);
@@ -178,6 +186,7 @@ CREATE TABLE IF NOT EXISTS withdrawal_migrated (
     tx_hash                     VARCHAR NOT NULL UNIQUE,
     old_withdrawal_root         VARCHAR NOT NULL,
     new_withdrawal_root         VARCHAR NOT NULL,
+    is_handle                   SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
 CREATE INDEX IF NOT EXISTS withdrawal_migrated_timestamp ON withdrawal_migrated(timestamp);
@@ -192,6 +201,7 @@ CREATE TABLE IF NOT EXISTS min_withdrawal_delay_blocks_set (
     tx_hash                     VARCHAR NOT NULL UNIQUE,
     previous_value              UINT256 NOT NULL,
     new_value                   UINT256 NOT NULL,
+    is_handle                   SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
 CREATE INDEX IF NOT EXISTS min_withdrawal_delay_blocks_set_timestamp ON min_withdrawal_delay_blocks_set(timestamp);
@@ -206,6 +216,7 @@ CREATE TABLE IF NOT EXISTS strategy_withdrawal_delay_blocks_set (
     strategy                    VARCHAR NOT NULL,
     previous_value              UINT256 NOT NULL,
     new_value                   UINT256 NOT NULL,
+    is_handle                   SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
 CREATE INDEX IF NOT EXISTS strategy_withdrawal_delay_blocks_set_timestamp ON strategy_withdrawal_delay_blocks_set(timestamp);
@@ -222,6 +233,7 @@ CREATE TABLE IF NOT EXISTS strategy_deposit (
     manta_token                 VARCHAR NOT NULL,
     strategy                    VARCHAR NOT NULL,
     shares                      UINT256 NOT NULL,
+    is_handle                   SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
 CREATE INDEX IF NOT EXISTS strategy_deposit_timestamp ON strategy_deposit(timestamp);
@@ -238,6 +250,7 @@ CREATE TABLE IF NOT EXISTS operator_and_stake_reward (
     operator                    VARCHAR NOT NULL,
     staker_fee                  UINT256 NOT NULL,
     operator_fee                UINT256 NOT NULL,
+    is_handle                   SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
 CREATE INDEX IF NOT EXISTS operator_and_stake_reward_timestamp ON operator_and_stake_reward(timestamp);
@@ -252,6 +265,7 @@ CREATE TABLE IF NOT EXISTS operator_claim_reward (
     tx_hash                     VARCHAR NOT NULL UNIQUE,
     operator                    VARCHAR NOT NULL,
     amount                      UINT256 NOT NULL,
+    is_handle                   SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
 CREATE INDEX IF NOT EXISTS operator_claim_reward_timestamp ON operator_claim_reward(timestamp);
@@ -266,6 +280,7 @@ CREATE TABLE IF NOT EXISTS stake_holder_claim_reward (
     stake_holder                VARCHAR NOT NULL,
     strategy                    VARCHAR NOT NULL,
     amount                      UINT256 NOT NULL,
+    is_handle                   SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
 CREATE INDEX IF NOT EXISTS stake_holder_claim_reward_timestamp ON stake_holder_claim_reward(timestamp);
