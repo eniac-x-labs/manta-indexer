@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	common2 "github.com/ethereum/go-ethereum/common"
@@ -255,8 +256,8 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 				Withdrawer:  withdrawalQueuedEvent.Withdrawal.Withdrawer,
 				Nonce:       withdrawalQueuedEvent.Withdrawal.Nonce,
 				StartBlock:  startBlockBigInt,
-				Strategies:  withdrawalQueuedEvent.Withdrawal.Strategies,
-				Shares:      withdrawalQueuedEvent.Withdrawal.Shares,
+				Strategies:  addressListToString(withdrawalQueuedEvent.Withdrawal.Strategies),
+				Shares:      bigIntListToString(withdrawalQueuedEvent.Withdrawal.Shares),
 				IsHandle:    0,
 				Timestamp:   eventItem.Timestamp,
 			}
@@ -416,4 +417,26 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 		"strategyWithdrawalDelayBlocksSets", len(strategyWithdrawalDelayBlocksSets))
 
 	return nil
+}
+
+func addressListToString(addressList []common2.Address) string {
+	if len(addressList) == 0 {
+		return "地址切片为空"
+	}
+	var result []string
+	for _, addr := range addressList {
+		result = append(result, addr.Hex()) // 将地址转换为十六进制字符串
+	}
+	return strings.Join(result, ",")
+}
+
+func bigIntListToString(bigIntList []*big.Int) string {
+	if len(bigIntList) == 0 {
+		return "地址切片为空"
+	}
+	var result []string
+	for _, bi := range bigIntList {
+		result = append(result, bi.String()) // 将 big.Int 转换为字符串
+	}
+	return strings.Join(result, ",")
 }
