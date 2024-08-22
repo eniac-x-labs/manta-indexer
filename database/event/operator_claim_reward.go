@@ -1,6 +1,8 @@
 package event
 
 import (
+	"errors"
+	"github.com/ethereum/go-ethereum/log"
 	"math/big"
 
 	"github.com/google/uuid"
@@ -23,11 +25,13 @@ type OperatorClaimReward struct {
 }
 
 type OperatorClaimRewardView interface {
+	QueryUnHandleOperatorClaimReward() ([]OperatorClaimReward, error)
 	QueryOperatorClaimRewardList(page int, pageSize int, order string) ([]OperatorClaimReward, uint64)
 }
 
 type OperatorClaimRewardDB interface {
 	OperatorClaimRewardView
+	MarkedOperatorClaimRewardHandled([]OperatorClaimReward) error
 	StoreOperatorClaimReward([]OperatorClaimReward) error
 }
 
@@ -35,12 +39,41 @@ type operatorClaimRewardDB struct {
 	gorm *gorm.DB
 }
 
-func (db operatorClaimRewardDB) QueryOperatorClaimRewardList(page int, pageSize int, order string) ([]OperatorClaimReward, uint64) {
+func (oc operatorClaimRewardDB) QueryUnHandleOperatorClaimReward() ([]OperatorClaimReward, error) {
+	var operatorClaimRewardList []OperatorClaimReward
+	err := oc.gorm.Table("operator_claim_reward").Where("is_handle = ?", 0).Find(&operatorClaimRewardList).Error
+	if err != nil {
+		log.Error("get unhandled operator and staker reward list fail", "err", err)
+		return nil, err
+	}
+	return operatorClaimRewardList, nil
+}
+
+func (oc operatorClaimRewardDB) MarkedOperatorClaimRewardHandled(rewards []OperatorClaimReward) error {
+	for i := 0; i < len(rewards); i++ {
+		var operatorClaimReward = OperatorClaimReward{}
+		result := oc.gorm.Where(&OperatorClaimReward{GUID: rewards[i].GUID}).Take(&operatorClaimReward)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				return nil
+			}
+			return result.Error
+		}
+		operatorClaimReward.IsHandle = 1
+		err := oc.gorm.Save(operatorClaimReward).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (oc operatorClaimRewardDB) QueryOperatorClaimRewardList(page int, pageSize int, order string) ([]OperatorClaimReward, uint64) {
 	panic("implement me")
 }
 
-func (db operatorClaimRewardDB) StoreOperatorClaimReward(operatorClaimRewardList []OperatorClaimReward) error {
-	result := db.gorm.CreateInBatches(&operatorClaimRewardList, len(operatorClaimRewardList))
+func (oc operatorClaimRewardDB) StoreOperatorClaimReward(operatorClaimRewardList []OperatorClaimReward) error {
+	result := oc.gorm.CreateInBatches(&operatorClaimRewardList, len(operatorClaimRewardList))
 	return result.Error
 }
 

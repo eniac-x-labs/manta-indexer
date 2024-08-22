@@ -1,15 +1,17 @@
 package worker
 
 import (
+	"errors"
 	"math/big"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 )
 
-type Operator struct {
+type Operators struct {
 	GUID                     uuid.UUID      `gorm:"primaryKey"`
 	BlockHash                common.Hash    `gorm:"serializer:bytes"`
 	Number                   *big.Int       `gorm:"serializer:u256"`
@@ -27,22 +29,65 @@ type Operator struct {
 }
 
 type OperatorsView interface {
+	QueryAndUpdateOperator(operator common.Address, opType OperatorsType) error
 }
 
-type OperatorDB interface {
+type OperatorsDB interface {
 	OperatorsView
-	StoreOperators([]Operator) error
+	StoreOperators([]Operators) error
 }
 
-type contractEventDB struct {
+type operatorsDB struct {
 	gorm *gorm.DB
 }
 
-func NewOperatorsDB(db *gorm.DB) OperatorDB {
-	return &contractEventDB{gorm: db}
+func (op *operatorsDB) QueryAndUpdateOperator(operator common.Address, opType OperatorsType) error {
+	var operatorEntity Operators
+	result := op.gorm.Where(&Operators{Operator: operator}).Take(&operatorEntity)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil
+		}
+		return result.Error
+	}
+	var zeroAddress common.Address
+	if opType.Socket != "" {
+		operatorEntity.Socket = opType.Socket
+	}
+	if opType.EarningsReceiver != zeroAddress {
+		operatorEntity.EarningsReceiver = opType.EarningsReceiver
+	}
+	if opType.DelegationApprover != zeroAddress {
+		operatorEntity.DelegationApprover = opType.DelegationApprover
+	}
+	if opType.StakerOptoutWindowBlocks != nil {
+		operatorEntity.StakerOptoutWindowBlocks = opType.StakerOptoutWindowBlocks
+	}
+	if opType.TotalMantaStake != nil {
+		operatorEntity.TotalMantaStake = new(big.Int).Add(operatorEntity.TotalMantaStake, opType.TotalMantaStake)
+	}
+	if opType.TotalStakeReward != nil {
+		operatorEntity.TotalStakeReward = new(big.Int).Add(operatorEntity.TotalStakeReward, opType.TotalStakeReward)
+	}
+	if operatorEntity.RateReturn != "" {
+		operatorEntity.RateReturn = opType.RateReturn
+	}
+	if operatorEntity.Status != 0 {
+		operatorEntity.Status = opType.Status
+	}
+	err := op.gorm.Save(operatorEntity).Error
+	if err != nil {
+		log.Error("Update node url fail", "err", err)
+		return err
+	}
+	return nil
 }
 
-func (db *contractEventDB) StoreOperators(events []Operator) error {
-	result := db.gorm.CreateInBatches(&events, len(events))
+func NewOperatorsDB(db *gorm.DB) OperatorsDB {
+	return &operatorsDB{gorm: db}
+}
+
+func (op *operatorsDB) StoreOperators(events []Operators) error {
+	result := op.gorm.CreateInBatches(&events, len(events))
 	return result.Error
 }
