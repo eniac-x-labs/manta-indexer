@@ -1,8 +1,13 @@
 package contracts
 
 import (
+	"context"
+	"fmt"
 	"math/big"
 
+	"github.com/google/uuid"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	common2 "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/log"
 
@@ -10,13 +15,14 @@ import (
 	"github.com/eniac-x-labs/manta-indexer/config"
 	"github.com/eniac-x-labs/manta-indexer/database"
 	"github.com/eniac-x-labs/manta-indexer/database/event"
-	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/eniac-x-labs/manta-indexer/synchronizer/retry"
 )
 
 type RewardManager struct {
 	db       *database.DB
 	RmAbi    *abi.ABI
 	RmFilter *rm.RewardManagerFilterer
+	rmCtx    context.Context
 }
 
 func NewRewardManager(db *database.DB) (*RewardManager, error) {
@@ -46,8 +52,9 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 		log.Error("get contracts event list fail", "err", err)
 		return err
 	}
+
+	operatorAndStakeRewardList := make([]event.OperatorAndStakeReward, 0, len(contractEventList))
 	for _, eventItem := range contractEventList {
-		// OperatorAndStakeReward
 		rlpLog := eventItem.RLPLog
 		if eventItem.EventSignature.String() == rm.RmAbi.Events["OperatorAndStakeReward"].ID.String() {
 			operatorAndStakeRewardEvent, err := rm.RmFilter.ParseOperatorAndStakeReward(*rlpLog)
@@ -60,6 +67,26 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 				"operator", operatorAndStakeRewardEvent.Operator.String(),
 				"stakerFee", operatorAndStakeRewardEvent.StakerFee.String(),
 				"operatorFee", operatorAndStakeRewardEvent.OperatorFee.String())
+
+			header, err := rm.db.Blocks.BlockHeader(eventItem.BlockHash)
+			if err != nil {
+				log.Error("db Blocks BlockHeader by BlockHash fail", "err", err)
+				return err
+			}
+
+			temp := event.OperatorAndStakeReward{
+				GUID:        uuid.New(),
+				BlockHash:   eventItem.BlockHash,
+				Number:      header.Number,
+				TxHash:      eventItem.TransactionHash,
+				Strategy:    operatorAndStakeRewardEvent.Strategy,
+				Operator:    operatorAndStakeRewardEvent.Operator,
+				StakerFee:   operatorAndStakeRewardEvent.StakerFee,
+				OperatorFee: operatorAndStakeRewardEvent.OperatorFee,
+				IsHandle:    0,
+				Timestamp:   eventItem.Timestamp,
+			}
+			operatorAndStakeRewardList = append(operatorAndStakeRewardList, temp)
 		}
 
 		// OperatorClaimReward
@@ -87,5 +114,22 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 				"amount", stakeHolderClaimRewardEvent.Amount.String())
 		}
 	}
+
+	retryStrategy := &retry.ExponentialStrategy{Min: 1000, Max: 20_000, MaxJitter: 250}
+	if _, err := retry.Do[interface{}](rm.rmCtx, 10, retryStrategy, func() (interface{}, error) {
+		if err := rm.db.Transaction(func(tx *database.DB) error {
+			if err := tx.OperatorAndStakeReward.StoreOperatorAndStakeReward(operatorAndStakeRewardList); err != nil {
+				return err
+			}
+			return nil
+		}); err != nil {
+			log.Info("unable to persist batch", err)
+			return nil, fmt.Errorf("unable to persist batch: %w", err)
+		}
+		return nil, nil
+	}); err != nil {
+		return err
+	}
+
 	return nil
 }
