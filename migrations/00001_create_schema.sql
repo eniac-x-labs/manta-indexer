@@ -250,7 +250,8 @@ CREATE TABLE IF NOT EXISTS operator_and_stake_reward (
     operator                    VARCHAR NOT NULL,
     staker_fee                  UINT256 NOT NULL,
     operator_fee                UINT256 NOT NULL,
-    is_handle                   SMALLINT NOT NULL DEFAULT 0,
+    is_operator_handle          SMALLINT NOT NULL DEFAULT 0,
+    is_staker_handle            SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
 CREATE INDEX IF NOT EXISTS operator_and_stake_reward_timestamp ON operator_and_stake_reward(timestamp);
@@ -288,7 +289,7 @@ CREATE INDEX IF NOT EXISTS stake_holder_claim_reward_number ON stake_holder_clai
 CREATE INDEX IF NOT EXISTS stake_holder_claim_reward_stake_holder ON stake_holder_claim_reward(stake_holder);
 
 
-CREATE TABLE IF NOT EXISTS operator (
+CREATE TABLE IF NOT EXISTS operators (
     guid                        VARCHAR PRIMARY KEY,
     block_hash                  VARCHAR NOT NULL,
     number                      UINT256 NOT NULL,

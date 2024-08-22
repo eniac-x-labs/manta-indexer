@@ -24,11 +24,13 @@ type StakeHolderClaimReward struct {
 }
 
 type StakeHolderClaimRewardView interface {
+	QueryUnHandleStakeHolderClaimReward() ([]StakeHolderClaimReward, error)
 	QueryStakeHolderClaimRewardList(page int, pageSize int, order string) ([]StakeHolderClaimReward, uint64)
 }
 
 type StakeHolderClaimRewardDB interface {
 	StakeHolderClaimRewardView
+	MarkedStakeHolderClaimRewardHandled(stakeHolderClaimReward []StakeHolderClaimReward) error
 	StoreStakeHolderClaimReward([]StakeHolderClaimReward) error
 }
 
@@ -36,12 +38,20 @@ type stakeHolderClaimRewardDB struct {
 	gorm *gorm.DB
 }
 
-func (db stakeHolderClaimRewardDB) QueryStakeHolderClaimRewardList(page int, pageSize int, order string) ([]StakeHolderClaimReward, uint64) {
+func (shc stakeHolderClaimRewardDB) QueryUnHandleStakeHolderClaimReward() ([]StakeHolderClaimReward, error) {
 	panic("implement me")
 }
 
-func (db stakeHolderClaimRewardDB) StoreStakeHolderClaimReward(stakeHolderClaimRewardList []StakeHolderClaimReward) error {
-	result := db.gorm.CreateInBatches(&stakeHolderClaimRewardList, len(stakeHolderClaimRewardList))
+func (shc stakeHolderClaimRewardDB) MarkedStakeHolderClaimRewardHandled(stakeHolderClaimReward []StakeHolderClaimReward) error {
+	panic("implement me")
+}
+
+func (shc stakeHolderClaimRewardDB) QueryStakeHolderClaimRewardList(page int, pageSize int, order string) ([]StakeHolderClaimReward, uint64) {
+	panic("implement me")
+}
+
+func (shc stakeHolderClaimRewardDB) StoreStakeHolderClaimReward(stakeHolderClaimRewardList []StakeHolderClaimReward) error {
+	result := shc.gorm.CreateInBatches(&stakeHolderClaimRewardList, len(stakeHolderClaimRewardList))
 	return result.Error
 }
 

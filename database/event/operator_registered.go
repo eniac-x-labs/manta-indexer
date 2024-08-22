@@ -1,12 +1,14 @@
 package event
 
 import (
+	"errors"
 	"math/big"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 
 	_ "github.com/eniac-x-labs/manta-indexer/database/utils/serializers"
 )
@@ -25,11 +27,13 @@ type OperatorRegistered struct {
 }
 
 type OperatorRegisteredView interface {
+	QueryUnHandleOperatorRegistered() ([]OperatorRegistered, error)
 	QueryOperatorRegisteredList(page int, pageSize int, order string) ([]OperatorRegistered, uint64)
 }
 
 type OperatorRegisteredDB interface {
 	OperatorRegisteredView
+	MarkedOperatorRegisteredHandled([]OperatorRegistered) error
 	StoreOperatorRegistered([]OperatorRegistered) error
 }
 
@@ -37,12 +41,41 @@ type operatorRegisteredDB struct {
 	gorm *gorm.DB
 }
 
-func (db operatorRegisteredDB) QueryOperatorRegisteredList(page int, pageSize int, order string) ([]OperatorRegistered, uint64) {
+func (or operatorRegisteredDB) MarkedOperatorRegisteredHandled(unHandledOperatorRegistered []OperatorRegistered) error {
+	for i := 0; i < len(unHandledOperatorRegistered); i++ {
+		var operatorRegistereds = OperatorRegistered{}
+		result := or.gorm.Where(&OperatorRegistered{GUID: unHandledOperatorRegistered[i].GUID}).Take(&operatorRegistereds)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				return nil
+			}
+			return result.Error
+		}
+		operatorRegistereds.IsHandle = 1
+		err := or.gorm.Save(operatorRegistereds).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (or operatorRegisteredDB) QueryUnHandleOperatorRegistered() ([]OperatorRegistered, error) {
+	var operatorRegisteredList []OperatorRegistered
+	err := or.gorm.Table("operator_registered").Where("is_handle = ?", 0).Find(&operatorRegisteredList).Error
+	if err != nil {
+		log.Error("get unhandled operator registered fail", "err", err)
+		return nil, err
+	}
+	return operatorRegisteredList, nil
+}
+
+func (or operatorRegisteredDB) QueryOperatorRegisteredList(page int, pageSize int, order string) ([]OperatorRegistered, uint64) {
 	panic("implement me")
 }
 
-func (db operatorRegisteredDB) StoreOperatorRegistered(operatorRegisteredList []OperatorRegistered) error {
-	result := db.gorm.CreateInBatches(&operatorRegisteredList, len(operatorRegisteredList))
+func (or operatorRegisteredDB) StoreOperatorRegistered(operatorRegisteredList []OperatorRegistered) error {
+	result := or.gorm.CreateInBatches(&operatorRegisteredList, len(operatorRegisteredList))
 	return result.Error
 }
 

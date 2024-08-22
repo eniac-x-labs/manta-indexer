@@ -31,10 +31,10 @@ type operatorPublicKeysDB struct {
 }
 
 func NewOperatorPublicKeysDB(db *gorm.DB) OperatorPublicKeysDB {
-	return &contractEventDB{gorm: db}
+	return &operatorPublicKeysDB{gorm: db}
 }
 
-func (db *contractEventDB) StoreOperatorPublicKeys(opPubKeys []OperatorPublicKeys) error {
+func (db *operatorPublicKeysDB) StoreOperatorPublicKeys(opPubKeys []OperatorPublicKeys) error {
 	result := db.gorm.CreateInBatches(&opPubKeys, len(opPubKeys))
 	return result.Error
 }

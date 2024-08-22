@@ -38,7 +38,7 @@ type DB struct {
 	StrategyWithdrawalDelayBlocksSet event.StrategyWithdrawalDelayBlocksSetDB
 	WithdrawalMigrated               event.WithdrawalMigratedDB
 	WithdrawalQueued                 event.WithdrawalQueuedDB
-	Operator                         worker.OperatorDB
+	Operators                        worker.OperatorsDB
 	OperatorPublicKeys               worker.OperatorPublicKeysDB
 	StakeHolder                      worker.StakeHolderDB
 	TotalOperator                    worker.TotalOperatorDB
@@ -94,7 +94,7 @@ func NewDB(ctx context.Context, dbConfig config.DBConfig) (*DB, error) {
 		StrategyWithdrawalDelayBlocksSet: event.NewStrategyWithdrawalDelayBlocksSetDB(gorm),
 		WithdrawalMigrated:               event.NewWithdrawalMigratedDB(gorm),
 		WithdrawalQueued:                 event.NewWithdrawalQueuedDB(gorm),
-		Operator:                         worker.NewOperatorsDB(gorm),
+		Operators:                        worker.NewOperatorsDB(gorm),
 		OperatorPublicKeys:               worker.NewOperatorPublicKeysDB(gorm),
 		StakeHolder:                      worker.NewStakeHolderDB(gorm),
 		TotalOperator:                    worker.NewTotalOperatorDB(gorm),
@@ -124,7 +124,7 @@ func (db *DB) Transaction(fn func(db *DB) error) error {
 			StrategyWithdrawalDelayBlocksSet: event.NewStrategyWithdrawalDelayBlocksSetDB(tx),
 			WithdrawalMigrated:               event.NewWithdrawalMigratedDB(tx),
 			WithdrawalQueued:                 event.NewWithdrawalQueuedDB(tx),
-			Operator:                         worker.NewOperatorsDB(tx),
+			Operators:                        worker.NewOperatorsDB(tx),
 			OperatorPublicKeys:               worker.NewOperatorPublicKeysDB(tx),
 			StakeHolder:                      worker.NewStakeHolderDB(tx),
 			TotalOperator:                    worker.NewTotalOperatorDB(tx),

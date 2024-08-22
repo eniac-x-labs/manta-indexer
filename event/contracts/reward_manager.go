@@ -78,16 +78,17 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 				"operatorFee", operatorAndStakeRewardEvent.OperatorFee.String())
 
 			temp := event.OperatorAndStakeReward{
-				GUID:        uuid.New(),
-				BlockHash:   eventItem.BlockHash,
-				Number:      header.Number,
-				TxHash:      eventItem.TransactionHash,
-				Strategy:    operatorAndStakeRewardEvent.Strategy,
-				Operator:    operatorAndStakeRewardEvent.Operator,
-				StakerFee:   operatorAndStakeRewardEvent.StakerFee,
-				OperatorFee: operatorAndStakeRewardEvent.OperatorFee,
-				IsHandle:    0,
-				Timestamp:   eventItem.Timestamp,
+				GUID:             uuid.New(),
+				BlockHash:        eventItem.BlockHash,
+				Number:           header.Number,
+				TxHash:           eventItem.TransactionHash,
+				Strategy:         operatorAndStakeRewardEvent.Strategy,
+				Operator:         operatorAndStakeRewardEvent.Operator,
+				StakerFee:        operatorAndStakeRewardEvent.StakerFee,
+				OperatorFee:      operatorAndStakeRewardEvent.OperatorFee,
+				IsOperatorHandle: 0,
+				IsStakerHandle:   0,
+				Timestamp:        eventItem.Timestamp,
 			}
 			operatorAndStakeRewardList = append(operatorAndStakeRewardList, temp)
 		}
