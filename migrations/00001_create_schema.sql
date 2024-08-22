@@ -258,7 +258,6 @@ CREATE INDEX IF NOT EXISTS operator_claim_reward_timestamp ON operator_claim_rew
 CREATE INDEX IF NOT EXISTS operator_claim_reward_number ON operator_claim_reward(number);
 CREATE INDEX IF NOT EXISTS operator_claim_reward_operator ON operator_claim_reward(operator);
 
-
 CREATE TABLE IF NOT EXISTS stake_holder_claim_reward (
     guid                        VARCHAR PRIMARY KEY,
     block_hash                  VARCHAR NOT NULL,
@@ -286,6 +285,7 @@ CREATE TABLE IF NOT EXISTS operator (
     staker_optout_window_blocks UINT256 NOT NULL,
     total_manta_stake           UINT256 NOT NULL,
     total_stake_reward          UINT256 NOT NULL,
+    rate_return                 VARCHAR NOT NULL,
     status                      SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
@@ -303,7 +303,6 @@ CREATE TABLE IF NOT EXISTS operator_public_keys (
 );
 CREATE INDEX IF NOT EXISTS operator_public_keys_operator ON operator_public_keys(operator);
 
-
 CREATE TABLE IF NOT EXISTS total_operator (
     guid                        VARCHAR PRIMARY KEY,
     to_block_number             UINT256 NOT NULL,
@@ -314,54 +313,12 @@ CREATE TABLE IF NOT EXISTS total_operator (
 );
 CREATE INDEX IF NOT EXISTS total_operator_to_block_number ON total_operator(to_block_number);
 
-
-CREATE TABLE IF NOT EXISTS operator_stake (
-    guid                        VARCHAR PRIMARY KEY,
-    staker                      VARCHAR NOT NULL,
-    operator                    VARCHAR NOT NULL,
-    block_hash                  VARCHAR NOT NULL,
-    number                      UINT256 NOT NULL,
-    tx_hash                     VARCHAR NOT NULL UNIQUE,
-    manta_stake                 UINT256 NOT NULL,
-    timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
-);
-CREATE INDEX IF NOT EXISTS operator_stake_timestamp ON operator_stake(timestamp);
-CREATE INDEX IF NOT EXISTS operator_stake_operator ON operator_stake(operator);
-CREATE INDEX IF NOT EXISTS operator_stake_staker ON operator_stake(staker);
-
-
 CREATE TABLE IF NOT EXISTS staker (
     guid                        VARCHAR PRIMARY KEY,
     staker                      VARCHAR NOT NULL,
     total_manta_stake           UINT256 NOT NULL,
     total_reward                UINT256 NOT NULL,
-    total_claim_amount          UINT256 NOT NULL,
+    claimed_amount              UINT256 NOT NULL,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
 CREATE INDEX IF NOT EXISTS operator_stake_staker ON operator_stake(staker);
-
-CREATE TABLE IF NOT EXISTS staker_cliam (
-      guid                        VARCHAR PRIMARY KEY,
-      block_hash                  VARCHAR NOT NULL,
-      number                      UINT256 NOT NULL,
-      tx_hash                     VARCHAR NOT NULL UNIQUE,
-      staker                      VARCHAR NOT NULL,
-      claim_amount                UINT256 NOT NULL,
-      timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
-);
-CREATE INDEX IF NOT EXISTS staker_cliam_staker ON staker_cliam(staker);
-CREATE INDEX IF NOT EXISTS staker_cliam_timestamp ON staker_cliam(timestamp);
-
-CREATE TABLE IF NOT EXISTS operator_cliam (
-    guid                        VARCHAR PRIMARY KEY,
-    block_hash                  VARCHAR NOT NULL,
-    number                      UINT256 NOT NULL,
-    tx_hash                     VARCHAR NOT NULL UNIQUE,
-    operator                    VARCHAR NOT NULL,
-    claim_amount                UINT256 NOT NULL,
-    timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
-);
-CREATE INDEX IF NOT EXISTS operator_cliam_operator ON operator_cliam(operator);
-CREATE INDEX IF NOT EXISTS operator_cliam_timestamp ON operator_cliam(timestamp);
-
-
