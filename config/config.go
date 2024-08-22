@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"time"
 
 	"github.com/urfave/cli/v2"
@@ -65,13 +66,30 @@ func LoadConfig(cliCtx *cli.Context) (Config, error) {
 	return cfg, nil
 }
 
-func LoadContracts() []common.Address {
-	var Contracts []common.Address
-	Contracts = append(Contracts, TreasureManagerAddr)
-	return Contracts
+func LoadContracts() ([]common.Address, error) {
+	contracts := ContractsFromConst()
+	ContractList := []common.Address{}
+	zeroAddr := common.Address{}
+	if err := contracts.ForEach(func(name string, addr common.Address) error {
+		if addr == zeroAddr {
+			log.Error("address not configured", "name", name)
+			return errors.New("all contracts must be configured")
+		}
+		log.Info("configured contract list", "name", name, "addr", addr)
+		ContractList = append(ContractList, addr)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return ContractList, nil
 }
 
 func NewConfig(ctx *cli.Context) Config {
+	contracts, err := LoadContracts()
+	if err != nil {
+		log.Error("load contract config fail", "err", err)
+		return Config{}
+	}
 	return Config{
 		Migrations: ctx.String(flags.MigrationsFlag.Name),
 		Chain: ChainConfig{
@@ -80,7 +98,7 @@ func NewConfig(ctx *cli.Context) Config {
 			StartingHeight: ctx.Uint64(flags.StartingHeightFlag.Name),
 			Confirmations:  ctx.Uint64(flags.ConfirmationsFlag.Name),
 			BlockStep:      ctx.Uint64(flags.BlocksStepFlag.Name),
-			Contracts:      LoadContracts(),
+			Contracts:      contracts,
 			LoopInterval:   ctx.Duration(flags.LoopIntervalFlag.Name),
 		},
 		MasterDB: DBConfig{

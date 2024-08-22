@@ -41,19 +41,19 @@ var (
 		Name:    "confirmations",
 		Usage:   "The confirmation depth of l1",
 		EnvVars: prefixEnvVars("CONFIRMATIONS"),
-		Value:   64,
+		Value:   0,
 	}
 	LoopIntervalFlag = &cli.DurationFlag{
 		Name:    "loop-interval",
 		Usage:   "The interval of synchronization",
 		EnvVars: prefixEnvVars("LOOP_INTERVAL"),
-		Value:   time.Second * 5,
+		Value:   time.Second * 1,
 	}
 	BlocksStepFlag = &cli.UintFlag{
 		Name:    "blocks-step",
 		Usage:   "Scanner blocks step",
 		EnvVars: prefixEnvVars("BLOCKS_STEP"),
-		Value:   5,
+		Value:   2,
 	}
 
 	// MasterDbHostFlag MasterDb Flags

@@ -61,7 +61,7 @@ func (a *API) initFromConfig(ctx context.Context, cfg *config.Config) error {
 func (a *API) initRouter(conf config.ServerConfig, cfg *config.Config) {
 	v := new(service.Validator)
 
-	svc := service.New(v, a.db.DepositTokens)
+	svc := service.New(v)
 	apiRouter := chi.NewRouter()
 	h := routes.NewRoutes(apiRouter, svc)
 
