@@ -61,7 +61,7 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 
 		header, err := rm.db.Blocks.BlockHeader(eventItem.BlockHash)
 		if err != nil {
-			log.Error("db Blocks BlockHeader by BlockHash fail", "err", err)
+			log.Error("ProcessRewardManager db Blocks BlockHeader by BlockHash fail", "err", err)
 			return err
 		}
 

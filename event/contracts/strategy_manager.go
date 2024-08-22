@@ -59,7 +59,7 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 
 		header, err := sm.db.Blocks.BlockHeader(eventItem.BlockHash)
 		if err != nil {
-			log.Error("db Blocks BlockHeader by BlockHash fail", "err", err)
+			log.Error("ProcessStrategyManager db Blocks BlockHeader by BlockHash fail", "err", err)
 			return err
 		}
 
