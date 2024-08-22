@@ -2,7 +2,6 @@ package service
 
 import (
 	"github.com/eniac-x-labs/manta-indexer/api/models"
-	"github.com/eniac-x-labs/manta-indexer/database/worker"
 	"strconv"
 )
 
@@ -13,8 +12,7 @@ type Service interface {
 }
 
 type HandlerSvc struct {
-	v                 *Validator
-	depositTokensView worker.DepositTokensView
+	v *Validator
 }
 
 func (h HandlerSvc) GetDepositTokensList(params *models.QueryDTParams) (*models.DepositTokensResponse, error) {
@@ -42,19 +40,16 @@ func (h HandlerSvc) QueryDTListParams(page string, pageSize string, order string
 	}, nil
 }
 
-func New(v *Validator, dtv worker.DepositTokensView) Service {
+func New(v *Validator) Service {
 	return &HandlerSvc{
-		v:                 v,
-		depositTokensView: dtv,
+		v: v,
 	}
 }
 
 func (h HandlerSvc) GetDepositList(params *models.QueryDTParams) (*models.DepositTokensResponse, error) {
-	depositList, total := h.depositTokensView.QueryDepositTokensList(params.Page, params.PageSize, params.Order)
 	return &models.DepositTokensResponse{
 		Current: params.Page,
 		Size:    params.PageSize,
-		Total:   int64(total),
-		Result:  depositList,
+		Total:   int64(100),
 	}, nil
 }

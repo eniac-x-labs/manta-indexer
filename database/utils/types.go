@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
@@ -18,6 +19,7 @@ func (h *RLPHeader) DecodeRLP(s *rlp.Stream) error {
 	block := new(types.Block)
 	err := block.DecodeRLP(s)
 	if err != nil {
+		log.Error("decode rlp fail", "err", err)
 		return err
 	}
 

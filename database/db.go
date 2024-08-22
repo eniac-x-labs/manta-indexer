@@ -14,16 +14,14 @@ import (
 	"github.com/eniac-x-labs/manta-indexer/database/common"
 	"github.com/eniac-x-labs/manta-indexer/database/event"
 	_ "github.com/eniac-x-labs/manta-indexer/database/utils/serializers"
-	"github.com/eniac-x-labs/manta-indexer/database/worker"
 	"github.com/eniac-x-labs/manta-indexer/synchronizer/retry"
 )
 
 type DB struct {
-	gorm *gorm.DB
-
+	gorm          *gorm.DB
 	Blocks        common.BlocksDB
 	ContractEvent event.ContractEventDB
-	DepositTokens worker.DepositTokensDB
+	EventBlocks   event.EventBlocksDB
 }
 
 func NewDB(ctx context.Context, dbConfig config.DBConfig) (*DB, error) {
@@ -57,11 +55,10 @@ func NewDB(ctx context.Context, dbConfig config.DBConfig) (*DB, error) {
 	}
 
 	db := &DB{
-		gorm: gorm,
-
+		gorm:          gorm,
 		Blocks:        common.NewBlocksDB(gorm),
 		ContractEvent: event.NewContractEventsDB(gorm),
-		DepositTokens: worker.NewDepositTokensDB(gorm),
+		EventBlocks:   event.NewEventBlocksDB(gorm),
 	}
 	return db, nil
 }
@@ -72,7 +69,7 @@ func (db *DB) Transaction(fn func(db *DB) error) error {
 			gorm:          tx,
 			Blocks:        common.NewBlocksDB(tx),
 			ContractEvent: event.NewContractEventsDB(tx),
-			DepositTokens: worker.NewDepositTokensDB(tx),
+			EventBlocks:   event.NewEventBlocksDB(tx),
 		}
 		return fn(txDB)
 	})

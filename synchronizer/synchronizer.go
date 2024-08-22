@@ -7,6 +7,8 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -23,23 +25,20 @@ import (
 )
 
 type Synchronizer struct {
-	ethClient node.EthClient
-	db        *database.DB
-
-	loopInterval     time.Duration
-	headerBufferSize uint64
-	headerTraversal  *node.HeaderTraversal
-
-	headers      []types.Header
-	latestHeader *types.Header
-
+	ethClient         node.EthClient
+	db                *database.DB
+	headers           []types.Header
+	latestHeader      *types.Header
+	headerTraversal   *node.HeaderTraversal
+	loopInterval      time.Duration
+	headerBufferSize  uint64
+	contracts         []common.Address
 	startHeight       *big.Int
 	confirmationDepth *big.Int
 	chainCfg          *config.ChainConfig
-
-	resourceCtx    context.Context
-	resourceCancel context.CancelFunc
-	tasks          tasks.Group
+	resourceCtx       context.Context
+	resourceCancel    context.CancelFunc
+	tasks             tasks.Group
 }
 
 func NewSynchronizer(cfg *config.Config, db *database.DB, client node.EthClient, shutdown context.CancelCauseFunc) (*Synchronizer, error) {
@@ -59,7 +58,7 @@ func NewSynchronizer(cfg *config.Config, db *database.DB, client node.EthClient,
 		}
 		fromHeader = header
 	} else {
-		log.Info("no eth wallet indexed state")
+		log.Info("no ethereum block indexed state")
 	}
 
 	headerTraversal := node.NewHeaderTraversal(client, fromHeader, big.NewInt(0), cfg.Chain.ChainId)
@@ -82,8 +81,7 @@ func NewSynchronizer(cfg *config.Config, db *database.DB, client node.EthClient,
 }
 
 func (syncer *Synchronizer) Start() error {
-	// tickerSyncer := time.NewTicker(syncer.loopInterval)
-	tickerSyncer := time.NewTicker(time.Second * 3)
+	tickerSyncer := time.NewTicker(time.Second * 2)
 	syncer.tasks.Go(func() error {
 		for range tickerSyncer.C {
 			if len(syncer.headers) > 0 {
@@ -149,6 +147,7 @@ func (syncer *Synchronizer) processBatch(headers []types.Header, chainCfg *confi
 			continue
 		}
 		bHeader := common2.BlockHeader{
+			GUID:       uuid.New(),
 			Hash:       headers[i].Hash(),
 			ParentHash: headers[i].ParentHash,
 			Number:     headers[i].Number,

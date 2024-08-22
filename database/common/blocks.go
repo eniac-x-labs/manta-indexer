@@ -13,7 +13,7 @@ import (
 )
 
 type BlockHeader struct {
-	GUID       uuid.UUID   `gorm:"primaryKey;DEFAULT replace(uuid_generate_v4()::text,'-','')"`
+	GUID       uuid.UUID   `gorm:"primaryKey"`
 	Hash       common.Hash `gorm:"serializer:bytes"`
 	ParentHash common.Hash `gorm:"serializer:bytes"`
 	Number     *big.Int    `gorm:"serializer:u256"`
@@ -21,12 +21,9 @@ type BlockHeader struct {
 	RLPHeader  *utils.RLPHeader `gorm:"serializer:rlp;column:rlp_bytes"`
 }
 
-func (BlockHeader) TableName() string {
-	return "block_header"
-}
-
 type BlocksView interface {
 	BlockHeader(common.Hash) (*BlockHeader, error)
+	BlockHeaderByNumber(*big.Int) (*BlockHeader, error)
 	BlockHeaderWithFilter(BlockHeader) (*BlockHeader, error)
 	BlockHeaderWithScope(func(db *gorm.DB) *gorm.DB) (*BlockHeader, error)
 	LatestBlockHeader() (*BlockHeader, error)
@@ -39,6 +36,10 @@ type BlocksDB interface {
 
 type blocksDB struct {
 	gorm *gorm.DB
+}
+
+func (b blocksDB) BlockHeaderByNumber(number *big.Int) (*BlockHeader, error) {
+	return b.BlockHeaderWithFilter(BlockHeader{Number: number})
 }
 
 func (b blocksDB) BlockHeader(hash common.Hash) (*BlockHeader, error) {
@@ -74,7 +75,7 @@ func (b blocksDB) LatestBlockHeader() (*BlockHeader, error) {
 }
 
 func (b blocksDB) StoreBlockHeaders(headers []BlockHeader) error {
-	result := b.gorm.Table("block_headers").Omit("guid").Create(&headers)
+	result := b.gorm.CreateInBatches(&headers, len(headers))
 	return result.Error
 }
 
