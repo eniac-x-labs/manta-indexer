@@ -3,10 +3,12 @@ package event
 import (
 	"math/big"
 
-	_ "github.com/eniac-x-labs/manta-indexer/database/utils/serializers"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+
+	"github.com/ethereum/go-ethereum/common"
+
+	_ "github.com/eniac-x-labs/manta-indexer/database/utils/serializers"
 )
 
 type StakerDelegated struct {

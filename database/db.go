@@ -14,14 +14,34 @@ import (
 	"github.com/eniac-x-labs/manta-indexer/database/common"
 	"github.com/eniac-x-labs/manta-indexer/database/event"
 	_ "github.com/eniac-x-labs/manta-indexer/database/utils/serializers"
+	"github.com/eniac-x-labs/manta-indexer/database/worker"
 	"github.com/eniac-x-labs/manta-indexer/synchronizer/retry"
 )
 
 type DB struct {
-	gorm          *gorm.DB
-	Blocks        common.BlocksDB
-	ContractEvent event.ContractEventDB
-	EventBlocks   event.EventBlocksDB
+	gorm                             *gorm.DB
+	Blocks                           common.BlocksDB
+	ContractEvent                    event.ContractEventDB
+	EventBlocks                      event.EventBlocksDB
+	MinWithdrawalDelayBlocksSet      event.MinWithdrawalDelayBlocksSetDB
+	OperatorAndStakeReward           event.OperatorAndStakeRewardDB
+	OperatorClaimReward              event.OperatorClaimRewardDB
+	OperatorModified                 event.OperatorModifiedDB
+	OperatorNodeUrlUpdate            event.OperatorNodeUrlUpdateDB
+	OperatorRegistered               event.OperatorRegisteredDB
+	OperatorSharesDecreased          event.OperatorSharesDecreasedDB
+	OperatorSharesIncreased          event.OperatorSharesIncreasedDB
+	StakeHolderClaimReward           event.StakeHolderClaimRewardDB
+	StakerDelegated                  event.StakerDelegatedDB
+	StakerUndelegated                event.StakerUndelegatedDB
+	StrategyDeposit                  event.StrategyDepositDB
+	StrategyWithdrawalDelayBlocksSet event.StrategyWithdrawalDelayBlocksSetDB
+	WithdrawalMigrated               event.WithdrawalMigratedDB
+	WithdrawalQueued                 event.WithdrawalQueuedDB
+	Operator                         worker.OperatorDB
+	OperatorPublicKeys               worker.OperatorPublicKeysDB
+	StakeHolder                      worker.StakeHolderDB
+	TotalOperator                    worker.TotalOperatorDB
 }
 
 func NewDB(ctx context.Context, dbConfig config.DBConfig) (*DB, error) {
@@ -55,10 +75,29 @@ func NewDB(ctx context.Context, dbConfig config.DBConfig) (*DB, error) {
 	}
 
 	db := &DB{
-		gorm:          gorm,
-		Blocks:        common.NewBlocksDB(gorm),
-		ContractEvent: event.NewContractEventsDB(gorm),
-		EventBlocks:   event.NewEventBlocksDB(gorm),
+		gorm:                             gorm,
+		Blocks:                           common.NewBlocksDB(gorm),
+		ContractEvent:                    event.NewContractEventsDB(gorm),
+		EventBlocks:                      event.NewEventBlocksDB(gorm),
+		MinWithdrawalDelayBlocksSet:      event.NewMinWithdrawalDelayBlocksSetDB(gorm),
+		OperatorAndStakeReward:           event.NewOperatorAndStakeRewardDB(gorm),
+		OperatorClaimReward:              event.NewOperatorClaimRewardDB(gorm),
+		OperatorModified:                 event.NewOperatorModifiedDB(gorm),
+		OperatorNodeUrlUpdate:            event.NewOperatorNodeUrlUpdateDB(gorm),
+		OperatorRegistered:               event.NewOperatorRegisteredDB(gorm),
+		OperatorSharesDecreased:          event.NewOperatorSharesDecreasedDB(gorm),
+		OperatorSharesIncreased:          event.NewOperatorSharesIncreasedDB(gorm),
+		StakeHolderClaimReward:           event.NewStakeHolderClaimRewardDB(gorm),
+		StakerDelegated:                  event.NewStakerDelegatedDB(gorm),
+		StakerUndelegated:                event.NewStakerUndelegatedDB(gorm),
+		StrategyDeposit:                  event.NewStrategyDepositDB(gorm),
+		StrategyWithdrawalDelayBlocksSet: event.NewStrategyWithdrawalDelayBlocksSetDB(gorm),
+		WithdrawalMigrated:               event.NewWithdrawalMigratedDB(gorm),
+		WithdrawalQueued:                 event.NewWithdrawalQueuedDB(gorm),
+		Operator:                         worker.NewOperatorsDB(gorm),
+		OperatorPublicKeys:               worker.NewOperatorPublicKeysDB(gorm),
+		StakeHolder:                      worker.NewStakeHolderDB(gorm),
+		TotalOperator:                    worker.NewTotalOperatorDB(gorm),
 	}
 	return db, nil
 }
@@ -66,10 +105,29 @@ func NewDB(ctx context.Context, dbConfig config.DBConfig) (*DB, error) {
 func (db *DB) Transaction(fn func(db *DB) error) error {
 	return db.gorm.Transaction(func(tx *gorm.DB) error {
 		txDB := &DB{
-			gorm:          tx,
-			Blocks:        common.NewBlocksDB(tx),
-			ContractEvent: event.NewContractEventsDB(tx),
-			EventBlocks:   event.NewEventBlocksDB(tx),
+			gorm:                             tx,
+			Blocks:                           common.NewBlocksDB(tx),
+			ContractEvent:                    event.NewContractEventsDB(tx),
+			EventBlocks:                      event.NewEventBlocksDB(tx),
+			MinWithdrawalDelayBlocksSet:      event.NewMinWithdrawalDelayBlocksSetDB(tx),
+			OperatorAndStakeReward:           event.NewOperatorAndStakeRewardDB(tx),
+			OperatorClaimReward:              event.NewOperatorClaimRewardDB(tx),
+			OperatorModified:                 event.NewOperatorModifiedDB(tx),
+			OperatorNodeUrlUpdate:            event.NewOperatorNodeUrlUpdateDB(tx),
+			OperatorRegistered:               event.NewOperatorRegisteredDB(tx),
+			OperatorSharesDecreased:          event.NewOperatorSharesDecreasedDB(tx),
+			OperatorSharesIncreased:          event.NewOperatorSharesIncreasedDB(tx),
+			StakeHolderClaimReward:           event.NewStakeHolderClaimRewardDB(tx),
+			StakerDelegated:                  event.NewStakerDelegatedDB(tx),
+			StakerUndelegated:                event.NewStakerUndelegatedDB(tx),
+			StrategyDeposit:                  event.NewStrategyDepositDB(tx),
+			StrategyWithdrawalDelayBlocksSet: event.NewStrategyWithdrawalDelayBlocksSetDB(tx),
+			WithdrawalMigrated:               event.NewWithdrawalMigratedDB(tx),
+			WithdrawalQueued:                 event.NewWithdrawalQueuedDB(tx),
+			Operator:                         worker.NewOperatorsDB(tx),
+			OperatorPublicKeys:               worker.NewOperatorPublicKeysDB(tx),
+			StakeHolder:                      worker.NewStakeHolderDB(tx),
+			TotalOperator:                    worker.NewTotalOperatorDB(tx),
 		}
 		return fn(txDB)
 	})
