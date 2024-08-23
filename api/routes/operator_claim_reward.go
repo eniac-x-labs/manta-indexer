@@ -35,14 +35,14 @@ func (h Routes) ListOperatorClaimRewardHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	rewards, total := h.svc.ListOperatorClaimReward(params)
+	tempList, err := h.svc.ListOperatorClaimReward(params)
 	if err != nil {
 		http.Error(w, "Internal server error reading ListOperatorClaimRewardHandler", http.StatusInternalServerError)
 		log.Error("Unable to read ListOperatorClaimRewardHandler from DB", "err", err.Error())
 		return
 	}
 
-	err = jsonResponse(w, rewards, http.StatusOK)
+	err = jsonResponse(w, tempList, http.StatusOK)
 	if err != nil {
 		log.Error("Error writing response", "err", err.Error())
 	}

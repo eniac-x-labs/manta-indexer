@@ -33,6 +33,7 @@ type OperatorNodeUrlUpdateView interface {
 type OperatorNodeUrlUpdateDB interface {
 	OperatorNodeUrlUpdateView
 	MarkedOperatorNodeUrlUpdateHandled([]OperatorNodeUrlUpdate) error
+	StoreOperatorNodeUrlUpdate(operatorNodeUrlUpdateList []OperatorNodeUrlUpdate) error
 }
 
 type operatorNodeUrlUpdateDB struct {

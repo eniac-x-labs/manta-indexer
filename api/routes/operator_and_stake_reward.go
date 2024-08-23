@@ -35,14 +35,14 @@ func (h Routes) ListOperatorAndStakeRewardHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	rewards, total := h.svc.ListOperatorAndStakeReward(params)
+	tempList, err := h.svc.ListOperatorAndStakeReward(params)
 	if err != nil {
 		http.Error(w, "Internal server error reading ListOperatorAndStakeRewardHandler", http.StatusInternalServerError)
 		log.Error("Unable to read ListOperatorAndStakeRewardHandler from DB", "err", err.Error())
 		return
 	}
 
-	err = jsonResponse(w, rewards, http.StatusOK)
+	err = jsonResponse(w, tempList, http.StatusOK)
 	if err != nil {
 		log.Error("Error writing response", "err", err.Error())
 	}
