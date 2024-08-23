@@ -61,6 +61,7 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 	var operatorDetailsModifies []event.OperatorModified
 	var operatorSharesDecreases []event.OperatorSharesDecreased
 	var withdrawalQueues []event.WithdrawalQueued
+	var WithdrawalCompleteds []event.WithdrawalCompleted
 	var withdrawalMigrates []event.WithdrawalMigrated
 	var minWithdrawalDelayBlocksSets []event.MinWithdrawalDelayBlocksSet
 	var strategyWithdrawalDelayBlocksSets []event.StrategyWithdrawalDelayBlocksSet
@@ -265,6 +266,28 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 			withdrawalQueues = append(withdrawalQueues, temp)
 		}
 
+		if eventItem.EventSignature.String() == dm.DmAbi.Events["WithdrawalCompleted"].ID.String() {
+			withdrawalCompleted, err := dm.DmFilter.ParseWithdrawalCompleted(*rlpLog)
+			if err != nil {
+				log.Error("parse withdrawal queued event fail", "err", err)
+				return err
+			}
+
+			temp := event.WithdrawalCompleted{
+				GUID:      uuid.New(),
+				BlockHash: eventItem.BlockHash,
+				Number:    header.Number,
+				TxHash:    eventItem.TransactionHash,
+				Operator:  withdrawalCompleted.Operator,
+				Staker:    withdrawalCompleted.Staker,
+				Strategy:  withdrawalCompleted.Strategy,
+				Shares:    withdrawalCompleted.Shares,
+				IsHandle:  0,
+				Timestamp: eventItem.Timestamp,
+			}
+			WithdrawalCompleteds = append(WithdrawalCompleteds, temp)
+		}
+
 		// WithdrawalMigrated
 		if eventItem.EventSignature.String() == dm.DmAbi.Events["WithdrawalMigrated"].ID.String() {
 			withdrawalMigratedEvent, err := dm.DmFilter.ParseWithdrawalMigrated(*rlpLog)
@@ -372,6 +395,11 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 			}
 			if len(operatorSharesDecreases) > 0 {
 				if err := tx.OperatorSharesDecreased.StoreOperatorSharesDecreased(operatorSharesDecreases); err != nil {
+					return err
+				}
+			}
+			if len(WithdrawalCompleteds) > 0 {
+				if err := tx.WithdrawalCompleted.StoreWithdrawalCompleted(WithdrawalCompleteds); err != nil {
 					return err
 				}
 			}

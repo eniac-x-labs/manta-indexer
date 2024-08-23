@@ -3,12 +3,15 @@ package handle
 import (
 	"context"
 	"fmt"
+
+	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/log"
 
 	"github.com/eniac-x-labs/manta-indexer/common/tasks"
 	"github.com/eniac-x-labs/manta-indexer/database"
+	"github.com/eniac-x-labs/manta-indexer/database/worker"
 )
 
 type StakeHolderHandle struct {
@@ -36,13 +39,106 @@ func (sh *StakeHolderHandle) Close() error {
 }
 
 func (sh *StakeHolderHandle) Start() error {
-	log.Info("...starting staker holder...")
+	log.Info("=======================================================")
+	log.Info("===========start stake holder worker task===========")
+	log.Info("=======================================================")
 	tickerOperator := time.NewTicker(time.Second * 5)
 	sh.tasks.Go(func() error {
 		for range tickerOperator.C {
-
+			err := sh.processStrategyDeposit()
+			if err != nil {
+				log.Error("Process strategy deposit fail", "err", err)
+				return err
+			}
+			err = sh.processWithdrawalCompleted()
+			if err != nil {
+				log.Error("Process withdraw completed fail", "err", err)
+				return err
+			}
 		}
 		return nil
 	})
+	return nil
+}
+
+func (sh *StakeHolderHandle) processStrategyDeposit() error {
+	unHandleDepositList, err := sh.db.StrategyDeposit.QueryUnHandleStrategyDeposit()
+	if err != nil {
+		log.Error("Query unhandled strategy deposit fail", "err", err)
+		return err
+	}
+	for _, unHandleDeposit := range unHandleDepositList {
+		stkType := worker.StakeHolderType{
+			MantaStake:    unHandleDeposit.Shares,
+			Reward:        big.NewInt(0),
+			ClaimedAmount: big.NewInt(0),
+			Timestamp:     unHandleDeposit.Timestamp,
+		}
+		err := sh.db.StakeHolder.QueryAndUpdateStakeHolder(unHandleDeposit.Staker, stkType)
+		if err != nil {
+			log.Error("processStrategyDeposit query and update operator fail", "err", err)
+			return err
+		}
+	}
+	if len(unHandleDepositList) > 0 {
+		if err := sh.db.StrategyDeposit.MarkedStrategyDepositHandled(unHandleDepositList); err != nil {
+			log.Error("MarkedStrategyDepositHandled fail", "err", err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (sh *StakeHolderHandle) processWithdrawalCompleted() error {
+	unHandleCompletedList, err := sh.db.WithdrawalCompleted.QueryUnHandleWithdrawalCompleted()
+	if err != nil {
+		return err
+	}
+	for _, unHandleCompleted := range unHandleCompletedList {
+		stkType := worker.StakeHolderType{
+			MantaStake:    new(big.Int).Neg(unHandleCompleted.Shares),
+			Reward:        big.NewInt(0),
+			ClaimedAmount: big.NewInt(0),
+			Timestamp:     unHandleCompleted.Timestamp,
+		}
+		err := sh.db.StakeHolder.QueryAndUpdateStakeHolder(unHandleCompleted.Staker, stkType)
+		if err != nil {
+			log.Error("processWithdrawalCompleted query and update staker fail", "err", err)
+			return err
+		}
+	}
+	if len(unHandleCompletedList) > 0 {
+		if err := sh.db.WithdrawalCompleted.MarkedWithdrawalCompleted(unHandleCompletedList); err != nil {
+			log.Error("MarkedWithdrawalCompleted fail", "err", err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (sh *StakeHolderHandle) processStakeHolderClaimReward() error {
+	unHandleStakeHolderClaimRewardList, err := sh.db.StakeHolderClaimReward.QueryUnHandleStakeHolderClaimReward()
+	if err != nil {
+		return err
+	}
+	for _, unHandleStakeHolderClaimReward := range unHandleStakeHolderClaimRewardList {
+		stkType := worker.StakeHolderType{
+			MantaStake:    big.NewInt(0),
+			Reward:        big.NewInt(0),
+			ClaimedAmount: new(big.Int).Neg(unHandleStakeHolderClaimReward.Amount),
+			Timestamp:     unHandleStakeHolderClaimReward.Timestamp,
+		}
+		err := sh.db.StakeHolder.QueryAndUpdateStakeHolder(unHandleStakeHolderClaimReward.StakeHolder, stkType)
+		if err != nil {
+			log.Error("processWithdrawalCompleted query and update staker fail", "err", err)
+			return err
+		}
+	}
+	if len(unHandleStakeHolderClaimRewardList) > 0 {
+		if err := sh.db.StakeHolderClaimReward.MarkedStakeHolderClaimRewardHandled(unHandleStakeHolderClaimRewardList); err != nil {
+			log.Error("MarkedStakeHolderClaimRewardHandled fail", "err", err)
+			return err
+		}
+	}
 	return nil
 }

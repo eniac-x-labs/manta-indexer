@@ -36,7 +36,9 @@ func NewOperatorHandle(db *database.DB, shutdown context.CancelCauseFunc) (*Oper
 }
 
 func (oh *OperatorHandle) Start() error {
-	log.Info(".......starting operator worker.......")
+	log.Info("=======================================================")
+	log.Info("============starting operator worker task==============")
+	log.Info("=======================================================")
 	tickerOperator := time.NewTicker(time.Second * 5)
 	oh.tasks.Go(func() error {
 		for range tickerOperator.C {

@@ -1,8 +1,9 @@
 package worker
 
 import (
-	"github.com/ethereum/go-ethereum/common"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type OperatorsType struct {
@@ -14,4 +15,11 @@ type OperatorsType struct {
 	TotalStakeReward         *big.Int
 	RateReturn               string
 	Status                   uint8
+}
+
+type StakeHolderType struct {
+	MantaStake    *big.Int
+	Reward        *big.Int
+	ClaimedAmount *big.Int
+	Timestamp     uint64
 }

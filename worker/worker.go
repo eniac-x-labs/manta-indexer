@@ -33,7 +33,6 @@ func NewWorker(db *database.DB, shutdown context.CancelCauseFunc) (*Worker, erro
 }
 
 func (ep *Worker) Start() error {
-	log.Info("...starting worker...")
 	err := ep.operatorHandle.Start()
 	if err != nil {
 		log.Error("start operator handler fail", "err", err)

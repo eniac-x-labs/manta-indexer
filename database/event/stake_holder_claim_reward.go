@@ -1,12 +1,14 @@
 package event
 
 import (
+	"errors"
 	"math/big"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 
 	_ "github.com/eniac-x-labs/manta-indexer/database/utils/serializers"
 )
@@ -39,11 +41,32 @@ type stakeHolderClaimRewardDB struct {
 }
 
 func (shc stakeHolderClaimRewardDB) QueryUnHandleStakeHolderClaimReward() ([]StakeHolderClaimReward, error) {
-	panic("implement me")
+	var stakeHolderClaimReward []StakeHolderClaimReward
+	err := shc.gorm.Table("stake_holder_claim_reward").Where("is_handle = ?", 0).Find(&stakeHolderClaimReward).Error
+	if err != nil {
+		log.Error("get stake holder claim reward fail", "err", err)
+		return nil, err
+	}
+	return stakeHolderClaimReward, nil
 }
 
-func (shc stakeHolderClaimRewardDB) MarkedStakeHolderClaimRewardHandled(stakeHolderClaimReward []StakeHolderClaimReward) error {
-	panic("implement me")
+func (shc stakeHolderClaimRewardDB) MarkedStakeHolderClaimRewardHandled(stakeHolderClaimRewards []StakeHolderClaimReward) error {
+	for i := 0; i < len(stakeHolderClaimRewards); i++ {
+		var stakeHolderClaimReward = StakeHolderClaimReward{}
+		result := shc.gorm.Where(&StakeHolderClaimReward{GUID: stakeHolderClaimRewards[i].GUID}).Take(&stakeHolderClaimReward)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				return nil
+			}
+			return result.Error
+		}
+		stakeHolderClaimReward.IsHandle = 1
+		err := shc.gorm.Save(stakeHolderClaimReward).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (shc stakeHolderClaimRewardDB) QueryStakeHolderClaimRewardList(page int, pageSize int, order string) ([]StakeHolderClaimReward, uint64) {
