@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/ethereum/go-ethereum/log"
 	"math/big"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -29,7 +30,8 @@ type OperatorAndStakeReward struct {
 
 type OperatorAndStakeRewardView interface {
 	QueryUnHandleOperatorAndStakeReward(isOperator bool) ([]OperatorAndStakeReward, error)
-	QueryOperatorAndStakeRewardList(page int, pageSize int, order string) ([]OperatorAndStakeReward, uint64)
+	GetOperatorAndStakeReward(string) (*OperatorAndStakeReward, error)
+	ListOperatorAndStakeReward(page int, pageSize int, order string) ([]OperatorAndStakeReward, uint64)
 }
 
 type OperatorAndStakeRewardDB interface {
@@ -80,8 +82,38 @@ func (oas operatorAndStakeRewardDB) MarkedOperatorAndStakeRewardHandled(rewards 
 	return nil
 }
 
-func (oas operatorAndStakeRewardDB) QueryOperatorAndStakeRewardList(page int, pageSize int, order string) ([]OperatorAndStakeReward, uint64) {
-	panic("implement me")
+func (osr operatorAndStakeRewardDB) GetOperatorAndStakeReward(address string) (*OperatorAndStakeReward, error) {
+	var operatorAndStakeReward OperatorAndStakeReward
+	result := osr.gorm.Where(&OperatorAndStakeReward{Operator: common.HexToAddress(address)}).Take(&operatorAndStakeReward)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &operatorAndStakeReward, nil
+}
+
+func (osr operatorAndStakeRewardDB) ListOperatorAndStakeReward(page int, pageSize int, order string) ([]OperatorAndStakeReward, uint64) {
+	var totalRecord int64
+	var operatorAndStakeRewardList []OperatorAndStakeReward
+	queryRoot := osr.gorm.Table("operator_and_stake_reward")
+	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	if err != nil {
+		log.Error("list operatorAndStakeRewardDB count fail", "err", err)
+	}
+
+	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
+	if strings.ToLower(order) == "asc" {
+		queryRoot.Order("guid asc")
+	} else {
+		queryRoot.Order("guid desc")
+	}
+	qErr := queryRoot.Find(&operatorAndStakeRewardList).Error
+	if qErr != nil {
+		log.Error("list operatorAndStakeRewardDB fail", "err", qErr)
+	}
+	return operatorAndStakeRewardList, uint64(totalRecord)
 }
 
 func (oas operatorAndStakeRewardDB) StoreOperatorAndStakeReward(operatorAndStakeRewardList []OperatorAndStakeReward) error {

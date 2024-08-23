@@ -2,6 +2,7 @@ package worker
 
 import (
 	"errors"
+	"strings"
 
 	"gorm.io/gorm"
 	"math/big"
@@ -22,6 +23,8 @@ type StakeHolder struct {
 }
 
 type StakeHolderView interface {
+	GetStakeHolder(string) (*StakeHolder, error)
+	ListStakeHolder(page int, pageSize int, order string) ([]StakeHolder, uint64)
 }
 
 type StakeHolderDB interface {
@@ -69,6 +72,40 @@ func (sh *stakeHolderDB) QueryAndUpdateStakeHolder(stakeAddress common.Address, 
 		return err
 	}
 	return nil
+}
+
+func (shv stakeHolderDB) GetStakeHolder(staker string) (*StakeHolder, error) {
+	var stakeHolder StakeHolder
+	result := shv.gorm.Where(&StakeHolder{Staker: common.HexToAddress(staker)}).Take(&stakeHolder)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &stakeHolder, nil
+}
+
+func (shv stakeHolderDB) ListStakeHolder(page int, pageSize int, order string) ([]StakeHolder, uint64) {
+	var totalRecord int64
+	var stakeHolderList []StakeHolder
+	queryRoot := shv.gorm.Table("stake_holder")
+	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	if err != nil {
+		log.Error("list stakeHolderDB count fail", "err", err)
+	}
+
+	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
+	if strings.ToLower(order) == "asc" {
+		queryRoot.Order("guid asc")
+	} else {
+		queryRoot.Order("guid desc")
+	}
+	qErr := queryRoot.Find(&stakeHolderList).Error
+	if qErr != nil {
+		log.Error("list stakeHolderDB fail", "err", qErr)
+	}
+	return stakeHolderList, uint64(totalRecord)
 }
 
 func NewStakeHolderDB(db *gorm.DB) StakeHolderDB {

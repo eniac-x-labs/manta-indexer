@@ -3,6 +3,7 @@ package worker
 import (
 	"errors"
 	"math/big"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -30,6 +31,8 @@ type Operators struct {
 
 type OperatorsView interface {
 	QueryAndUpdateOperator(operator common.Address, opType OperatorsType) error
+	GetOperator(string) (*Operators, error)
+	ListOperator(page int, pageSize int, order string) ([]Operators, uint64)
 }
 
 type OperatorsDB interface {
@@ -82,6 +85,40 @@ func (op *operatorsDB) QueryAndUpdateOperator(operator common.Address, opType Op
 		return err
 	}
 	return nil
+}
+
+func (ov operatorsDB) GetOperator(operator string) (*Operators, error) {
+	var operatorDetail Operators
+	result := ov.gorm.Where(&Operators{Operator: common.HexToAddress(operator)}).Take(&operatorDetail)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &operatorDetail, nil
+}
+
+func (ov operatorsDB) ListOperator(page int, pageSize int, order string) ([]Operators, uint64) {
+	var totalRecord int64
+	var operatorList []Operators
+	queryRoot := ov.gorm.Table("operators")
+	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	if err != nil {
+		log.Error("list operatorsDB count fail", "err", err)
+	}
+
+	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
+	if strings.ToLower(order) == "asc" {
+		queryRoot.Order("guid asc")
+	} else {
+		queryRoot.Order("guid desc")
+	}
+	qErr := queryRoot.Find(&operatorList).Error
+	if qErr != nil {
+		log.Error("list operatorsDB fail", "err", qErr)
+	}
+	return operatorList, uint64(totalRecord)
 }
 
 func NewOperatorsDB(db *gorm.DB) OperatorsDB {

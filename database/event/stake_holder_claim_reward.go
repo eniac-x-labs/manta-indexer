@@ -3,6 +3,7 @@ package event
 import (
 	"errors"
 	"math/big"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -27,7 +28,8 @@ type StakeHolderClaimReward struct {
 
 type StakeHolderClaimRewardView interface {
 	QueryUnHandleStakeHolderClaimReward() ([]StakeHolderClaimReward, error)
-	QueryStakeHolderClaimRewardList(page int, pageSize int, order string) ([]StakeHolderClaimReward, uint64)
+	GetStakeHolderClaimReward(string) (*StakeHolderClaimReward, error)
+	ListStakeHolderClaimReward(page int, pageSize int, order string) ([]StakeHolderClaimReward, uint64)
 }
 
 type StakeHolderClaimRewardDB interface {
@@ -69,8 +71,38 @@ func (shc stakeHolderClaimRewardDB) MarkedStakeHolderClaimRewardHandled(stakeHol
 	return nil
 }
 
-func (shc stakeHolderClaimRewardDB) QueryStakeHolderClaimRewardList(page int, pageSize int, order string) ([]StakeHolderClaimReward, uint64) {
-	panic("implement me")
+func (shcr stakeHolderClaimRewardDB) GetStakeHolderClaimReward(address string) (*StakeHolderClaimReward, error) {
+	var stakeHolderClaimReward StakeHolderClaimReward
+	result := shcr.gorm.Where(&StakeHolderClaimReward{StakeHolder: common.HexToAddress(address)}).Take(&stakeHolderClaimReward)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &stakeHolderClaimReward, nil
+}
+
+func (shcr stakeHolderClaimRewardDB) ListStakeHolderClaimReward(page int, pageSize int, order string) ([]StakeHolderClaimReward, uint64) {
+	var totalRecord int64
+	var stakeHolderClaimRewardList []StakeHolderClaimReward
+	queryRoot := shcr.gorm.Table("stake_holder_claim_reward")
+	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	if err != nil {
+		log.Error("list stakeHolderClaimRewardDB count fail", "err", err)
+	}
+
+	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
+	if strings.ToLower(order) == "asc" {
+		queryRoot.Order("guid asc")
+	} else {
+		queryRoot.Order("guid desc")
+	}
+	qErr := queryRoot.Find(&stakeHolderClaimRewardList).Error
+	if qErr != nil {
+		log.Error("list stakeHolderClaimRewardDB fail", "err", qErr)
+	}
+	return stakeHolderClaimRewardList, uint64(totalRecord)
 }
 
 func (shc stakeHolderClaimRewardDB) StoreStakeHolderClaimReward(stakeHolderClaimRewardList []StakeHolderClaimReward) error {

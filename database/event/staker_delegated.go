@@ -1,7 +1,10 @@
 package event
 
 import (
+	"errors"
+	"github.com/ethereum/go-ethereum/log"
 	"math/big"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -23,7 +26,8 @@ type StakerDelegated struct {
 }
 
 type StakerDelegatedView interface {
-	QueryStakerDelegatedList(page int, pageSize int, order string) ([]StakerDelegated, uint64)
+	GetStakerDelegated(string) (*StakerDelegated, error)
+	ListStakerDelegated(page int, pageSize int, order string) ([]StakerDelegated, uint64)
 }
 
 type StakerDelegatedDB interface {
@@ -35,8 +39,38 @@ type stakerDelegatedDB struct {
 	gorm *gorm.DB
 }
 
-func (db stakerDelegatedDB) QueryStakerDelegatedList(page int, pageSize int, order string) ([]StakerDelegated, uint64) {
-	panic("implement me")
+func (sd stakerDelegatedDB) GetStakerDelegated(address string) (*StakerDelegated, error) {
+	var stakerDelegated StakerDelegated
+	result := sd.gorm.Where(&StakerDelegated{Staker: common.HexToAddress(address)}).Take(&stakerDelegated)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &stakerDelegated, nil
+}
+
+func (sd stakerDelegatedDB) ListStakerDelegated(page int, pageSize int, order string) ([]StakerDelegated, uint64) {
+	var totalRecord int64
+	var stakerDelegatedList []StakerDelegated
+	queryRoot := sd.gorm.Table("staker_delegated")
+	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	if err != nil {
+		log.Error("list stakerDelegatedDB count fail", "err", err)
+	}
+
+	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
+	if strings.ToLower(order) == "asc" {
+		queryRoot.Order("guid asc")
+	} else {
+		queryRoot.Order("guid desc")
+	}
+	qErr := queryRoot.Find(&stakerDelegatedList).Error
+	if qErr != nil {
+		log.Error("list stakerDelegatedDB fail", "err", qErr)
+	}
+	return stakerDelegatedList, uint64(totalRecord)
 }
 
 func (db stakerDelegatedDB) StoreStakerDelegated(stakerDelegatedList []StakerDelegated) error {

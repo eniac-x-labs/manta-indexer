@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/ethereum/go-ethereum/log"
 	"math/big"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -28,7 +29,8 @@ type OperatorSharesDecreased struct {
 
 type OperatorSharesDecreasedView interface {
 	QueryUnHandlerOperatorSharesDecreased() ([]OperatorSharesDecreased, error)
-	QueryOperatorSharesDecreasedList(page int, pageSize int, order string) ([]OperatorSharesDecreased, uint64)
+	GetOperatorSharesDecreased(string) (*OperatorSharesDecreased, error)
+	ListOperatorSharesDecreased(page int, pageSize int, order string) ([]OperatorSharesDecreased, uint64)
 }
 
 type OperatorSharesDecreasedDB interface {
@@ -70,8 +72,38 @@ func (osd operatorSharesDecreasedDB) QueryUnHandlerOperatorSharesDecreased() ([]
 	return operatorSharesDecreasedList, nil
 }
 
-func (osd operatorSharesDecreasedDB) QueryOperatorSharesDecreasedList(page int, pageSize int, order string) ([]OperatorSharesDecreased, uint64) {
-	panic("implement me")
+func (osd operatorSharesDecreasedDB) GetOperatorSharesDecreased(address string) (*OperatorSharesDecreased, error) {
+	var operatorSharesDecreased OperatorSharesDecreased
+	result := osd.gorm.Where(&OperatorSharesDecreased{Staker: common.HexToAddress(address)}).Take(&operatorSharesDecreased)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &operatorSharesDecreased, nil
+}
+
+func (osd operatorSharesDecreasedDB) ListOperatorSharesDecreased(page int, pageSize int, order string) ([]OperatorSharesDecreased, uint64) {
+	var totalRecord int64
+	var operatorSharesDecreasedList []OperatorSharesDecreased
+	queryRoot := osd.gorm.Table("operator_shares_decreased")
+	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	if err != nil {
+		log.Error("list operatorSharesDecreasedDB count fail", "err", err)
+	}
+
+	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
+	if strings.ToLower(order) == "asc" {
+		queryRoot.Order("guid asc")
+	} else {
+		queryRoot.Order("guid desc")
+	}
+	qErr := queryRoot.Find(&operatorSharesDecreasedList).Error
+	if qErr != nil {
+		log.Error("list operatorSharesDecreasedDB fail", "err", qErr)
+	}
+	return operatorSharesDecreasedList, uint64(totalRecord)
 }
 
 func (osd operatorSharesDecreasedDB) StoreOperatorSharesDecreased(operatorSharesDecreasedList []OperatorSharesDecreased) error {
