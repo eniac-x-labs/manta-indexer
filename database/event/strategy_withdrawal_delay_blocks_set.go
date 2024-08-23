@@ -41,7 +41,7 @@ func (db strategyWithdrawalDelayBlocksSetDB) QueryStrategyWithdrawalDelayBlocksS
 }
 
 func (db strategyWithdrawalDelayBlocksSetDB) StoreStrategyWithdrawalDelayBlocksSet(strategyWithdrawalDelayBlocksSetList []StrategyWithdrawalDelayBlocksSet) error {
-	result := db.gorm.CreateInBatches(&strategyWithdrawalDelayBlocksSetList, len(strategyWithdrawalDelayBlocksSetList))
+	result := db.gorm.Table("strategy_withdrawal_delay_blocks_set").CreateInBatches(&strategyWithdrawalDelayBlocksSetList, len(strategyWithdrawalDelayBlocksSetList))
 	return result.Error
 }
 

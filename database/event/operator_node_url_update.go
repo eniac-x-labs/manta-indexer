@@ -72,8 +72,8 @@ func (onuu operatorNodeUrlUpdateDB) QueryOperatorNodeUrlUpdateList(page int, pag
 	panic("implement me")
 }
 
-func (db operatorNodeUrlUpdateDB) StoreOperatorNodeUrlUpdate(operatorNodeUrlUpdateList []OperatorNodeUrlUpdate) error {
-	result := db.gorm.CreateInBatches(&operatorNodeUrlUpdateList, len(operatorNodeUrlUpdateList))
+func (onuu operatorNodeUrlUpdateDB) StoreOperatorNodeUrlUpdate(operatorNodeUrlUpdateList []OperatorNodeUrlUpdate) error {
+	result := onuu.gorm.Table("operator_node_url_update").CreateInBatches(&operatorNodeUrlUpdateList, len(operatorNodeUrlUpdateList))
 	return result.Error
 }
 

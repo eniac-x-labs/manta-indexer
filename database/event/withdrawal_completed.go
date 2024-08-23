@@ -75,7 +75,7 @@ func (wc withdrawalCompletedDB) QueryWithdrawalCompletedList(page int, pageSize 
 }
 
 func (wc withdrawalCompletedDB) StoreWithdrawalCompleted(withdrawalCompletedList []WithdrawalCompleted) error {
-	result := wc.gorm.CreateInBatches(&withdrawalCompletedList, len(withdrawalCompletedList))
+	result := wc.gorm.Table("withdrawal_completed").CreateInBatches(&withdrawalCompletedList, len(withdrawalCompletedList))
 	return result.Error
 }
 

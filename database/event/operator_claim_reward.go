@@ -73,7 +73,7 @@ func (oc operatorClaimRewardDB) QueryOperatorClaimRewardList(page int, pageSize 
 }
 
 func (oc operatorClaimRewardDB) StoreOperatorClaimReward(operatorClaimRewardList []OperatorClaimReward) error {
-	result := oc.gorm.CreateInBatches(&operatorClaimRewardList, len(operatorClaimRewardList))
+	result := oc.gorm.Table("operator_claim_reward").CreateInBatches(&operatorClaimRewardList, len(operatorClaimRewardList))
 	return result.Error
 }
 

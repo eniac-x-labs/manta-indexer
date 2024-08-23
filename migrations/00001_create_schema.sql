@@ -322,9 +322,9 @@ CREATE TABLE IF NOT EXISTS operators (
     status                      SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
-CREATE INDEX IF NOT EXISTS operator_timestamp ON operator(timestamp);
-CREATE INDEX IF NOT EXISTS operator_number ON operator(number);
-CREATE INDEX IF NOT EXISTS operator_operator ON operator(operator);
+CREATE INDEX IF NOT EXISTS operators_timestamp ON operators(timestamp);
+CREATE INDEX IF NOT EXISTS operators_number ON operators(number);
+CREATE INDEX IF NOT EXISTS operators_operator ON operators(operator);
 
 CREATE TABLE IF NOT EXISTS operator_public_keys (
     guid                        VARCHAR PRIMARY KEY,
@@ -346,7 +346,7 @@ CREATE TABLE IF NOT EXISTS total_operator (
 );
 CREATE INDEX IF NOT EXISTS total_operator_to_block_number ON total_operator(to_block_number);
 
-CREATE TABLE IF NOT EXISTS staker (
+CREATE TABLE IF NOT EXISTS staker_holder (
     guid                        VARCHAR PRIMARY KEY,
     staker                      VARCHAR NOT NULL,
     total_manta_stake           UINT256 NOT NULL,
@@ -354,4 +354,4 @@ CREATE TABLE IF NOT EXISTS staker (
     claimed_amount              UINT256 NOT NULL,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
-CREATE INDEX IF NOT EXISTS operator_stake_staker ON operator_stake(staker);
+CREATE INDEX IF NOT EXISTS staker_holder_staker ON staker_holder(staker);

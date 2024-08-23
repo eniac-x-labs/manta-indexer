@@ -41,6 +41,7 @@ func NewStrategyManager(db *database.DB) (*StrategyManager, error) {
 		db:       db,
 		SmAbi:    strategyAbi,
 		SmFilter: strategyUnpack,
+		smCtx:    context.Background(),
 	}, nil
 }
 
@@ -52,8 +53,7 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 		return err
 	}
 
-	deposits := make([]event.StrategyDeposit, 0, len(contractEventList))
-
+	var deposits []event.StrategyDeposit
 	for _, eventItem := range contractEventList {
 		rlpLog := eventItem.RLPLog
 
@@ -81,7 +81,7 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 				Number:     header.Number,
 				TxHash:     eventItem.TransactionHash,
 				Staker:     depositEvent.Staker,
-				MantaToken: depositEvent.Weth,
+				MantaToken: depositEvent.MantaToken,
 				Strategy:   depositEvent.Strategy,
 				Shares:     depositEvent.Shares,
 				IsHandle:   0,
@@ -94,8 +94,10 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 	retryStrategy := &retry.ExponentialStrategy{Min: 1000, Max: 20_000, MaxJitter: 250}
 	if _, err := retry.Do[interface{}](sm.smCtx, 10, retryStrategy, func() (interface{}, error) {
 		if err := sm.db.Transaction(func(tx *database.DB) error {
-			if err := tx.StrategyDeposit.StoreStrategyDeposit(deposits); err != nil {
-				return err
+			if len(deposits) > 0 {
+				if err := tx.StrategyDeposit.StoreStrategyDeposit(deposits); err != nil {
+					return err
+				}
 			}
 			return nil
 		}); err != nil {

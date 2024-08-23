@@ -76,7 +76,7 @@ func (sd strategyDepositDB) QueryStrategyDepositList(page int, pageSize int, ord
 }
 
 func (sd strategyDepositDB) StoreStrategyDeposit(strategyDepositList []StrategyDeposit) error {
-	result := sd.gorm.CreateInBatches(&strategyDepositList, len(strategyDepositList))
+	result := sd.gorm.Table("strategy_deposit").CreateInBatches(&strategyDepositList, len(strategyDepositList))
 	return result.Error
 }
 

@@ -40,7 +40,7 @@ func (db stakerUndelegatedDB) QueryStakerUndelegatedList(page int, pageSize int,
 }
 
 func (db stakerUndelegatedDB) StoreStakerUndelegated(stakerUndelegatedList []StakerUndelegated) error {
-	result := db.gorm.CreateInBatches(&stakerUndelegatedList, len(stakerUndelegatedList))
+	result := db.gorm.Table("staker_undelegated").CreateInBatches(&stakerUndelegatedList, len(stakerUndelegatedList))
 	return result.Error
 }
 

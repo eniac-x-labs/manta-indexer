@@ -75,7 +75,7 @@ func (or operatorRegisteredDB) QueryOperatorRegisteredList(page int, pageSize in
 }
 
 func (or operatorRegisteredDB) StoreOperatorRegistered(operatorRegisteredList []OperatorRegistered) error {
-	result := or.gorm.CreateInBatches(&operatorRegisteredList, len(operatorRegisteredList))
+	result := or.gorm.Table("operator_registered").CreateInBatches(&operatorRegisteredList, len(operatorRegisteredList))
 	return result.Error
 }
 

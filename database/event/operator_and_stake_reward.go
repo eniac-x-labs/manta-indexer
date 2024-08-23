@@ -85,7 +85,7 @@ func (oas operatorAndStakeRewardDB) QueryOperatorAndStakeRewardList(page int, pa
 }
 
 func (oas operatorAndStakeRewardDB) StoreOperatorAndStakeReward(operatorAndStakeRewardList []OperatorAndStakeReward) error {
-	result := oas.gorm.CreateInBatches(&operatorAndStakeRewardList, len(operatorAndStakeRewardList))
+	result := oas.gorm.Table("operator_and_stake_reward").CreateInBatches(&operatorAndStakeRewardList, len(operatorAndStakeRewardList))
 	return result.Error
 }
 

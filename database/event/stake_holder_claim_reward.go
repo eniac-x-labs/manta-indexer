@@ -74,7 +74,7 @@ func (shc stakeHolderClaimRewardDB) QueryStakeHolderClaimRewardList(page int, pa
 }
 
 func (shc stakeHolderClaimRewardDB) StoreStakeHolderClaimReward(stakeHolderClaimRewardList []StakeHolderClaimReward) error {
-	result := shc.gorm.CreateInBatches(&stakeHolderClaimRewardList, len(stakeHolderClaimRewardList))
+	result := shc.gorm.Table("stake_holder_claim_reward").CreateInBatches(&stakeHolderClaimRewardList, len(stakeHolderClaimRewardList))
 	return result.Error
 }
 

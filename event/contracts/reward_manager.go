@@ -41,6 +41,7 @@ func NewRewardManager(db *database.DB) (*RewardManager, error) {
 		db:       db,
 		RmAbi:    rewardManagerAbi,
 		RmFilter: rewardManagerUnpack,
+		rmCtx:    context.Background(),
 	}, nil
 }
 
@@ -52,10 +53,9 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 		return err
 	}
 
-	operatorAndStakeRewardList := make([]event.OperatorAndStakeReward, 0, len(contractEventList))
-	operatorClaimRewardList := make([]event.OperatorClaimReward, 0, len(contractEventList))
-	stakeHolderClaimRewardList := make([]event.StakeHolderClaimReward, 0, len(contractEventList))
-
+	var operatorAndStakeRewardList []event.OperatorAndStakeReward
+	var operatorClaimRewardList []event.OperatorClaimReward
+	var stakeHolderClaimRewardList []event.StakeHolderClaimReward
 	for _, eventItem := range contractEventList {
 		rlpLog := eventItem.RLPLog
 

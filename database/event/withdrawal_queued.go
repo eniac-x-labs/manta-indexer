@@ -46,7 +46,7 @@ func (db withdrawalQueuedDB) QueryWithdrawalQueuedList(page int, pageSize int, o
 }
 
 func (db withdrawalQueuedDB) StoreWithdrawalQueued(withdrawalQueuedList []WithdrawalQueued) error {
-	result := db.gorm.CreateInBatches(&withdrawalQueuedList, len(withdrawalQueuedList))
+	result := db.gorm.Table("withdrawal_queued").CreateInBatches(&withdrawalQueuedList, len(withdrawalQueuedList))
 	return result.Error
 }
 
