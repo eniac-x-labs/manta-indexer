@@ -46,7 +46,7 @@ type operatorSharesDecreasedDB struct {
 func (osd operatorSharesDecreasedDB) MarkedOperatorSharesDecreasedHandled(unHandleOperatorSharesDecreased []OperatorSharesDecreased) error {
 	for i := 0; i < len(unHandleOperatorSharesDecreased); i++ {
 		var operatorSharesDecreased = OperatorSharesDecreased{}
-		result := osd.gorm.Where(&OperatorRegistered{GUID: unHandleOperatorSharesDecreased[i].GUID}).Take(&operatorSharesDecreased)
+		result := osd.gorm.Table("operator_shares_decreased").Where(&OperatorRegistered{GUID: unHandleOperatorSharesDecreased[i].GUID}).Take(&operatorSharesDecreased)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				return nil
@@ -74,7 +74,7 @@ func (osd operatorSharesDecreasedDB) QueryUnHandlerOperatorSharesDecreased() ([]
 
 func (osd operatorSharesDecreasedDB) GetOperatorSharesDecreased(address string) (*OperatorSharesDecreased, error) {
 	var operatorSharesDecreased OperatorSharesDecreased
-	result := osd.gorm.Where(&OperatorSharesDecreased{Staker: common.HexToAddress(address)}).Take(&operatorSharesDecreased)
+	result := osd.gorm.Table("operator_shares_decreased").Where(&OperatorSharesDecreased{Staker: common.HexToAddress(address)}).Take(&operatorSharesDecreased)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil

@@ -46,7 +46,7 @@ type operatorSharesIncreasedDB struct {
 func (osi operatorSharesIncreasedDB) MarkedOperatorSharesIncreasedHandled(unHandleOperatorSharesIncreased []OperatorSharesIncreased) error {
 	for i := 0; i < len(unHandleOperatorSharesIncreased); i++ {
 		var operatorSharesIncreased = OperatorSharesIncreased{}
-		result := osi.gorm.Where(&OperatorRegistered{GUID: unHandleOperatorSharesIncreased[i].GUID}).Take(&operatorSharesIncreased)
+		result := osi.gorm.Table("operator_shares_increased").Where(&OperatorRegistered{GUID: unHandleOperatorSharesIncreased[i].GUID}).Take(&operatorSharesIncreased)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				return nil
@@ -64,7 +64,7 @@ func (osi operatorSharesIncreasedDB) MarkedOperatorSharesIncreasedHandled(unHand
 
 func (osi operatorSharesIncreasedDB) QueryUnHandleOperatorSharesIncreased() ([]OperatorSharesIncreased, error) {
 	var operatorSharesIncreasedList []OperatorSharesIncreased
-	err := osi.gorm.Table("operator_shares_decreased").Where("is_handle = ?", 0).Find(&operatorSharesIncreasedList).Error
+	err := osi.gorm.Table("operator_shares_increased").Where("is_handle = ?", 0).Find(&operatorSharesIncreasedList).Error
 	if err != nil {
 		log.Error("get operator share increased list fail", "err", err)
 		return nil, err
@@ -74,7 +74,7 @@ func (osi operatorSharesIncreasedDB) QueryUnHandleOperatorSharesIncreased() ([]O
 
 func (osi operatorSharesIncreasedDB) GetOperatorSharesIncreased(address string) (*OperatorSharesIncreased, error) {
 	var operatorSharesIncreased OperatorSharesIncreased
-	result := osi.gorm.Where(&OperatorSharesIncreased{Staker: common.HexToAddress(address)}).Take(&operatorSharesIncreased)
+	result := osi.gorm.Table("operator_shares_increased").Where(&OperatorSharesIncreased{Staker: common.HexToAddress(address)}).Take(&operatorSharesIncreased)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil

@@ -58,7 +58,7 @@ func (sd strategyDepositDB) QueryUnHandleStrategyDeposit() ([]StrategyDeposit, e
 func (sd strategyDepositDB) MarkedStrategyDepositHandled(strategyDeposits []StrategyDeposit) error {
 	for i := 0; i < len(strategyDeposits); i++ {
 		var strategyDeposit = StrategyDeposit{}
-		result := sd.gorm.Where(&StrategyDeposit{GUID: strategyDeposits[i].GUID}).Take(&strategyDeposit)
+		result := sd.gorm.Table("strategy_deposit").Where(&StrategyDeposit{GUID: strategyDeposits[i].GUID}).Take(&strategyDeposit)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				return nil
@@ -76,7 +76,7 @@ func (sd strategyDepositDB) MarkedStrategyDepositHandled(strategyDeposits []Stra
 
 func (sdv strategyDepositDB) GetStrategyDeposit(address string) (*StrategyDeposit, error) {
 	var strategyDeposit StrategyDeposit
-	result := sdv.gorm.Where(&StrategyDeposit{Staker: common.HexToAddress(address)}).Take(&strategyDeposit)
+	result := sdv.gorm.Table("strategy_deposit").Where(&StrategyDeposit{Staker: common.HexToAddress(address)}).Take(&strategyDeposit)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil

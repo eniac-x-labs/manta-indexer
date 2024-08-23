@@ -43,7 +43,7 @@ type WithdrawalQueuedDB interface {
 
 func (wq withdrawalQueuedDB) GetWithdrawalQueued(address string) (*WithdrawalQueued, error) {
 	var withdrawalQueued WithdrawalQueued
-	result := wq.gorm.Where(&WithdrawalQueued{Withdrawer: common.HexToAddress(address)}).Take(&withdrawalQueued)
+	result := wq.gorm.Table("withdrawal_queued").Where(&WithdrawalQueued{Withdrawer: common.HexToAddress(address)}).Take(&withdrawalQueued)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil

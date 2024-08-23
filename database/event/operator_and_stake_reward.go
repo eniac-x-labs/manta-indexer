@@ -62,7 +62,7 @@ func (oas operatorAndStakeRewardDB) QueryUnHandleOperatorAndStakeReward(isOperat
 func (oas operatorAndStakeRewardDB) MarkedOperatorAndStakeRewardHandled(rewards []OperatorAndStakeReward, isOperator bool) error {
 	for i := 0; i < len(rewards); i++ {
 		var operatorAndStakeReward = OperatorAndStakeReward{}
-		result := oas.gorm.Where(&OperatorAndStakeReward{GUID: rewards[i].GUID}).Take(&operatorAndStakeReward)
+		result := oas.gorm.Table("operator_and_stake_reward").Where(&OperatorAndStakeReward{GUID: rewards[i].GUID}).Take(&operatorAndStakeReward)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				return nil
@@ -84,7 +84,7 @@ func (oas operatorAndStakeRewardDB) MarkedOperatorAndStakeRewardHandled(rewards 
 
 func (osr operatorAndStakeRewardDB) GetOperatorAndStakeReward(address string) (*OperatorAndStakeReward, error) {
 	var operatorAndStakeReward OperatorAndStakeReward
-	result := osr.gorm.Where(&OperatorAndStakeReward{Operator: common.HexToAddress(address)}).Take(&operatorAndStakeReward)
+	result := osr.gorm.Table("operator_and_stake_reward").Where(&OperatorAndStakeReward{Operator: common.HexToAddress(address)}).Take(&operatorAndStakeReward)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil

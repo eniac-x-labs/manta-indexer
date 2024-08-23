@@ -41,7 +41,7 @@ type stakerDelegatedDB struct {
 
 func (sd stakerDelegatedDB) GetStakerDelegated(address string) (*StakerDelegated, error) {
 	var stakerDelegated StakerDelegated
-	result := sd.gorm.Where(&StakerDelegated{Staker: common.HexToAddress(address)}).Take(&stakerDelegated)
+	result := sd.gorm.Table("staker_delegated").Where(&StakerDelegated{Staker: common.HexToAddress(address)}).Take(&stakerDelegated)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil

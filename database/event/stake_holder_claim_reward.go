@@ -55,7 +55,7 @@ func (shc stakeHolderClaimRewardDB) QueryUnHandleStakeHolderClaimReward() ([]Sta
 func (shc stakeHolderClaimRewardDB) MarkedStakeHolderClaimRewardHandled(stakeHolderClaimRewards []StakeHolderClaimReward) error {
 	for i := 0; i < len(stakeHolderClaimRewards); i++ {
 		var stakeHolderClaimReward = StakeHolderClaimReward{}
-		result := shc.gorm.Where(&StakeHolderClaimReward{GUID: stakeHolderClaimRewards[i].GUID}).Take(&stakeHolderClaimReward)
+		result := shc.gorm.Table("stake_holder_claim_reward").Where(&StakeHolderClaimReward{GUID: stakeHolderClaimRewards[i].GUID}).Take(&stakeHolderClaimReward)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				return nil
@@ -73,7 +73,7 @@ func (shc stakeHolderClaimRewardDB) MarkedStakeHolderClaimRewardHandled(stakeHol
 
 func (shcr stakeHolderClaimRewardDB) GetStakeHolderClaimReward(address string) (*StakeHolderClaimReward, error) {
 	var stakeHolderClaimReward StakeHolderClaimReward
-	result := shcr.gorm.Where(&StakeHolderClaimReward{StakeHolder: common.HexToAddress(address)}).Take(&stakeHolderClaimReward)
+	result := shcr.gorm.Table("stake_holder_claim_reward").Where(&StakeHolderClaimReward{StakeHolder: common.HexToAddress(address)}).Take(&stakeHolderClaimReward)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil

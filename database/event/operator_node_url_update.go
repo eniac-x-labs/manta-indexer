@@ -42,7 +42,7 @@ type operatorNodeUrlUpdateDB struct {
 
 func (onuu operatorNodeUrlUpdateDB) GetOperatorNodeUrlUpdate(address string) (*OperatorNodeUrlUpdate, error) {
 	var operatorNodeUrlUpdate OperatorNodeUrlUpdate
-	result := onuu.gorm.Where(&OperatorNodeUrlUpdate{Operator: common.HexToAddress(address)}).Take(&operatorNodeUrlUpdate)
+	result := onuu.gorm.Table("operator_node_url_update").Where(&OperatorNodeUrlUpdate{Operator: common.HexToAddress(address)}).Take(&operatorNodeUrlUpdate)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil

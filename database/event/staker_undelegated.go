@@ -41,7 +41,7 @@ type stakerUndelegatedDB struct {
 
 func (su stakerUndelegatedDB) GetStakerUndelegated(address string) (*StakerUndelegated, error) {
 	var stakerUndelegated StakerUndelegated
-	result := su.gorm.Where(&StakerUndelegated{Staker: common.HexToAddress(address)}).Take(&stakerUndelegated)
+	result := su.gorm.Table("staker_undelegated").Where(&StakerUndelegated{Staker: common.HexToAddress(address)}).Take(&stakerUndelegated)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil

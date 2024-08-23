@@ -54,7 +54,7 @@ func (oc operatorClaimRewardDB) QueryUnHandleOperatorClaimReward() ([]OperatorCl
 func (oc operatorClaimRewardDB) MarkedOperatorClaimRewardHandled(rewards []OperatorClaimReward) error {
 	for i := 0; i < len(rewards); i++ {
 		var operatorClaimReward = OperatorClaimReward{}
-		result := oc.gorm.Where(&OperatorClaimReward{GUID: rewards[i].GUID}).Take(&operatorClaimReward)
+		result := oc.gorm.Table("operator_claim_reward").Where(&OperatorClaimReward{GUID: rewards[i].GUID}).Take(&operatorClaimReward)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				return nil
@@ -72,7 +72,7 @@ func (oc operatorClaimRewardDB) MarkedOperatorClaimRewardHandled(rewards []Opera
 
 func (ocr operatorClaimRewardDB) GetOperatorClaimReward(address string) (*OperatorClaimReward, error) {
 	var operatorClaimReward OperatorClaimReward
-	result := ocr.gorm.Where(&OperatorClaimReward{Operator: common.HexToAddress(address)}).Take(&operatorClaimReward)
+	result := ocr.gorm.Table("operator_claim_reward").Where(&OperatorClaimReward{Operator: common.HexToAddress(address)}).Take(&operatorClaimReward)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil
