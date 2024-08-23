@@ -1,8 +1,9 @@
 package routes
 
 import (
-	"github.com/ethereum/go-ethereum/log"
 	"net/http"
+
+	"github.com/ethereum/go-ethereum/log"
 )
 
 func (h Routes) GetStakeHolder(w http.ResponseWriter, r *http.Request) {

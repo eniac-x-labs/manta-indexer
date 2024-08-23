@@ -1,10 +1,11 @@
 package models
 
 import (
+	"math/big"
+
 	"github.com/eniac-x-labs/manta-indexer/database/event"
 	"github.com/eniac-x-labs/manta-indexer/database/worker"
 	"github.com/ethereum/go-ethereum/common"
-	"math/big"
 )
 
 type QueryAddressParams struct {

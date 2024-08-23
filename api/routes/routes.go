@@ -1,8 +1,9 @@
 package routes
 
 import (
-	"github.com/eniac-x-labs/manta-indexer/api/service"
 	"github.com/go-chi/chi/v5"
+
+	"github.com/eniac-x-labs/manta-indexer/api/service"
 )
 
 type Routes struct {

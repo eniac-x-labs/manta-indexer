@@ -1,9 +1,10 @@
 package service
 
 import (
+	"strings"
+
 	"github.com/eniac-x-labs/manta-indexer/api/models"
 	"github.com/eniac-x-labs/manta-indexer/database/worker"
-	"strings"
 )
 
 func (h HandlerSvc) GetStakeHolder(staker string) (*worker.StakeHolder, error) {

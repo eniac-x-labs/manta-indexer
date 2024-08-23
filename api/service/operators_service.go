@@ -1,9 +1,10 @@
 package service
 
 import (
+	"strings"
+
 	"github.com/eniac-x-labs/manta-indexer/api/models"
 	"github.com/eniac-x-labs/manta-indexer/database/worker"
-	"strings"
 )
 
 func (h HandlerSvc) GetOperator(operator string) (*worker.Operators, error) {

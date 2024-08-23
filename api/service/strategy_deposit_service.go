@@ -1,9 +1,10 @@
 package service
 
 import (
+	"strings"
+
 	"github.com/eniac-x-labs/manta-indexer/api/models"
 	"github.com/eniac-x-labs/manta-indexer/database/event"
-	"strings"
 )
 
 func (h HandlerSvc) GetStrategyDeposit(staker string) (*event.StrategyDeposit, error) {

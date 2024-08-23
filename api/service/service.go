@@ -1,11 +1,12 @@
 package service
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/eniac-x-labs/manta-indexer/api/models"
 	"github.com/eniac-x-labs/manta-indexer/database/event"
 	"github.com/eniac-x-labs/manta-indexer/database/worker"
-	"strconv"
-	"strings"
 )
 
 type Service interface {
