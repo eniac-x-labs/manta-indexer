@@ -40,7 +40,7 @@ func (db minWithdrawalDelayBlocksSetDB) QueryMinWithdrawalDelayBlocksSetList(pag
 }
 
 func (db minWithdrawalDelayBlocksSetDB) StoreMinWithdrawalDelayBlocksSet(minWithdrawalDelayBlocksSetList []MinWithdrawalDelayBlocksSet) error {
-	result := db.gorm.CreateInBatches(&minWithdrawalDelayBlocksSetList, len(minWithdrawalDelayBlocksSetList))
+	result := db.gorm.Table("min_withdrawal_delay_blocks_set").CreateInBatches(&minWithdrawalDelayBlocksSetList, len(minWithdrawalDelayBlocksSetList))
 	return result.Error
 }
 

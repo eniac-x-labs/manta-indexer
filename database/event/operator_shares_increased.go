@@ -75,7 +75,7 @@ func (osi operatorSharesIncreasedDB) QueryOperatorSharesIncreasedList(page int, 
 }
 
 func (osi operatorSharesIncreasedDB) StoreOperatorSharesIncreased(operatorSharesIncreasedList []OperatorSharesIncreased) error {
-	result := osi.gorm.CreateInBatches(&operatorSharesIncreasedList, len(operatorSharesIncreasedList))
+	result := osi.gorm.Table("operator_shares_increased").CreateInBatches(&operatorSharesIncreasedList, len(operatorSharesIncreasedList))
 	return result.Error
 }
 

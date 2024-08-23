@@ -75,7 +75,7 @@ func (osd operatorSharesDecreasedDB) QueryOperatorSharesDecreasedList(page int, 
 }
 
 func (osd operatorSharesDecreasedDB) StoreOperatorSharesDecreased(operatorSharesDecreasedList []OperatorSharesDecreased) error {
-	result := osd.gorm.CreateInBatches(&operatorSharesDecreasedList, len(operatorSharesDecreasedList))
+	result := osd.gorm.Table("operator_shares_decreased").CreateInBatches(&operatorSharesDecreasedList, len(operatorSharesDecreasedList))
 	return result.Error
 }
 

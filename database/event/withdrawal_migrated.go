@@ -40,7 +40,7 @@ func (db withdrawalMigratedDB) QueryWithdrawalMigratedList(page int, pageSize in
 }
 
 func (db withdrawalMigratedDB) StoreWithdrawalMigrated(withdrawalMigratedList []WithdrawalMigrated) error {
-	result := db.gorm.CreateInBatches(&withdrawalMigratedList, len(withdrawalMigratedList))
+	result := db.gorm.Table("withdrawal_migrated").CreateInBatches(&withdrawalMigratedList, len(withdrawalMigratedList))
 	return result.Error
 }
 

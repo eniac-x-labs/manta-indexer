@@ -40,7 +40,7 @@ func (db stakerDelegatedDB) QueryStakerDelegatedList(page int, pageSize int, ord
 }
 
 func (db stakerDelegatedDB) StoreStakerDelegated(stakerDelegatedList []StakerDelegated) error {
-	result := db.gorm.CreateInBatches(&stakerDelegatedList, len(stakerDelegatedList))
+	result := db.gorm.Table("staker_delegated").CreateInBatches(&stakerDelegatedList, len(stakerDelegatedList))
 	return result.Error
 }
 

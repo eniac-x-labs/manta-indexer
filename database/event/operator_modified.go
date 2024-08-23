@@ -42,7 +42,7 @@ func (db operatorModifiedDB) QueryOperatorModifiedList(page int, pageSize int, o
 }
 
 func (db operatorModifiedDB) StoreOperatorModified(operatorModifiedList []OperatorModified) error {
-	result := db.gorm.CreateInBatches(&operatorModifiedList, len(operatorModifiedList))
+	result := db.gorm.Table("operator_modified").CreateInBatches(&operatorModifiedList, len(operatorModifiedList))
 	return result.Error
 }
 
