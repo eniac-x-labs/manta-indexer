@@ -54,6 +54,8 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 	}
 
 	var deposits []event.StrategyDeposit
+	var strategiesAdd []event.Strategies
+	var strategiesRemove []event.Strategies
 	for _, eventItem := range contractEventList {
 		rlpLog := eventItem.RLPLog
 
@@ -89,6 +91,42 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 			}
 			deposits = append(deposits, deposit)
 		}
+
+		if eventItem.EventSignature.String() == sm.SmAbi.Events["StrategyAddedToDepositWhitelist"].ID.String() {
+			strategyAdded, err := sm.SmFilter.ParseStrategyAddedToDepositWhitelist(*rlpLog)
+			if err != nil {
+				log.Error("parse deposit event fail", "err", err)
+				return err
+			}
+			strategy := event.Strategies{
+				GUID:      uuid.New(),
+				BlockHash: eventItem.BlockHash,
+				Number:    header.Number,
+				TxHash:    eventItem.TransactionHash,
+				Strategy:  strategyAdded.Strategy,
+				IsHandle:  0,
+				Timestamp: eventItem.Timestamp,
+			}
+			strategiesAdd = append(strategiesAdd, strategy)
+		}
+
+		if eventItem.EventSignature.String() == sm.SmAbi.Events["StrategyRemovedFromDepositWhitelist"].ID.String() {
+			strategyRemoved, err := sm.SmFilter.ParseStrategyRemovedFromDepositWhitelist(*rlpLog)
+			if err != nil {
+				log.Error("parse deposit event fail", "err", err)
+				return err
+			}
+			strategy := event.Strategies{
+				GUID:      uuid.New(),
+				BlockHash: eventItem.BlockHash,
+				Number:    header.Number,
+				TxHash:    eventItem.TransactionHash,
+				Strategy:  strategyRemoved.Strategy,
+				IsHandle:  0,
+				Timestamp: eventItem.Timestamp,
+			}
+			strategiesRemove = append(strategiesRemove, strategy)
+		}
 	}
 
 	retryStrategy := &retry.ExponentialStrategy{Min: 1000, Max: 20_000, MaxJitter: 250}
@@ -96,6 +134,16 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 		if err := sm.db.Transaction(func(tx *database.DB) error {
 			if len(deposits) > 0 {
 				if err := tx.StrategyDeposit.StoreStrategyDeposit(deposits); err != nil {
+					return err
+				}
+			}
+			if len(strategiesAdd) > 0 {
+				if err := tx.Strategies.StoreStrategies(strategiesAdd); err != nil {
+					return err
+				}
+			}
+			if len(strategiesRemove) > 0 {
+				if err := tx.Strategies.RemoveStoreStrategies(strategiesRemove); err != nil {
 					return err
 				}
 			}

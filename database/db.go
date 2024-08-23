@@ -34,6 +34,7 @@ type DB struct {
 	StakeHolderClaimReward           event.StakeHolderClaimRewardDB
 	StakerDelegated                  event.StakerDelegatedDB
 	StakerUndelegated                event.StakerUndelegatedDB
+	Strategies                       event.StrategiesDB
 	StrategyDeposit                  event.StrategyDepositDB
 	StrategyWithdrawalDelayBlocksSet event.StrategyWithdrawalDelayBlocksSetDB
 	WithdrawalMigrated               event.WithdrawalMigratedDB
@@ -91,6 +92,7 @@ func NewDB(ctx context.Context, dbConfig config.DBConfig) (*DB, error) {
 		StakeHolderClaimReward:           event.NewStakeHolderClaimRewardDB(gorm),
 		StakerDelegated:                  event.NewStakerDelegatedDB(gorm),
 		StakerUndelegated:                event.NewStakerUndelegatedDB(gorm),
+		Strategies:                       event.NewStrategiesDB(gorm),
 		StrategyDeposit:                  event.NewStrategyDepositDB(gorm),
 		StrategyWithdrawalDelayBlocksSet: event.NewStrategyWithdrawalDelayBlocksSetDB(gorm),
 		WithdrawalMigrated:               event.NewWithdrawalMigratedDB(gorm),
@@ -122,6 +124,7 @@ func (db *DB) Transaction(fn func(db *DB) error) error {
 			StakeHolderClaimReward:           event.NewStakeHolderClaimRewardDB(tx),
 			StakerDelegated:                  event.NewStakerDelegatedDB(tx),
 			StakerUndelegated:                event.NewStakerUndelegatedDB(tx),
+			Strategies:                       event.NewStrategiesDB(tx),
 			StrategyDeposit:                  event.NewStrategyDepositDB(tx),
 			StrategyWithdrawalDelayBlocksSet: event.NewStrategyWithdrawalDelayBlocksSetDB(tx),
 			WithdrawalMigrated:               event.NewWithdrawalMigratedDB(tx),

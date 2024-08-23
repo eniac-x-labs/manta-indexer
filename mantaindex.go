@@ -2,6 +2,7 @@ package manta_indexer
 
 import (
 	"context"
+	"github.com/eniac-x-labs/manta-indexer/worker"
 	"math/big"
 	"sync/atomic"
 
@@ -15,8 +16,9 @@ import (
 )
 
 type MantaIndexer struct {
-	synchronizer   *synchronizer.Synchronizer
-	eventProcessor *event.EventProcessor
+	synchronizer    *synchronizer.Synchronizer
+	eventProcessor  *event.EventProcessor
+	workerProcessor *worker.Worker
 
 	shutdown context.CancelCauseFunc
 	stopped  atomic.Bool
@@ -53,10 +55,17 @@ func NewMantaIndexer(ctx context.Context, cfg *config.Config, shutdown context.C
 		return nil, err
 	}
 
+	workerProcessor, err := worker.NewWorker(db, shutdown)
+	if err != nil {
+		log.Error("new event processor fail", "err", err)
+		return nil, err
+	}
+
 	out := &MantaIndexer{
-		synchronizer:   syncer,
-		eventProcessor: eventProcessor,
-		shutdown:       shutdown,
+		synchronizer:    syncer,
+		eventProcessor:  eventProcessor,
+		workerProcessor: workerProcessor,
+		shutdown:        shutdown,
 	}
 	return out, nil
 }
@@ -70,6 +79,10 @@ func (ew *MantaIndexer) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	err = ew.workerProcessor.Start()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -79,6 +92,10 @@ func (ew *MantaIndexer) Stop(ctx context.Context) error {
 		return err
 	}
 	err = ew.eventProcessor.Close()
+	if err != nil {
+		return err
+	}
+	err = ew.workerProcessor.Close()
 	if err != nil {
 		return err
 	}

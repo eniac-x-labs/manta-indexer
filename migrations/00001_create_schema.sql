@@ -240,6 +240,17 @@ CREATE INDEX IF NOT EXISTS strategy_withdrawal_delay_blocks_set_timestamp ON str
 CREATE INDEX IF NOT EXISTS strategy_withdrawal_delay_blocks_set_number ON strategy_withdrawal_delay_blocks_set(number);
 CREATE INDEX IF NOT EXISTS strategy_withdrawal_delay_blocks_set_strategy ON strategy_withdrawal_delay_blocks_set(strategy);
 
+CREATE TABLE IF NOT EXISTS strategies (
+    guid                        VARCHAR PRIMARY KEY,
+    block_hash                  VARCHAR NOT NULL,
+    number                      UINT256 NOT NULL,
+    tx_hash                     VARCHAR NOT NULL UNIQUE,
+    strategy                    VARCHAR NOT NULL,
+    is_handle                   SMALLINT NOT NULL DEFAULT 0,
+    timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+);
+CREATE INDEX IF NOT EXISTS strategies_timestamp ON strategies(timestamp);
+CREATE INDEX IF NOT EXISTS strategies_strategy ON strategies(strategy);
 
 CREATE TABLE IF NOT EXISTS strategy_deposit (
     guid                        VARCHAR PRIMARY KEY,
