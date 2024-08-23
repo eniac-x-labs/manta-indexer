@@ -92,7 +92,7 @@ func (or operatorRegisteredDB) QueryOperatorRegisteredList(page int, pageSize in
 	var totalRecord int64
 	var operatorRegisteredList []OperatorRegistered
 	queryStateRoot := or.gorm.Table("operator_registered")
-	err := queryStateRoot.Select("number").Count(&totalRecord).Error
+	err := or.gorm.Table("operator_registered").Select("number").Count(&totalRecord).Error
 	if err != nil {
 		log.Error("get operator registered count fail", "err", err)
 	}

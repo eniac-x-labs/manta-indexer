@@ -107,16 +107,16 @@ func (ov operatorsDB) ListOperator(page int, pageSize int, order string) ([]Oper
 	var totalRecord int64
 	var operatorList []Operators
 	queryRoot := ov.gorm.Table("operators")
-	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	err := ov.gorm.Table("operators").Select("number").Count(&totalRecord).Error
 	if err != nil {
 		log.Error("list operatorsDB count fail", "err", err)
 	}
 
 	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
-		queryRoot.Order("guid asc")
+		queryRoot.Order("number asc")
 	} else {
-		queryRoot.Order("guid desc")
+		queryRoot.Order("number desc")
 	}
 	qErr := queryRoot.Find(&operatorList).Error
 	if qErr != nil {

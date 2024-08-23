@@ -91,16 +91,15 @@ func (shcr stakeHolderClaimRewardDB) ListStakeHolderClaimReward(page int, pageSi
 	var totalRecord int64
 	var stakeHolderClaimRewardList []StakeHolderClaimReward
 	queryRoot := shcr.gorm.Table("stake_holder_claim_reward")
-	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	err := shcr.gorm.Table("stake_holder_claim_reward").Select("number").Count(&totalRecord).Error
 	if err != nil {
 		log.Error("list stakeHolderClaimRewardDB count fail", "err", err)
 	}
-
 	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
-		queryRoot.Order("guid asc")
+		queryRoot.Order("number asc")
 	} else {
-		queryRoot.Order("guid desc")
+		queryRoot.Order("number desc")
 	}
 	qErr := queryRoot.Find(&stakeHolderClaimRewardList).Error
 	if qErr != nil {

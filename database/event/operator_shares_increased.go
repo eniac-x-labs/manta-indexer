@@ -92,16 +92,16 @@ func (osi operatorSharesIncreasedDB) ListOperatorSharesIncreased(page int, pageS
 	var totalRecord int64
 	var operatorSharesIncreasedList []OperatorSharesIncreased
 	queryRoot := osi.gorm.Table("operator_shares_increased")
-	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	err := osi.gorm.Table("operator_shares_increased").Select("number").Count(&totalRecord).Error
 	if err != nil {
 		log.Error("list operatorSharesIncreasedDB count fail", "err", err)
 	}
 
 	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
-		queryRoot.Order("guid asc")
+		queryRoot.Order("number asc")
 	} else {
-		queryRoot.Order("guid desc")
+		queryRoot.Order("number desc")
 	}
 	qErr := queryRoot.Find(&operatorSharesIncreasedList).Error
 	if qErr != nil {

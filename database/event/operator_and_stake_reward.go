@@ -102,16 +102,15 @@ func (osr operatorAndStakeRewardDB) ListOperatorAndStakeReward(page int, pageSiz
 	var totalRecord int64
 	var operatorAndStakeRewardList []OperatorAndStakeReward
 	queryRoot := osr.gorm.Table("operator_and_stake_reward")
-	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	err := osr.gorm.Table("operator_and_stake_reward").Select("number").Count(&totalRecord).Error
 	if err != nil {
 		log.Error("list operatorAndStakeRewardDB count fail", "err", err)
 	}
-
 	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
-		queryRoot.Order("guid asc")
+		queryRoot.Order("number asc")
 	} else {
-		queryRoot.Order("guid desc")
+		queryRoot.Order("number desc")
 	}
 	qErr := queryRoot.Find(&operatorAndStakeRewardList).Error
 	if qErr != nil {

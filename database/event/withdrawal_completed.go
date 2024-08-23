@@ -93,16 +93,16 @@ func (wc withdrawalCompletedDB) ListWithdrawalCompleted(page int, pageSize int, 
 	var totalRecord int64
 	var withdrawalCompletedList []WithdrawalCompleted
 	queryRoot := wc.gorm.Table("withdrawal_completed")
-	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	err := wc.gorm.Table("withdrawal_completed").Select("number").Count(&totalRecord).Error
 	if err != nil {
 		log.Error("list withdrawalCompletedDB count fail", "err", err)
 	}
 
 	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
-		queryRoot.Order("guid asc")
+		queryRoot.Order("number asc")
 	} else {
-		queryRoot.Order("guid desc")
+		queryRoot.Order("number desc")
 	}
 	qErr := queryRoot.Find(&withdrawalCompletedList).Error
 	if qErr != nil {

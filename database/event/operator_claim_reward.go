@@ -90,16 +90,15 @@ func (ocr operatorClaimRewardDB) ListOperatorClaimReward(page int, pageSize int,
 	var totalRecord int64
 	var operatorClaimRewardList []OperatorClaimReward
 	queryRoot := ocr.gorm.Table("operator_claim_reward")
-	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	err := ocr.gorm.Table("operator_claim_reward").Select("number").Count(&totalRecord).Error
 	if err != nil {
 		log.Error("list operatorClaimRewardDB count fail", "err", err)
 	}
-
 	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
-		queryRoot.Order("guid asc")
+		queryRoot.Order("number asc")
 	} else {
-		queryRoot.Order("guid desc")
+		queryRoot.Order("number desc")
 	}
 	qErr := queryRoot.Find(&operatorClaimRewardList).Error
 	if qErr != nil {

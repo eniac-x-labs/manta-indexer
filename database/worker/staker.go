@@ -94,16 +94,15 @@ func (shv stakeHolderDB) ListStakeHolder(page int, pageSize int, order string) (
 	var totalRecord int64
 	var stakeHolderList []StakeHolder
 	queryRoot := shv.gorm.Table("stake_holder")
-	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	err := shv.gorm.Table("staker_holder").Select("number").Count(&totalRecord).Error
 	if err != nil {
 		log.Error("list stakeHolderDB count fail", "err", err)
 	}
-
 	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
-		queryRoot.Order("guid asc")
+		queryRoot.Order("timestamp asc")
 	} else {
-		queryRoot.Order("guid desc")
+		queryRoot.Order("timestamp desc")
 	}
 	qErr := queryRoot.Find(&stakeHolderList).Error
 	if qErr != nil {

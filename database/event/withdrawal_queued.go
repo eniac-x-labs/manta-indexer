@@ -61,16 +61,16 @@ func (wq withdrawalQueuedDB) ListWithdrawalQueued(page int, pageSize int, order 
 	var totalRecord int64
 	var withdrawalQueuedList []WithdrawalQueued
 	queryRoot := wq.gorm.Table("withdrawal_queued")
-	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	err := wq.gorm.Table("withdrawal_queued").Select("number").Count(&totalRecord).Error
 	if err != nil {
 		log.Error("list withdrawalQueuedDB count fail", "err", err)
 	}
 
 	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
-		queryRoot.Order("guid asc")
+		queryRoot.Order("number asc")
 	} else {
-		queryRoot.Order("guid desc")
+		queryRoot.Order("number desc")
 	}
 	qErr := queryRoot.Find(&withdrawalQueuedList).Error
 	if qErr != nil {

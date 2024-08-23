@@ -94,7 +94,7 @@ func (sdv strategyDepositDB) ListStrategyDeposit(page int, pageSize int, order s
 	var totalRecord int64
 	var strategyDepositList []StrategyDeposit
 	queryRoot := sdv.gorm.Table("strategy_deposit")
-	err := queryRoot.Select("number").Count(&totalRecord).Error
+	err := sdv.gorm.Table("strategy_deposit").Select("number").Count(&totalRecord).Error
 	if err != nil {
 		log.Error("list strategyDepositDB count fail", "err", err)
 	}

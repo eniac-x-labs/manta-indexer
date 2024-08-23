@@ -92,16 +92,16 @@ func (osd operatorSharesDecreasedDB) ListOperatorSharesDecreased(page int, pageS
 	var totalRecord int64
 	var operatorSharesDecreasedList []OperatorSharesDecreased
 	queryRoot := osd.gorm.Table("operator_shares_decreased")
-	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	err := osd.gorm.Table("operator_shares_decreased").Select("number").Count(&totalRecord).Error
 	if err != nil {
 		log.Error("list operatorSharesDecreasedDB count fail", "err", err)
 	}
 
 	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
-		queryRoot.Order("guid asc")
+		queryRoot.Order("number asc")
 	} else {
-		queryRoot.Order("guid desc")
+		queryRoot.Order("number desc")
 	}
 	qErr := queryRoot.Find(&operatorSharesDecreasedList).Error
 	if qErr != nil {

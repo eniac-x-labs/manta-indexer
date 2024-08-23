@@ -52,7 +52,7 @@ func (db strategiesDB) QueryStrategiesList(page int, pageSize int, order string)
 	var totalRecord int64
 	var strategyList []Strategies
 	queryStateRoot := db.gorm.Table("operator_registered")
-	err := queryStateRoot.Select("number").Count(&totalRecord).Error
+	err := db.gorm.Table("operator_registered").Select("number").Count(&totalRecord).Error
 	if err != nil {
 		log.Error("get strategies fail", "err", err)
 	}

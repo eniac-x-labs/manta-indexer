@@ -59,16 +59,15 @@ func (sd stakerDelegatedDB) ListStakerDelegated(page int, pageSize int, order st
 	var totalRecord int64
 	var stakerDelegatedList []StakerDelegated
 	queryRoot := sd.gorm.Table("staker_delegated")
-	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	err := sd.gorm.Table("staker_delegated").Select("number").Count(&totalRecord).Error
 	if err != nil {
 		log.Error("list stakerDelegatedDB count fail", "err", err)
 	}
-
 	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
-		queryRoot.Order("guid asc")
+		queryRoot.Order("number asc")
 	} else {
-		queryRoot.Order("guid desc")
+		queryRoot.Order("number desc")
 	}
 	qErr := queryRoot.Find(&stakerDelegatedList).Error
 	if qErr != nil {

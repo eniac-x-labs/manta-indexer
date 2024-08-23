@@ -59,16 +59,16 @@ func (su stakerUndelegatedDB) ListStakerUndelegated(page int, pageSize int, orde
 	var totalRecord int64
 	var stakerUndelegatedList []StakerUndelegated
 	queryRoot := su.gorm.Table("staker_undelegated")
-	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	err := su.gorm.Table("staker_undelegated").Select("number").Count(&totalRecord).Error
 	if err != nil {
 		log.Error("list stakerUndelegatedDB count fail", "err", err)
 	}
 
 	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
-		queryRoot.Order("guid asc")
+		queryRoot.Order("number asc")
 	} else {
-		queryRoot.Order("guid desc")
+		queryRoot.Order("number desc")
 	}
 	qErr := queryRoot.Find(&stakerUndelegatedList).Error
 	if qErr != nil {
