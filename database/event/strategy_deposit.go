@@ -2,6 +2,7 @@ package event
 
 import (
 	"errors"
+	"strings"
 
 	"math/big"
 
@@ -33,7 +34,9 @@ func (StrategyDeposit) TableName() string {
 
 type StrategyDepositView interface {
 	QueryUnHandleStrategyDeposit() ([]StrategyDeposit, error)
-	QueryStrategyDepositList(page int, pageSize int, order string) ([]StrategyDeposit, uint64)
+
+	GetStrategyDeposit(string) (*StrategyDeposit, error)
+	ListStrategyDeposit(page int, pageSize int, order string) ([]StrategyDeposit, uint64)
 }
 
 type StrategyDepositDB interface {
@@ -59,7 +62,7 @@ func (sd strategyDepositDB) QueryUnHandleStrategyDeposit() ([]StrategyDeposit, e
 func (sd strategyDepositDB) MarkedStrategyDepositHandled(strategyDeposits []StrategyDeposit) error {
 	for i := 0; i < len(strategyDeposits); i++ {
 		var strategyDeposit = StrategyDeposit{}
-		result := sd.gorm.Where(&StrategyDeposit{GUID: strategyDeposits[i].GUID}).Take(&strategyDeposit)
+		result := sd.gorm.Table("strategy_deposit").Where(&StrategyDeposit{GUID: strategyDeposits[i].GUID}).Take(&strategyDeposit)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				return nil
@@ -75,8 +78,38 @@ func (sd strategyDepositDB) MarkedStrategyDepositHandled(strategyDeposits []Stra
 	return nil
 }
 
-func (sd strategyDepositDB) QueryStrategyDepositList(page int, pageSize int, order string) ([]StrategyDeposit, uint64) {
-	panic("implement me")
+func (sdv strategyDepositDB) GetStrategyDeposit(address string) (*StrategyDeposit, error) {
+	var strategyDeposit StrategyDeposit
+	result := sdv.gorm.Table("strategy_deposit").Where(&StrategyDeposit{Staker: common.HexToAddress(address)}).Take(&strategyDeposit)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &strategyDeposit, nil
+}
+
+func (sdv strategyDepositDB) ListStrategyDeposit(page int, pageSize int, order string) ([]StrategyDeposit, uint64) {
+	var totalRecord int64
+	var strategyDepositList []StrategyDeposit
+	queryRoot := sdv.gorm.Table("strategy_deposit")
+	err := queryRoot.Select("number").Count(&totalRecord).Error
+	if err != nil {
+		log.Error("list strategyDepositDB count fail", "err", err)
+	}
+
+	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
+	if strings.ToLower(order) == "asc" {
+		queryRoot.Order("number asc")
+	} else {
+		queryRoot.Order("number desc")
+	}
+	qErr := queryRoot.Find(&strategyDepositList).Error
+	if qErr != nil {
+		log.Error("list strategyDepositDB fail", "err", qErr)
+	}
+	return strategyDepositList, uint64(totalRecord)
 }
 
 func (sd strategyDepositDB) StoreStrategyDeposit(strategyDepositList []StrategyDeposit) error {

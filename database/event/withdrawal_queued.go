@@ -1,7 +1,10 @@
 package event
 
 import (
+	"errors"
+	"github.com/ethereum/go-ethereum/log"
 	"math/big"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -33,7 +36,8 @@ func (WithdrawalQueued) TableName() string {
 }
 
 type WithdrawalQueuedView interface {
-	QueryWithdrawalQueuedList(page int, pageSize int, order string) ([]WithdrawalQueued, uint64)
+	GetWithdrawalQueued(string) (*WithdrawalQueued, error)
+	ListWithdrawalQueued(page int, pageSize int, order string) ([]WithdrawalQueued, uint64)
 }
 
 type WithdrawalQueuedDB interface {
@@ -41,12 +45,42 @@ type WithdrawalQueuedDB interface {
 	StoreWithdrawalQueued([]WithdrawalQueued) error
 }
 
-type withdrawalQueuedDB struct {
-	gorm *gorm.DB
+func (wq withdrawalQueuedDB) GetWithdrawalQueued(address string) (*WithdrawalQueued, error) {
+	var withdrawalQueued WithdrawalQueued
+	result := wq.gorm.Table("withdrawal_queued").Where(&WithdrawalQueued{Withdrawer: common.HexToAddress(address)}).Take(&withdrawalQueued)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &withdrawalQueued, nil
 }
 
-func (db withdrawalQueuedDB) QueryWithdrawalQueuedList(page int, pageSize int, order string) ([]WithdrawalQueued, uint64) {
-	panic("implement me")
+func (wq withdrawalQueuedDB) ListWithdrawalQueued(page int, pageSize int, order string) ([]WithdrawalQueued, uint64) {
+	var totalRecord int64
+	var withdrawalQueuedList []WithdrawalQueued
+	queryRoot := wq.gorm.Table("withdrawal_queued")
+	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	if err != nil {
+		log.Error("list withdrawalQueuedDB count fail", "err", err)
+	}
+
+	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
+	if strings.ToLower(order) == "asc" {
+		queryRoot.Order("guid asc")
+	} else {
+		queryRoot.Order("guid desc")
+	}
+	qErr := queryRoot.Find(&withdrawalQueuedList).Error
+	if qErr != nil {
+		log.Error("list withdrawalQueuedDB fail", "err", qErr)
+	}
+	return withdrawalQueuedList, uint64(totalRecord)
+}
+
+type withdrawalQueuedDB struct {
+	gorm *gorm.DB
 }
 
 func (db withdrawalQueuedDB) StoreWithdrawalQueued(withdrawalQueuedList []WithdrawalQueued) error {

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/ethereum/go-ethereum/log"
 	"math/big"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -30,7 +31,8 @@ func (OperatorClaimReward) TableName() string {
 
 type OperatorClaimRewardView interface {
 	QueryUnHandleOperatorClaimReward() ([]OperatorClaimReward, error)
-	QueryOperatorClaimRewardList(page int, pageSize int, order string) ([]OperatorClaimReward, uint64)
+	GetOperatorClaimReward(string) (*OperatorClaimReward, error)
+	ListOperatorClaimReward(page int, pageSize int, order string) ([]OperatorClaimReward, uint64)
 }
 
 type OperatorClaimRewardDB interface {
@@ -56,7 +58,7 @@ func (oc operatorClaimRewardDB) QueryUnHandleOperatorClaimReward() ([]OperatorCl
 func (oc operatorClaimRewardDB) MarkedOperatorClaimRewardHandled(rewards []OperatorClaimReward) error {
 	for i := 0; i < len(rewards); i++ {
 		var operatorClaimReward = OperatorClaimReward{}
-		result := oc.gorm.Where(&OperatorClaimReward{GUID: rewards[i].GUID}).Take(&operatorClaimReward)
+		result := oc.gorm.Table("operator_claim_reward").Where(&OperatorClaimReward{GUID: rewards[i].GUID}).Take(&operatorClaimReward)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				return nil
@@ -72,8 +74,38 @@ func (oc operatorClaimRewardDB) MarkedOperatorClaimRewardHandled(rewards []Opera
 	return nil
 }
 
-func (oc operatorClaimRewardDB) QueryOperatorClaimRewardList(page int, pageSize int, order string) ([]OperatorClaimReward, uint64) {
-	panic("implement me")
+func (ocr operatorClaimRewardDB) GetOperatorClaimReward(address string) (*OperatorClaimReward, error) {
+	var operatorClaimReward OperatorClaimReward
+	result := ocr.gorm.Table("operator_claim_reward").Where(&OperatorClaimReward{Operator: common.HexToAddress(address)}).Take(&operatorClaimReward)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &operatorClaimReward, nil
+}
+
+func (ocr operatorClaimRewardDB) ListOperatorClaimReward(page int, pageSize int, order string) ([]OperatorClaimReward, uint64) {
+	var totalRecord int64
+	var operatorClaimRewardList []OperatorClaimReward
+	queryRoot := ocr.gorm.Table("operator_claim_reward")
+	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	if err != nil {
+		log.Error("list operatorClaimRewardDB count fail", "err", err)
+	}
+
+	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
+	if strings.ToLower(order) == "asc" {
+		queryRoot.Order("guid asc")
+	} else {
+		queryRoot.Order("guid desc")
+	}
+	qErr := queryRoot.Find(&operatorClaimRewardList).Error
+	if qErr != nil {
+		log.Error("list operatorClaimRewardDB fail", "err", qErr)
+	}
+	return operatorClaimRewardList, uint64(totalRecord)
 }
 
 func (oc operatorClaimRewardDB) StoreOperatorClaimReward(operatorClaimRewardList []OperatorClaimReward) error {

@@ -3,6 +3,7 @@ package event
 import (
 	"errors"
 	"math/big"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -32,7 +33,9 @@ func (WithdrawalCompleted) TableName() string {
 
 type WithdrawalCompletedView interface {
 	QueryUnHandleWithdrawalCompleted() ([]WithdrawalCompleted, error)
-	QueryWithdrawalCompletedList(page int, pageSize int, order string) ([]WithdrawalCompleted, uint64)
+
+	GetWithdrawalCompleted(string) (*WithdrawalCompleted, error)
+	ListWithdrawalCompleted(page int, pageSize int, order string) ([]WithdrawalCompleted, uint64)
 }
 
 type WithdrawalCompletedDB interface {
@@ -58,7 +61,7 @@ func (wc withdrawalCompletedDB) QueryUnHandleWithdrawalCompleted() ([]Withdrawal
 func (wc withdrawalCompletedDB) MarkedWithdrawalCompleted(withdrawalCompletedList []WithdrawalCompleted) error {
 	for i := 0; i < len(withdrawalCompletedList); i++ {
 		var withdrawalCompleted = WithdrawalCompleted{}
-		result := wc.gorm.Where(&WithdrawalCompleted{GUID: withdrawalCompletedList[i].GUID}).Take(&withdrawalCompleted)
+		result := wc.gorm.Table("withdrawal_completed").Where(&WithdrawalCompleted{GUID: withdrawalCompletedList[i].GUID}).Take(&withdrawalCompleted)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				return nil
@@ -74,8 +77,38 @@ func (wc withdrawalCompletedDB) MarkedWithdrawalCompleted(withdrawalCompletedLis
 	return nil
 }
 
-func (wc withdrawalCompletedDB) QueryWithdrawalCompletedList(page int, pageSize int, order string) ([]WithdrawalCompleted, uint64) {
-	panic("implement me")
+func (wc withdrawalCompletedDB) GetWithdrawalCompleted(address string) (*WithdrawalCompleted, error) {
+	var withdrawalCompleted WithdrawalCompleted
+	result := wc.gorm.Table("withdrawal_completed").Where(&WithdrawalCompleted{Staker: common.HexToAddress(address)}).Take(&withdrawalCompleted)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &withdrawalCompleted, nil
+}
+
+func (wc withdrawalCompletedDB) ListWithdrawalCompleted(page int, pageSize int, order string) ([]WithdrawalCompleted, uint64) {
+	var totalRecord int64
+	var withdrawalCompletedList []WithdrawalCompleted
+	queryRoot := wc.gorm.Table("withdrawal_completed")
+	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	if err != nil {
+		log.Error("list withdrawalCompletedDB count fail", "err", err)
+	}
+
+	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
+	if strings.ToLower(order) == "asc" {
+		queryRoot.Order("guid asc")
+	} else {
+		queryRoot.Order("guid desc")
+	}
+	qErr := queryRoot.Find(&withdrawalCompletedList).Error
+	if qErr != nil {
+		log.Error("list withdrawalCompletedDB fail", "err", qErr)
+	}
+	return withdrawalCompletedList, uint64(totalRecord)
 }
 
 func (wc withdrawalCompletedDB) StoreWithdrawalCompleted(withdrawalCompletedList []WithdrawalCompleted) error {

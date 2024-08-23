@@ -3,6 +3,7 @@ package event
 import (
 	"errors"
 	"math/big"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -32,7 +33,8 @@ func (OperatorSharesIncreased) TableName() string {
 
 type OperatorSharesIncreasedView interface {
 	QueryUnHandleOperatorSharesIncreased() ([]OperatorSharesIncreased, error)
-	QueryOperatorSharesIncreasedList(page int, pageSize int, order string) ([]OperatorSharesIncreased, uint64)
+	GetOperatorSharesIncreased(string) (*OperatorSharesIncreased, error)
+	ListOperatorSharesIncreased(page int, pageSize int, order string) ([]OperatorSharesIncreased, uint64)
 }
 
 type OperatorSharesIncreasedDB interface {
@@ -48,7 +50,7 @@ type operatorSharesIncreasedDB struct {
 func (osi operatorSharesIncreasedDB) MarkedOperatorSharesIncreasedHandled(unHandleOperatorSharesIncreased []OperatorSharesIncreased) error {
 	for i := 0; i < len(unHandleOperatorSharesIncreased); i++ {
 		var operatorSharesIncreased = OperatorSharesIncreased{}
-		result := osi.gorm.Where(&OperatorRegistered{GUID: unHandleOperatorSharesIncreased[i].GUID}).Take(&operatorSharesIncreased)
+		result := osi.gorm.Table("operator_shares_increased").Where(&OperatorRegistered{GUID: unHandleOperatorSharesIncreased[i].GUID}).Take(&operatorSharesIncreased)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				return nil
@@ -66,7 +68,7 @@ func (osi operatorSharesIncreasedDB) MarkedOperatorSharesIncreasedHandled(unHand
 
 func (osi operatorSharesIncreasedDB) QueryUnHandleOperatorSharesIncreased() ([]OperatorSharesIncreased, error) {
 	var operatorSharesIncreasedList []OperatorSharesIncreased
-	err := osi.gorm.Table("operator_shares_decreased").Where("is_handle = ?", 0).Find(&operatorSharesIncreasedList).Error
+	err := osi.gorm.Table("operator_shares_increased").Where("is_handle = ?", 0).Find(&operatorSharesIncreasedList).Error
 	if err != nil {
 		log.Error("get operator share increased list fail", "err", err)
 		return nil, err
@@ -74,8 +76,38 @@ func (osi operatorSharesIncreasedDB) QueryUnHandleOperatorSharesIncreased() ([]O
 	return operatorSharesIncreasedList, nil
 }
 
-func (osi operatorSharesIncreasedDB) QueryOperatorSharesIncreasedList(page int, pageSize int, order string) ([]OperatorSharesIncreased, uint64) {
-	panic("implement me")
+func (osi operatorSharesIncreasedDB) GetOperatorSharesIncreased(address string) (*OperatorSharesIncreased, error) {
+	var operatorSharesIncreased OperatorSharesIncreased
+	result := osi.gorm.Table("operator_shares_increased").Where(&OperatorSharesIncreased{Staker: common.HexToAddress(address)}).Take(&operatorSharesIncreased)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &operatorSharesIncreased, nil
+}
+
+func (osi operatorSharesIncreasedDB) ListOperatorSharesIncreased(page int, pageSize int, order string) ([]OperatorSharesIncreased, uint64) {
+	var totalRecord int64
+	var operatorSharesIncreasedList []OperatorSharesIncreased
+	queryRoot := osi.gorm.Table("operator_shares_increased")
+	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	if err != nil {
+		log.Error("list operatorSharesIncreasedDB count fail", "err", err)
+	}
+
+	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
+	if strings.ToLower(order) == "asc" {
+		queryRoot.Order("guid asc")
+	} else {
+		queryRoot.Order("guid desc")
+	}
+	qErr := queryRoot.Find(&operatorSharesIncreasedList).Error
+	if qErr != nil {
+		log.Error("list operatorSharesIncreasedDB fail", "err", qErr)
+	}
+	return operatorSharesIncreasedList, uint64(totalRecord)
 }
 
 func (osi operatorSharesIncreasedDB) StoreOperatorSharesIncreased(operatorSharesIncreasedList []OperatorSharesIncreased) error {

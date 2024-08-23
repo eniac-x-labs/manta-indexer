@@ -3,6 +3,7 @@ package event
 import (
 	"errors"
 	"math/big"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -29,18 +30,52 @@ func (OperatorNodeUrlUpdate) TableName() string {
 }
 
 type OperatorNodeUrlUpdateView interface {
-	QueryUnHandleOperatorNodeUrlUpdate() ([]OperatorNodeUrlUpdate, error)
-	QueryOperatorNodeUrlUpdateList(page int, pageSize int, order string) ([]OperatorNodeUrlUpdate, uint64)
+	GetOperatorNodeUrlUpdate(string) (*OperatorNodeUrlUpdate, error)
+	ListOperatorNodeUrlUpdate(page int, pageSize int, order string) ([]OperatorNodeUrlUpdate, uint64)
 }
 
 type OperatorNodeUrlUpdateDB interface {
 	OperatorNodeUrlUpdateView
 	MarkedOperatorNodeUrlUpdateHandled([]OperatorNodeUrlUpdate) error
-	StoreOperatorNodeUrlUpdate([]OperatorNodeUrlUpdate) error
+	StoreOperatorNodeUrlUpdate(operatorNodeUrlUpdateList []OperatorNodeUrlUpdate) error
 }
 
 type operatorNodeUrlUpdateDB struct {
 	gorm *gorm.DB
+}
+
+func (onuu operatorNodeUrlUpdateDB) GetOperatorNodeUrlUpdate(address string) (*OperatorNodeUrlUpdate, error) {
+	var operatorNodeUrlUpdate OperatorNodeUrlUpdate
+	result := onuu.gorm.Table("operator_node_url_update").Where(&OperatorNodeUrlUpdate{Operator: common.HexToAddress(address)}).Take(&operatorNodeUrlUpdate)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &operatorNodeUrlUpdate, nil
+}
+
+func (onuu operatorNodeUrlUpdateDB) ListOperatorNodeUrlUpdate(page int, pageSize int, order string) ([]OperatorNodeUrlUpdate, uint64) {
+	var totalRecord int64
+	var operatorNodeUrlUpdateList []OperatorNodeUrlUpdate
+	queryRoot := onuu.gorm.Table("operator_node_url_update")
+	err := queryRoot.Select("number").Count(&totalRecord).Error
+	if err != nil {
+		log.Error("list operatorNodeUrlUpdateDB count fail", "err", err)
+	}
+
+	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
+	if strings.ToLower(order) == "asc" {
+		queryRoot.Order("number asc")
+	} else {
+		queryRoot.Order("number desc")
+	}
+	qErr := queryRoot.Find(&operatorNodeUrlUpdateList).Error
+	if qErr != nil {
+		log.Error("list operatorNodeUrlUpdateDB fail", "err", qErr)
+	}
+	return operatorNodeUrlUpdateList, uint64(totalRecord)
 }
 
 func (onuu operatorNodeUrlUpdateDB) MarkedOperatorNodeUrlUpdateHandled(urlUpdates []OperatorNodeUrlUpdate) error {
@@ -70,10 +105,6 @@ func (onuu operatorNodeUrlUpdateDB) QueryUnHandleOperatorNodeUrlUpdate() ([]Oper
 		return nil, err
 	}
 	return operatorNodeUrlUpdateList, nil
-}
-
-func (onuu operatorNodeUrlUpdateDB) QueryOperatorNodeUrlUpdateList(page int, pageSize int, order string) ([]OperatorNodeUrlUpdate, uint64) {
-	panic("implement me")
 }
 
 func (onuu operatorNodeUrlUpdateDB) StoreOperatorNodeUrlUpdate(operatorNodeUrlUpdateList []OperatorNodeUrlUpdate) error {

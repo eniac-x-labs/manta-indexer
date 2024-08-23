@@ -1,7 +1,10 @@
 package event
 
 import (
+	"errors"
+	"github.com/ethereum/go-ethereum/log"
 	"math/big"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -27,7 +30,8 @@ func (StakerUndelegated) TableName() string {
 }
 
 type StakerUndelegatedView interface {
-	QueryStakerUndelegatedList(page int, pageSize int, order string) ([]StakerUndelegated, uint64)
+	GetStakerUndelegated(string) (*StakerUndelegated, error)
+	ListStakerUndelegated(page int, pageSize int, order string) ([]StakerUndelegated, uint64)
 }
 
 type StakerUndelegatedDB interface {
@@ -39,8 +43,38 @@ type stakerUndelegatedDB struct {
 	gorm *gorm.DB
 }
 
-func (db stakerUndelegatedDB) QueryStakerUndelegatedList(page int, pageSize int, order string) ([]StakerUndelegated, uint64) {
-	panic("implement me")
+func (su stakerUndelegatedDB) GetStakerUndelegated(address string) (*StakerUndelegated, error) {
+	var stakerUndelegated StakerUndelegated
+	result := su.gorm.Table("staker_undelegated").Where(&StakerUndelegated{Staker: common.HexToAddress(address)}).Take(&stakerUndelegated)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &stakerUndelegated, nil
+}
+
+func (su stakerUndelegatedDB) ListStakerUndelegated(page int, pageSize int, order string) ([]StakerUndelegated, uint64) {
+	var totalRecord int64
+	var stakerUndelegatedList []StakerUndelegated
+	queryRoot := su.gorm.Table("staker_undelegated")
+	err := queryRoot.Select("guid").Count(&totalRecord).Error
+	if err != nil {
+		log.Error("list stakerUndelegatedDB count fail", "err", err)
+	}
+
+	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
+	if strings.ToLower(order) == "asc" {
+		queryRoot.Order("guid asc")
+	} else {
+		queryRoot.Order("guid desc")
+	}
+	qErr := queryRoot.Find(&stakerUndelegatedList).Error
+	if qErr != nil {
+		log.Error("list stakerUndelegatedDB fail", "err", qErr)
+	}
+	return stakerUndelegatedList, uint64(totalRecord)
 }
 
 func (db stakerUndelegatedDB) StoreStakerUndelegated(stakerUndelegatedList []StakerUndelegated) error {
