@@ -18,6 +18,10 @@ type OperatorPublicKeys struct {
 	Timestamp  uint64
 }
 
+func (OperatorPublicKeys) TableName() string {
+	return "operator_public_keys"
+}
+
 type OperatorPublicKeysView interface {
 }
 

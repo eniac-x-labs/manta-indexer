@@ -24,6 +24,10 @@ type OperatorNodeUrlUpdate struct {
 	Timestamp   uint64         `json:"timestamp"`
 }
 
+func (OperatorNodeUrlUpdate) TableName() string {
+	return "operator_node_url_update"
+}
+
 type OperatorNodeUrlUpdateView interface {
 	QueryUnHandleOperatorNodeUrlUpdate() ([]OperatorNodeUrlUpdate, error)
 	QueryOperatorNodeUrlUpdateList(page int, pageSize int, order string) ([]OperatorNodeUrlUpdate, uint64)

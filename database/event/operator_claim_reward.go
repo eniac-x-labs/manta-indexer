@@ -24,6 +24,10 @@ type OperatorClaimReward struct {
 	Timestamp uint64         `json:"timestamp"`
 }
 
+func (OperatorClaimReward) TableName() string {
+	return "operator_claim_reward"
+}
+
 type OperatorClaimRewardView interface {
 	QueryUnHandleOperatorClaimReward() ([]OperatorClaimReward, error)
 	QueryOperatorClaimRewardList(page int, pageSize int, order string) ([]OperatorClaimReward, uint64)

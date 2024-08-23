@@ -28,6 +28,10 @@ type WithdrawalQueued struct {
 	Timestamp      uint64         `json:"timestamp"`
 }
 
+func (WithdrawalQueued) TableName() string {
+	return "withdrawal_queued"
+}
+
 type WithdrawalQueuedView interface {
 	QueryWithdrawalQueuedList(page int, pageSize int, order string) ([]WithdrawalQueued, uint64)
 }

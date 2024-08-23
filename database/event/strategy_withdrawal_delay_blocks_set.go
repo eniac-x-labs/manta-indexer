@@ -23,6 +23,10 @@ type StrategyWithdrawalDelayBlocksSet struct {
 	Timestamp     uint64         `json:"timestamp"`
 }
 
+func (StrategyWithdrawalDelayBlocksSet) TableName() string {
+	return "strategy_withdrawal_delay_blocks_set"
+}
+
 type StrategyWithdrawalDelayBlocksSetView interface {
 	QueryStrategyWithdrawalDelayBlocksSetList(page int, pageSize int, order string) ([]StrategyWithdrawalDelayBlocksSet, uint64)
 }

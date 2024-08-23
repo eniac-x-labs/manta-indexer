@@ -27,6 +27,10 @@ type OperatorRegistered struct {
 	Timestamp                uint64         `json:"timestamp"`
 }
 
+func (OperatorRegistered) TableName() string {
+	return "operator_registered"
+}
+
 type OperatorRegisteredView interface {
 	QueryUnHandleOperatorRegistered() ([]OperatorRegistered, error)
 	QueryOperatorRegistered(string) (*OperatorRegistered, error)
@@ -45,7 +49,7 @@ type operatorRegisteredDB struct {
 
 func (or operatorRegisteredDB) QueryOperatorRegistered(operator string) (*OperatorRegistered, error) {
 	var operatorRegistered OperatorRegistered
-	result := or.gorm.Where(&OperatorRegistered{Operator: common.HexToAddress(operator)}).Take(&operatorRegistered)
+	result := or.gorm.Table("operator_registered").Where(&OperatorRegistered{Operator: common.HexToAddress(operator)}).Take(&operatorRegistered)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -58,7 +62,7 @@ func (or operatorRegisteredDB) QueryOperatorRegistered(operator string) (*Operat
 func (or operatorRegisteredDB) MarkedOperatorRegisteredHandled(unHandledOperatorRegistered []OperatorRegistered) error {
 	for i := 0; i < len(unHandledOperatorRegistered); i++ {
 		var operatorRegistereds = OperatorRegistered{}
-		result := or.gorm.Where(&OperatorRegistered{GUID: unHandledOperatorRegistered[i].GUID}).Take(&operatorRegistereds)
+		result := or.gorm.Table("operator_registered").Where(&OperatorRegistered{GUID: unHandledOperatorRegistered[i].GUID}).Take(&operatorRegistereds)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				return nil
@@ -66,7 +70,7 @@ func (or operatorRegisteredDB) MarkedOperatorRegisteredHandled(unHandledOperator
 			return result.Error
 		}
 		operatorRegistereds.IsHandle = 1
-		err := or.gorm.Save(operatorRegistereds).Error
+		err := or.gorm.Table("operator_registered").Save(operatorRegistereds).Error
 		if err != nil {
 			return err
 		}

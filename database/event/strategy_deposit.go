@@ -27,6 +27,10 @@ type StrategyDeposit struct {
 	Timestamp  uint64         `json:"timestamp"`
 }
 
+func (StrategyDeposit) TableName() string {
+	return "strategy_deposit"
+}
+
 type StrategyDepositView interface {
 	QueryUnHandleStrategyDeposit() ([]StrategyDeposit, error)
 	QueryStrategyDepositList(page int, pageSize int, order string) ([]StrategyDeposit, uint64)

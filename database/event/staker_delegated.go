@@ -22,6 +22,10 @@ type StakerDelegated struct {
 	Timestamp uint64         `json:"timestamp"`
 }
 
+func (StakerDelegated) TableName() string {
+	return "staker_delegated"
+}
+
 type StakerDelegatedView interface {
 	QueryStakerDelegatedList(page int, pageSize int, order string) ([]StakerDelegated, uint64)
 }

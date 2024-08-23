@@ -24,6 +24,10 @@ type OperatorModified struct {
 	Timestamp                uint64         `json:"timestamp"`
 }
 
+func (OperatorModified) TableName() string {
+	return "operator_modified"
+}
+
 type OperatorModifiedView interface {
 	QueryOperatorModifiedList(page int, pageSize int, order string) ([]OperatorModified, uint64)
 }

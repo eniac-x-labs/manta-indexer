@@ -26,6 +26,10 @@ type OperatorSharesIncreased struct {
 	Timestamp uint64         `json:"timestamp"`
 }
 
+func (OperatorSharesIncreased) TableName() string {
+	return "operator_shares_decreased"
+}
+
 type OperatorSharesIncreasedView interface {
 	QueryUnHandleOperatorSharesIncreased() ([]OperatorSharesIncreased, error)
 	QueryOperatorSharesIncreasedList(page int, pageSize int, order string) ([]OperatorSharesIncreased, uint64)

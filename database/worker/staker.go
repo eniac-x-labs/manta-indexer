@@ -21,6 +21,10 @@ type StakeHolder struct {
 	Timestamp       uint64
 }
 
+func (StakeHolder) TableName() string {
+	return "staker_holder"
+}
+
 type StakeHolderView interface {
 }
 

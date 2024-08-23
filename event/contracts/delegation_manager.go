@@ -273,6 +273,13 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 				return err
 			}
 
+			log.Info("parse withdrawal completed success",
+				"Operator", common2.BytesToHash(withdrawalCompleted.Operator[:]).String(),
+				"Staker", common2.BytesToHash(withdrawalCompleted.Staker[:]).String(),
+				"Strategy", common2.BytesToHash(withdrawalCompleted.Strategy[:]).String(),
+				"Shares", withdrawalCompleted.Shares.String(),
+			)
+
 			temp := event.WithdrawalCompleted{
 				GUID:      uuid.New(),
 				BlockHash: eventItem.BlockHash,
@@ -423,6 +430,18 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 					return err
 				}
 			}
+			// Log success messages
+			log.Info("store delegation events success",
+				"operatorNodeUrlUpdates", len(operatorNodeUrlUpdates),
+				"operatorRegisters", len(operatorRegisters),
+				"stakerDelegates", len(stakerDelegates),
+				"operatorSharesIncreases", len(operatorSharesIncreases),
+				"operatorDetailsModifies", len(operatorDetailsModifies),
+				"operatorSharesDecreases", len(operatorSharesDecreases),
+				"withdrawalQueues", len(withdrawalQueues),
+				"withdrawalMigrates", len(withdrawalMigrates),
+				"minWithdrawalDelayBlocksSets", len(minWithdrawalDelayBlocksSets),
+				"strategyWithdrawalDelayBlocksSets", len(strategyWithdrawalDelayBlocksSets))
 			return nil
 		}); err != nil {
 			log.Info("unable to persist batch", "err", err)
@@ -432,19 +451,6 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 	}); err != nil {
 		return err
 	}
-
-	// Log success messages
-	log.Info("store delegation events success",
-		"operatorNodeUrlUpdates", len(operatorNodeUrlUpdates),
-		"operatorRegisters", len(operatorRegisters),
-		"stakerDelegates", len(stakerDelegates),
-		"operatorSharesIncreases", len(operatorSharesIncreases),
-		"operatorDetailsModifies", len(operatorDetailsModifies),
-		"operatorSharesDecreases", len(operatorSharesDecreases),
-		"withdrawalQueues", len(withdrawalQueues),
-		"withdrawalMigrates", len(withdrawalMigrates),
-		"minWithdrawalDelayBlocksSets", len(minWithdrawalDelayBlocksSets),
-		"strategyWithdrawalDelayBlocksSets", len(strategyWithdrawalDelayBlocksSets))
 
 	return nil
 }

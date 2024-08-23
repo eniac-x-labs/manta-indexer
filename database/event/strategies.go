@@ -23,6 +23,10 @@ type Strategies struct {
 	Timestamp uint64         `json:"timestamp"`
 }
 
+func (Strategies) TableName() string {
+	return "strategies"
+}
+
 type StrategiesView interface {
 	QueryStrategiesList(page int, pageSize int, order string) ([]Strategies, uint64)
 }

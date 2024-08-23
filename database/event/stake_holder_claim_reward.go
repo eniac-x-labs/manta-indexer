@@ -25,6 +25,10 @@ type StakeHolderClaimReward struct {
 	Timestamp   uint64         `json:"timestamp"`
 }
 
+func (StakeHolderClaimReward) TableName() string {
+	return "stake_holder_claim_reward"
+}
+
 type StakeHolderClaimRewardView interface {
 	QueryUnHandleStakeHolderClaimReward() ([]StakeHolderClaimReward, error)
 	QueryStakeHolderClaimRewardList(page int, pageSize int, order string) ([]StakeHolderClaimReward, uint64)
