@@ -22,6 +22,10 @@ type MinWithdrawalDelayBlocksSet struct {
 	Timestamp     uint64      `json:"timestamp"`
 }
 
+func (MinWithdrawalDelayBlocksSet) TableName() string {
+	return "min_withdrawal_delay_blocks_set"
+}
+
 type MinWithdrawalDelayBlocksSetView interface {
 	QueryMinWithdrawalDelayBlocksSetList(page int, pageSize int, order string) ([]MinWithdrawalDelayBlocksSet, uint64)
 }

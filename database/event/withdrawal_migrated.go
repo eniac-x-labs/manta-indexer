@@ -22,6 +22,10 @@ type WithdrawalMigrated struct {
 	Timestamp         uint64      `json:"timestamp"`
 }
 
+func (WithdrawalMigrated) TableName() string {
+	return "withdrawal_migrated"
+}
+
 type WithdrawalMigratedView interface {
 	QueryWithdrawalMigratedList(page int, pageSize int, order string) ([]WithdrawalMigrated, uint64)
 }

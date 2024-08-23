@@ -123,7 +123,7 @@ func (syncer *Synchronizer) processBatch(headers []types.Header, chainCfg *confi
 		header := headers[i]
 		headerMap[header.Hash()] = &header
 	}
-	log.Info("chainCfg Contracts", "contract address", chainCfg.Contracts[0])
+	log.Info("chainCfg Contracts", "contract address", chainCfg.Contracts)
 	filterQuery := ethereum.FilterQuery{FromBlock: firstHeader.Number, ToBlock: lastHeader.Number, Addresses: chainCfg.Contracts}
 	logs, err := syncer.ethClient.FilterLogs(filterQuery)
 	if err != nil {

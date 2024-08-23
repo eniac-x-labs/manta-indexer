@@ -18,6 +18,10 @@ type TotalOperator struct {
 	Timestamp       uint64
 }
 
+func (TotalOperator) TableName() string {
+	return "total_operator"
+}
+
 type TotalOperatorView interface {
 }
 

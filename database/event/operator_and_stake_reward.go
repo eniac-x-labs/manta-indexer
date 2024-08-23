@@ -27,6 +27,10 @@ type OperatorAndStakeReward struct {
 	Timestamp        uint64         `json:"timestamp"`
 }
 
+func (OperatorAndStakeReward) TableName() string {
+	return "operator_and_stake_reward"
+}
+
 type OperatorAndStakeRewardView interface {
 	QueryUnHandleOperatorAndStakeReward(isOperator bool) ([]OperatorAndStakeReward, error)
 	QueryOperatorAndStakeRewardList(page int, pageSize int, order string) ([]OperatorAndStakeReward, uint64)

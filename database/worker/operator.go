@@ -28,6 +28,10 @@ type Operators struct {
 	Timestamp                uint64
 }
 
+func (Operators) TableName() string {
+	return "operators"
+}
+
 type OperatorsView interface {
 	QueryAndUpdateOperator(operator common.Address, opType OperatorsType) error
 }

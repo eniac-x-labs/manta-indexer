@@ -154,6 +154,12 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 			if err := tx.StakeHolderClaimReward.StoreStakeHolderClaimReward(stakeHolderClaimRewardList); err != nil {
 				return err
 			}
+			// Log success messages
+			log.Info("store reward manager events success",
+				"operatorAndStakeRewardList", len(operatorAndStakeRewardList),
+				"operatorClaimRewardList", len(operatorClaimRewardList),
+				"stakeHolderClaimRewardList", len(stakeHolderClaimRewardList),
+			)
 			return nil
 		}); err != nil {
 			log.Info("unable to persist batch", err)

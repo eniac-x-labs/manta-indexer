@@ -22,6 +22,10 @@ type StakerUndelegated struct {
 	Timestamp uint64         `json:"timestamp"`
 }
 
+func (StakerUndelegated) TableName() string {
+	return "staker_undelegated"
+}
+
 type StakerUndelegatedView interface {
 	QueryStakerUndelegatedList(page int, pageSize int, order string) ([]StakerUndelegated, uint64)
 }

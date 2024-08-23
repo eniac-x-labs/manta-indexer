@@ -26,6 +26,10 @@ type WithdrawalCompleted struct {
 	Timestamp uint64         `json:"timestamp"`
 }
 
+func (WithdrawalCompleted) TableName() string {
+	return "withdrawal_completed"
+}
+
 type WithdrawalCompletedView interface {
 	QueryUnHandleWithdrawalCompleted() ([]WithdrawalCompleted, error)
 	QueryWithdrawalCompletedList(page int, pageSize int, order string) ([]WithdrawalCompleted, uint64)

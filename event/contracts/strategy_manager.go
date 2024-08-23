@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/google/uuid"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	common2 "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/google/uuid"
 
 	"github.com/eniac-x-labs/manta-indexer/bindings/sm"
 	"github.com/eniac-x-labs/manta-indexer/config"
@@ -98,6 +99,7 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 				log.Error("parse deposit event fail", "err", err)
 				return err
 			}
+			log.Info("parse strategy added to Deposit whitelist success", "Strategy", strategyAdded.Strategy.String())
 			strategy := event.Strategies{
 				GUID:      uuid.New(),
 				BlockHash: eventItem.BlockHash,
@@ -113,9 +115,10 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 		if eventItem.EventSignature.String() == sm.SmAbi.Events["StrategyRemovedFromDepositWhitelist"].ID.String() {
 			strategyRemoved, err := sm.SmFilter.ParseStrategyRemovedFromDepositWhitelist(*rlpLog)
 			if err != nil {
-				log.Error("parse deposit event fail", "err", err)
+				log.Error("parse strategy removed from deposit whitelist fail", "err", err)
 				return err
 			}
+			log.Info("parse strategy removed from deposit whitelist success", "Strategy", strategyRemoved.Strategy.String())
 			strategy := event.Strategies{
 				GUID:      uuid.New(),
 				BlockHash: eventItem.BlockHash,
@@ -147,6 +150,12 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 					return err
 				}
 			}
+			// Log success messages
+			log.Info("store strategy manager events success",
+				"deposits", len(deposits),
+				"strategiesAdd", len(strategiesAdd),
+				"strategiesRemove", len(strategiesRemove),
+			)
 			return nil
 		}); err != nil {
 			log.Info("unable to persist batch", err)
