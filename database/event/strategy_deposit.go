@@ -1,12 +1,15 @@
 package event
 
 import (
+	"errors"
+
 	"math/big"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 
 	_ "github.com/eniac-x-labs/manta-indexer/database/utils/serializers"
 )
@@ -25,11 +28,13 @@ type StrategyDeposit struct {
 }
 
 type StrategyDepositView interface {
+	QueryUnHandleStrategyDeposit() ([]StrategyDeposit, error)
 	QueryStrategyDepositList(page int, pageSize int, order string) ([]StrategyDeposit, uint64)
 }
 
 type StrategyDepositDB interface {
 	StrategyDepositView
+	MarkedStrategyDepositHandled([]StrategyDeposit) error
 	StoreStrategyDeposit([]StrategyDeposit) error
 }
 
@@ -37,12 +42,41 @@ type strategyDepositDB struct {
 	gorm *gorm.DB
 }
 
-func (db strategyDepositDB) QueryStrategyDepositList(page int, pageSize int, order string) ([]StrategyDeposit, uint64) {
+func (sd strategyDepositDB) QueryUnHandleStrategyDeposit() ([]StrategyDeposit, error) {
+	var strategyDepositList []StrategyDeposit
+	err := sd.gorm.Table("strategy_deposit").Where("is_handle = ?", 0).Find(&strategyDepositList).Error
+	if err != nil {
+		log.Error("get strategy deposit fail", "err", err)
+		return nil, err
+	}
+	return strategyDepositList, nil
+}
+
+func (sd strategyDepositDB) MarkedStrategyDepositHandled(strategyDeposits []StrategyDeposit) error {
+	for i := 0; i < len(strategyDeposits); i++ {
+		var strategyDeposit = StrategyDeposit{}
+		result := sd.gorm.Where(&StrategyDeposit{GUID: strategyDeposits[i].GUID}).Take(&strategyDeposit)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				return nil
+			}
+			return result.Error
+		}
+		strategyDeposit.IsHandle = 1
+		err := sd.gorm.Save(strategyDeposit).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (sd strategyDepositDB) QueryStrategyDepositList(page int, pageSize int, order string) ([]StrategyDeposit, uint64) {
 	panic("implement me")
 }
 
-func (db strategyDepositDB) StoreStrategyDeposit(strategyDepositList []StrategyDeposit) error {
-	result := db.gorm.CreateInBatches(&strategyDepositList, len(strategyDepositList))
+func (sd strategyDepositDB) StoreStrategyDeposit(strategyDepositList []StrategyDeposit) error {
+	result := sd.gorm.CreateInBatches(&strategyDepositList, len(strategyDepositList))
 	return result.Error
 }
 

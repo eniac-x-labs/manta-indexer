@@ -64,13 +64,14 @@ func (op *operatorsDB) QueryAndUpdateOperator(operator common.Address, opType Op
 		operatorEntity.StakerOptoutWindowBlocks = opType.StakerOptoutWindowBlocks
 	}
 	if opType.TotalMantaStake != nil {
-		operatorEntity.TotalMantaStake = new(big.Int).Add(operatorEntity.TotalMantaStake, opType.TotalMantaStake)
+		totalStake := new(big.Int).Add(operatorEntity.TotalMantaStake, opType.TotalMantaStake)
+		operatorEntity.TotalMantaStake = totalStake
+		operatorEntity.RateReturn = new(big.Int).Div(operatorEntity.TotalStakeReward, totalStake).String()
 	}
 	if opType.TotalStakeReward != nil {
-		operatorEntity.TotalStakeReward = new(big.Int).Add(operatorEntity.TotalStakeReward, opType.TotalStakeReward)
-	}
-	if operatorEntity.RateReturn != "" {
-		operatorEntity.RateReturn = opType.RateReturn
+		totalStakeReward := new(big.Int).Add(operatorEntity.TotalStakeReward, opType.TotalStakeReward)
+		operatorEntity.TotalStakeReward = totalStakeReward
+		operatorEntity.RateReturn = new(big.Int).Div(totalStakeReward, operatorEntity.TotalMantaStake).String()
 	}
 	if operatorEntity.Status != 0 {
 		operatorEntity.Status = opType.Status
