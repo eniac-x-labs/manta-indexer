@@ -9,14 +9,14 @@ const Polygon = "Polygon"
 const RpcReturnCodeSuccess = 0
 const RpcReturnCodeError = 1
 
-// AssetsType20 erc20资产
+// AssetsType20 erc20 assert
 const AssetsType20 = 20
 
-// AssetsType721 erc20资产
+// AssetsType721 erc20 assert
 
 const AssetsType721 = 721
 
-// AssetsType1155 erc20资产
+// AssetsType1155 erc20 assert
 
 const AssetsType1155 = 1155
 
