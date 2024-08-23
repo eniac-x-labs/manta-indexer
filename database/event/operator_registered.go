@@ -3,6 +3,7 @@ package event
 import (
 	"errors"
 	"math/big"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -28,6 +29,7 @@ type OperatorRegistered struct {
 
 type OperatorRegisteredView interface {
 	QueryUnHandleOperatorRegistered() ([]OperatorRegistered, error)
+	QueryOperatorRegistered(string) (*OperatorRegistered, error)
 	QueryOperatorRegisteredList(page int, pageSize int, order string) ([]OperatorRegistered, uint64)
 }
 
@@ -39,6 +41,18 @@ type OperatorRegisteredDB interface {
 
 type operatorRegisteredDB struct {
 	gorm *gorm.DB
+}
+
+func (or operatorRegisteredDB) QueryOperatorRegistered(operator string) (*OperatorRegistered, error) {
+	var operatorRegistered OperatorRegistered
+	result := or.gorm.Where(&OperatorRegistered{Operator: common.HexToAddress(operator)}).Take(&operatorRegistered)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &operatorRegistered, nil
 }
 
 func (or operatorRegisteredDB) MarkedOperatorRegisteredHandled(unHandledOperatorRegistered []OperatorRegistered) error {
@@ -71,7 +85,24 @@ func (or operatorRegisteredDB) QueryUnHandleOperatorRegistered() ([]OperatorRegi
 }
 
 func (or operatorRegisteredDB) QueryOperatorRegisteredList(page int, pageSize int, order string) ([]OperatorRegistered, uint64) {
-	panic("implement me")
+	var totalRecord int64
+	var operatorRegisteredList []OperatorRegistered
+	queryStateRoot := or.gorm.Table("operator_registered")
+	err := queryStateRoot.Select("number").Count(&totalRecord).Error
+	if err != nil {
+		log.Error("get operator registered count fail", "err", err)
+	}
+	queryStateRoot.Offset((page - 1) * pageSize).Limit(pageSize)
+	if strings.ToLower(order) == "asc" {
+		queryStateRoot.Order("number asc")
+	} else {
+		queryStateRoot.Order("number desc")
+	}
+	qErr := queryStateRoot.Find(&operatorRegisteredList).Error
+	if qErr != nil {
+		log.Error("get operator registered list fail", "err", qErr)
+	}
+	return operatorRegisteredList, uint64(totalRecord)
 }
 
 func (or operatorRegisteredDB) StoreOperatorRegistered(operatorRegisteredList []OperatorRegistered) error {

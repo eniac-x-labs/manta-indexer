@@ -23,8 +23,9 @@ import (
 const ethereumAddressRegex = `^0x[a-fA-F0-9]{40}$`
 
 const (
-	HealthPath          = "/healthz"
-	DepositTokensV1Path = "/api/v1/deposit/tokens"
+	HealthPath                 = "/healthz"
+	RegisterOperatorV1Path     = "/api/v1/operator/register"
+	RegisterOperatorListV1Path = "/api/v1/operator/register/list"
 )
 
 type APIConfig struct {
@@ -61,7 +62,7 @@ func (a *API) initFromConfig(ctx context.Context, cfg *config.Config) error {
 func (a *API) initRouter(conf config.ServerConfig, cfg *config.Config) {
 	v := new(service.Validator)
 
-	svc := service.New(v)
+	svc := service.New(v, a.db.OperatorRegistered)
 	apiRouter := chi.NewRouter()
 	h := routes.NewRoutes(apiRouter, svc)
 
@@ -70,7 +71,8 @@ func (a *API) initRouter(conf config.ServerConfig, cfg *config.Config) {
 
 	apiRouter.Use(middleware.Heartbeat(HealthPath))
 
-	apiRouter.Get(fmt.Sprintf(DepositTokensV1Path), h.DepositTokensHandler)
+	apiRouter.Get(fmt.Sprintf(RegisterOperatorV1Path), h.RegisterOperatorHandler)
+	apiRouter.Get(fmt.Sprintf(RegisterOperatorListV1Path), h.RegisterOperatorListHandler)
 
 	a.router = apiRouter
 }
