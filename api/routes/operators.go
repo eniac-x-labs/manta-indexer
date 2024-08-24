@@ -1,9 +1,8 @@
 package routes
 
 import (
-	"net/http"
-
 	"github.com/ethereum/go-ethereum/log"
+	"net/http"
 )
 
 func (h Routes) StrategyHandler(w http.ResponseWriter, r *http.Request) {

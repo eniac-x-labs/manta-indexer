@@ -2,7 +2,6 @@ package operator
 
 import (
 	"errors"
-	"github.com/ethereum/go-ethereum/log"
 	"math/big"
 	"strings"
 
@@ -10,6 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 
 	_ "github.com/eniac-x-labs/manta-indexer/database/utils/serializers"
 )
@@ -87,6 +87,8 @@ func (ocr operatorClaimRewardDB) GetOperatorClaimReward(address string) (*Operat
 }
 
 func (ocr operatorClaimRewardDB) ListOperatorClaimReward(address string, page int, pageSize int, order string) ([]OperatorClaimReward, uint64) {
+	address = strings.ToLower(address)
+
 	var totalRecord int64
 	var operatorClaimRewardList []OperatorClaimReward
 	queryRoot := ocr.gorm.Table("operator_claim_reward")

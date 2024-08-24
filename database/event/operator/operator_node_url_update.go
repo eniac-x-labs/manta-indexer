@@ -45,6 +45,8 @@ type operatorNodeUrlUpdateDB struct {
 }
 
 func (onuu operatorNodeUrlUpdateDB) ListOperatorNodeUrlUpdate(address string, page int, pageSize int, order string) ([]OperatorNodeUrlUpdate, uint64) {
+	address = strings.ToLower(address)
+
 	var totalRecord int64
 	var operatorNodeUrlUpdateList []OperatorNodeUrlUpdate
 	queryRoot := onuu.gorm.Table("operator_node_url_update")

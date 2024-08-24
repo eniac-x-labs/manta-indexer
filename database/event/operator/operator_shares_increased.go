@@ -76,6 +76,8 @@ func (osi operatorSharesIncreasedDB) QueryUnHandleOperatorSharesIncreased() ([]O
 }
 
 func (osi operatorSharesIncreasedDB) ListOperatorSharesIncreased(address string, page int, pageSize int, order string) ([]OperatorSharesIncreased, uint64) {
+	address = strings.ToLower(address)
+
 	var totalRecord int64
 	var operatorSharesIncreasedList []OperatorSharesIncreased
 	queryRoot := osi.gorm.Table("operator_shares_increased")

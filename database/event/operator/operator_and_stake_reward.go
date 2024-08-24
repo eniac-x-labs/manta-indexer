@@ -2,7 +2,6 @@ package operator
 
 import (
 	"errors"
-	"github.com/ethereum/go-ethereum/log"
 	"math/big"
 	"strings"
 
@@ -10,6 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 
 	_ "github.com/eniac-x-labs/manta-indexer/database/utils/serializers"
 )
@@ -99,6 +99,8 @@ func (osr operatorAndStakeRewardDB) GetOperatorAndStakeReward(address string) (*
 }
 
 func (osr operatorAndStakeRewardDB) ListOperatorAndStakeReward(address string, page int, pageSize int, order string) ([]OperatorAndStakeReward, uint64) {
+	address = strings.ToLower(address)
+
 	var totalRecord int64
 	var operatorAndStakeRewardList []OperatorAndStakeReward
 	queryRoot := osr.gorm.Table("operator_and_stake_reward")

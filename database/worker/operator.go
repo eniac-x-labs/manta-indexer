@@ -13,17 +13,17 @@ import (
 )
 
 type Operators struct {
-	GUID                     uuid.UUID      `gorm:"primaryKey"`
-	BlockHash                common.Hash    `gorm:"serializer:bytes"`
-	Number                   *big.Int       `gorm:"serializer:u256"`
-	TxHash                   common.Hash    `gorm:"serializer:bytes"`
-	Operator                 common.Address `gorm:"serializer:bytes"`
+	GUID                     uuid.UUID      `gorm:"primaryKey" json:"guid"`
+	BlockHash                common.Hash    `gorm:"serializer:bytes" json:"block_hash"`
+	Number                   *big.Int       `gorm:"serializer:u256" json:"number"`
+	TxHash                   common.Hash    `gorm:"serializer:bytes" json:"tx_hash"`
+	Operator                 common.Address `gorm:"serializer:bytes" json:"operator"`
 	Socket                   string         `json:"socket"`
-	EarningsReceiver         common.Address `gorm:"serializer:bytes"`
-	DelegationApprover       common.Address `gorm:"serializer:bytes"`
-	StakerOptoutWindowBlocks *big.Int       `gorm:"serializer:u256"`
-	TotalMantaStake          *big.Int       `gorm:"serializer:u256"`
-	TotalStakeReward         *big.Int       `gorm:"serializer:u256"`
+	EarningsReceiver         common.Address `gorm:"serializer:bytes" json:"earnings_receiver"`
+	DelegationApprover       common.Address `gorm:"serializer:bytes" json:"delegation_approver"`
+	StakerOptoutWindowBlocks *big.Int       `gorm:"serializer:u256" json:"staker_optout_window_blocks"`
+	TotalMantaStake          *big.Int       `gorm:"serializer:u256" json:"total_manta_stake"`
+	TotalStakeReward         *big.Int       `gorm:"serializer:u256" json:"total_stake_reward"`
 	RateReturn               string         `json:"rate_return"`
 	Status                   uint8
 	Timestamp                uint64

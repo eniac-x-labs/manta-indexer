@@ -2,7 +2,6 @@ package operator
 
 import (
 	"errors"
-	"github.com/ethereum/go-ethereum/log"
 	"math/big"
 	"strings"
 
@@ -10,6 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 
 	_ "github.com/eniac-x-labs/manta-indexer/database/utils/serializers"
 )
@@ -76,6 +76,8 @@ func (osd operatorSharesDecreasedDB) QueryUnHandlerOperatorSharesDecreased() ([]
 }
 
 func (osd operatorSharesDecreasedDB) ListOperatorSharesDecreased(address string, page int, pageSize int, order string) ([]OperatorSharesDecreased, uint64) {
+	address = strings.ToLower(address)
+
 	var totalRecord int64
 	var operatorSharesDecreasedList []OperatorSharesDecreased
 	queryRoot := osd.gorm.Table("operator_shares_decreased")

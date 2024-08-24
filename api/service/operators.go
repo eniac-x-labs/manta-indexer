@@ -1,7 +1,10 @@
 package service
 
 import (
+	"encoding/json"
 	"strings"
+
+	"github.com/ethereum/go-ethereum/log"
 
 	"github.com/eniac-x-labs/manta-indexer/api/models"
 	"github.com/eniac-x-labs/manta-indexer/database/event"
@@ -123,6 +126,12 @@ func (h HandlerSvc) ListOperatorSharesDecreased(params *models.QueryAddressListP
 
 func (h HandlerSvc) ListOperatorAndStakeReward(params *models.QueryAddressListParams) (*models.OperatorAndStakeRewardListResponse, error) {
 	rewardList, total := h.operatorAndStakeRewardView.ListOperatorAndStakeReward(params.Address, params.Page, params.PageSize, params.Order)
+	jsonStr, err := json.Marshal(rewardList)
+	if err != nil {
+		log.Error("operators ListOperatorAndStakeReward error ", "err", err)
+		return &models.OperatorAndStakeRewardListResponse{}, err
+	}
+	log.Info("operators ListOperatorAndStakeReward", "info", jsonStr)
 	return &models.OperatorAndStakeRewardListResponse{
 		ListResponse: models.ListResponse{
 			Current: params.Page,

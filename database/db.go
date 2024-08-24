@@ -3,8 +3,6 @@ package database
 import (
 	"context"
 	"fmt"
-	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
-	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
 	"os"
 	"path/filepath"
 
@@ -12,9 +10,13 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"github.com/ethereum/go-ethereum/log"
+
 	"github.com/eniac-x-labs/manta-indexer/config"
 	"github.com/eniac-x-labs/manta-indexer/database/common"
 	"github.com/eniac-x-labs/manta-indexer/database/event"
+	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
+	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
 	_ "github.com/eniac-x-labs/manta-indexer/database/utils/serializers"
 	"github.com/eniac-x-labs/manta-indexer/database/worker"
 	"github.com/eniac-x-labs/manta-indexer/synchronizer/retry"
@@ -64,7 +66,7 @@ func NewDB(ctx context.Context, dbConfig config.DBConfig) (*DB, error) {
 		SkipDefaultTransaction: true,
 		CreateBatchSize:        3_000,
 	}
-
+	log.Info("database NewDB dsn ", "info", dsn)
 	retryStrategy := &retry.ExponentialStrategy{Min: 1000, Max: 20_000, MaxJitter: 250}
 	gorm, err := retry.Do[*gorm.DB](context.Background(), 10, retryStrategy, func() (*gorm.DB, error) {
 		gorm, err := gorm.Open(postgres.Open(dsn), &gormConfig)
