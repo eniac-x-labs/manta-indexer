@@ -14,11 +14,11 @@ import (
 )
 
 type StakeHolder struct {
-	GUID            uuid.UUID      `gorm:"primaryKey"`
-	Staker          common.Address `gorm:"serializer:bytes"`
-	TotalMantaStake *big.Int       `gorm:"serializer:u256"`
-	TotalReward     *big.Int       `gorm:"serializer:u256"`
-	ClaimedAmount   *big.Int       `gorm:"serializer:u256"`
+	GUID            uuid.UUID      `gorm:"primaryKey" json:"guid"`
+	Staker          common.Address `gorm:"serializer:bytes" json:"staker"`
+	TotalMantaStake *big.Int       `gorm:"serializer:u256" json:"total_manta_stake"`
+	TotalReward     *big.Int       `gorm:"serializer:u256" json:"total_reward"`
+	ClaimedAmount   *big.Int       `gorm:"serializer:u256" json:"claimed_amount"`
 	Timestamp       uint64
 }
 
@@ -80,7 +80,7 @@ func (sh *stakeHolderDB) QueryAndUpdateStakeHolder(stakeAddress common.Address, 
 
 func (shv stakeHolderDB) GetStakeHolder(staker string) (*StakeHolder, error) {
 	var stakeHolder StakeHolder
-	result := shv.gorm.Where(&StakeHolder{Staker: common.HexToAddress(staker)}).Take(&stakeHolder)
+	result := shv.gorm.Table("staker_holder").Where("staker = ?", staker).Take(&stakeHolder)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -93,10 +93,10 @@ func (shv stakeHolderDB) GetStakeHolder(staker string) (*StakeHolder, error) {
 func (shv stakeHolderDB) ListStakeHolder(page int, pageSize int, order string) ([]StakeHolder, uint64) {
 	var totalRecord int64
 	var stakeHolderList []StakeHolder
-	queryRoot := shv.gorm.Table("stake_holder")
-	err := shv.gorm.Table("staker_holder").Select("number").Count(&totalRecord).Error
+	queryRoot := shv.gorm.Table("staker_holder")
+	err := shv.gorm.Table("staker_holder").Select("staker").Count(&totalRecord).Error
 	if err != nil {
-		log.Error("list stakeHolderDB count fail", "err", err)
+		log.Error("list stake holder db count fail", "err", err)
 	}
 	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
@@ -106,7 +106,7 @@ func (shv stakeHolderDB) ListStakeHolder(page int, pageSize int, order string) (
 	}
 	qErr := queryRoot.Find(&stakeHolderList).Error
 	if qErr != nil {
-		log.Error("list stakeHolderDB fail", "err", qErr)
+		log.Error("list stake holder db fail", "err", qErr)
 	}
 	return stakeHolderList, uint64(totalRecord)
 }

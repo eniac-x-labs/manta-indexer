@@ -81,17 +81,16 @@ func (sdv strategyDepositDB) ListStrategyDeposit(address string, page int, pageS
 	var totalRecord int64
 	var strategyDepositList []StrategyDeposit
 	queryRoot := sdv.gorm.Table("strategy_deposit")
-
 	if address != "0x00" {
 		err := sdv.gorm.Table("strategy_deposit").Select("number").Where("staker = ?", address).Count(&totalRecord).Error
 		if err != nil {
-			log.Error("get operator node url update count fail")
+			log.Error("get list strategy count fail")
 		}
 		queryRoot.Where("staker = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
 	} else {
 		err := sdv.gorm.Table("strategy_deposit").Select("number").Count(&totalRecord).Error
 		if err != nil {
-			log.Error("get operator node url update count fail ")
+			log.Error("get list strategy count fail ")
 		}
 		queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	}
@@ -102,7 +101,7 @@ func (sdv strategyDepositDB) ListStrategyDeposit(address string, page int, pageS
 	}
 	qErr := queryRoot.Find(&strategyDepositList).Error
 	if qErr != nil {
-		log.Error("list strategyDepositDB fail", "err", qErr)
+		log.Error("list strategy deposit database fail", "err", qErr)
 	}
 	return strategyDepositList, uint64(totalRecord)
 }

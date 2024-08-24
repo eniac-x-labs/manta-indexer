@@ -29,7 +29,8 @@ func (h HandlerSvc) ListStakeHolder(params *models.QueryListParams) (*models.Sta
 }
 
 func (h HandlerSvc) ListStakerDepositStrategy(params *models.QueryAddressListParams) (*models.StrategyDepositListResponse, error) {
-	strategyDepositList, total := h.strategyDepositView.ListStrategyDeposit(params.Address, params.Page, params.PageSize, params.Order)
+	stakerAddress := strings.ToLower(params.Address)
+	strategyDepositList, total := h.strategyDepositView.ListStrategyDeposit(stakerAddress, params.Page, params.PageSize, params.Order)
 	return &models.StrategyDepositListResponse{
 		ListResponse: models.ListResponse{
 			Current: params.Page,
@@ -41,7 +42,8 @@ func (h HandlerSvc) ListStakerDepositStrategy(params *models.QueryAddressListPar
 }
 
 func (h HandlerSvc) ListStakerDelegated(params *models.QueryAddressListParams) (*models.StakerDelegatedListResponse, error) {
-	stakerDelegatedList, total := h.stakerDelegatedView.ListStakerDelegated(params.Address, params.Page, params.PageSize, params.Order)
+	stakerAddress := strings.ToLower(params.Address)
+	stakerDelegatedList, total := h.stakerDelegatedView.ListStakerDelegated(stakerAddress, params.Page, params.PageSize, params.Order)
 	return &models.StakerDelegatedListResponse{
 		ListResponse: models.ListResponse{
 			Current: params.Page,
@@ -53,7 +55,8 @@ func (h HandlerSvc) ListStakerDelegated(params *models.QueryAddressListParams) (
 }
 
 func (h HandlerSvc) ListStakerUndelegated(params *models.QueryAddressListParams) (*models.StakerUndelegatedListResponse, error) {
-	stakerUndelegatedList, total := h.stakerUndelegatedView.ListStakerUndelegated(params.Address, params.Page, params.PageSize, params.Order)
+	stakerAddress := strings.ToLower(params.Address)
+	stakerUndelegatedList, total := h.stakerUndelegatedView.ListStakerUndelegated(stakerAddress, params.Page, params.PageSize, params.Order)
 	return &models.StakerUndelegatedListResponse{
 		ListResponse: models.ListResponse{
 			Current: params.Page,
@@ -65,7 +68,8 @@ func (h HandlerSvc) ListStakerUndelegated(params *models.QueryAddressListParams)
 }
 
 func (h HandlerSvc) ListStakerWithdrawalQueued(params *models.QueryAddressListParams) (*models.WithdrawalQueuedListResponse, error) {
-	withdrawalQueuedList, total := h.withdrawalQueuedView.ListWithdrawalQueued(params.Address, params.Page, params.PageSize, params.Order)
+	stakerAddress := strings.ToLower(params.Address)
+	withdrawalQueuedList, total := h.withdrawalQueuedView.ListWithdrawalQueued(stakerAddress, params.Page, params.PageSize, params.Order)
 	return &models.WithdrawalQueuedListResponse{
 		ListResponse: models.ListResponse{
 			Current: params.Page,
@@ -77,7 +81,8 @@ func (h HandlerSvc) ListStakerWithdrawalQueued(params *models.QueryAddressListPa
 }
 
 func (h HandlerSvc) ListStakerWithdrawalCompleted(params *models.QueryAddressListParams) (*models.WithdrawalCompletedListResponse, error) {
-	withdrawalCompletedList, total := h.withdrawalCompletedView.ListWithdrawalCompleted(params.Address, params.Page, params.PageSize, params.Order)
+	stakerAddress := strings.ToLower(params.Address)
+	withdrawalCompletedList, total := h.withdrawalCompletedView.ListWithdrawalCompleted(stakerAddress, params.Page, params.PageSize, params.Order)
 	return &models.WithdrawalCompletedListResponse{
 		ListResponse: models.ListResponse{
 			Current: params.Page,
@@ -89,7 +94,8 @@ func (h HandlerSvc) ListStakerWithdrawalCompleted(params *models.QueryAddressLis
 }
 
 func (h HandlerSvc) ListStakeHolderClaimReward(params *models.QueryAddressListParams) (*models.StakeHolderClaimRewardListResponse, error) {
-	stakeHolderClaimRewardList, total := h.stakeHolderClaimRewardView.ListStakeHolderClaimReward(params.Address, params.Page, params.PageSize, params.Order)
+	stakerAddress := strings.ToLower(params.Address)
+	stakeHolderClaimRewardList, total := h.stakeHolderClaimRewardView.ListStakeHolderClaimReward(stakerAddress, params.Page, params.PageSize, params.Order)
 	return &models.StakeHolderClaimRewardListResponse{
 		ListResponse: models.ListResponse{
 			Current: params.Page,

@@ -10,13 +10,13 @@ func (h Routes) GetStakeHolder(w http.ResponseWriter, r *http.Request) {
 	staker := r.URL.Query().Get("staker")
 	if staker == "" {
 		http.Error(w, "invalid query params", http.StatusBadRequest)
-		log.Error("error GetStakeHolder reading request params")
+		log.Error("error get stake holder reading request params")
 		return
 	}
 	temp, err := h.svc.GetStakeHolder(staker)
 	if err != nil {
 		http.Error(w, "Internal server error reading GetStakeHolder", http.StatusInternalServerError)
-		log.Error("Unable to read GetStakeHolder from DB", "err", err.Error())
+		log.Error("Unable to read get stake holder from DB", "err", err.Error())
 		return
 	}
 	err = jsonResponse(w, temp, http.StatusOK)

@@ -22,9 +22,9 @@ type QueryListParams struct {
 }
 
 type ListResponse struct {
-	Current int    `json:"Current"`
-	Size    int    `json:"Size"`
-	Total   uint64 `json:"Total"`
+	Current int    `json:"current"`
+	Size    int    `json:"size"`
+	Total   uint64 `json:"total"`
 }
 
 type RegisterOperatorResponse struct {
@@ -36,78 +36,76 @@ type RegisterOperatorResponse struct {
 }
 
 type RegisterOperatorListResponse struct {
-	Current int    `json:"Current"`
-	Size    int    `json:"Size"`
-	Total   uint64 `json:"Total"`
-	Records []event.OperatorRegistered
+	ListResponse
+	Records []event.OperatorRegistered `json:"records"`
 }
 
 type StrategiesListResponse struct {
 	ListResponse
-	Records []event.Strategies
+	Records []event.Strategies `json:"records"`
 }
 
 type OperatorNodeUrlUpdateListResponse struct {
 	ListResponse
-	Records []event.OperatorNodeUrlUpdate
+	Records []event.OperatorNodeUrlUpdate `json:"records"`
 }
 
 type StrategyDepositListResponse struct {
 	ListResponse
-	Records []event.StrategyDeposit
+	Records []event.StrategyDeposit `json:"records"`
 }
 
 type StakeHolderListResponse struct {
 	ListResponse
-	Records []worker.StakeHolder
+	Records []worker.StakeHolder `json:"records"`
 }
 
 type OperatorListResponse struct {
 	ListResponse
-	Records []worker.Operators
+	Records []worker.Operators `json:"records"`
 }
 
 type WithdrawalQueuedListResponse struct {
 	ListResponse
-	Records []event.WithdrawalQueued
+	Records []event.WithdrawalQueued `json:"records"`
 }
 
 type WithdrawalCompletedListResponse struct {
 	ListResponse
-	Records []event.WithdrawalCompleted
+	Records []event.WithdrawalCompleted `json:"records"`
 }
 
 type StakerDelegatedListResponse struct {
 	ListResponse
-	Records []event.StakerDelegated
+	Records []event.StakerDelegated `json:"records"`
 }
 
 type StakerUndelegatedListResponse struct {
 	ListResponse
-	Records []event.StakerUndelegated
+	Records []event.StakerUndelegated `json:"records"`
 }
 
 type StakeHolderClaimRewardListResponse struct {
 	ListResponse
-	Records []event.StakeHolderClaimReward
+	Records []event.StakeHolderClaimReward `json:"records"`
 }
 
 type OperatorSharesDecreasedListResponse struct {
 	ListResponse
-	Records []event.OperatorSharesDecreased
+	Records []event.OperatorSharesDecreased `json:"records"`
 }
 
 type OperatorSharesIncreasedListResponse struct {
 	ListResponse
-	Records []event.OperatorSharesIncreased
+	Records []event.OperatorSharesIncreased `json:"records"`
 }
 
 type OperatorAndStakeRewardListResponse struct {
 	ListResponse
-	Records []event.OperatorAndStakeReward
+	Records []event.OperatorAndStakeReward `json:"records"`
 }
 
 type OperatorClaimRewardListResponse struct {
 	ListResponse
-	Records []event.OperatorClaimReward
+	Records []event.OperatorClaimReward `json:"records"`
 }
