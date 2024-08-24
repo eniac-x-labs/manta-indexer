@@ -1,6 +1,7 @@
 package event
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
@@ -28,6 +29,7 @@ func (Strategies) TableName() string {
 }
 
 type StrategiesView interface {
+	QueryStrategies(string) (*Strategies, error)
 	QueryStrategiesList(page int, pageSize int, order string) ([]Strategies, uint64)
 }
 
@@ -41,6 +43,18 @@ type strategiesDB struct {
 	gorm *gorm.DB
 }
 
+func (db strategiesDB) QueryStrategies(strategy string) (*Strategies, error) {
+	var strategyTemp Strategies
+	result := db.gorm.Table("strategies").Where("strategy = ?", strategy).Take(&strategyTemp)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &strategyTemp, nil
+}
+
 func (db strategiesDB) RemoveStoreStrategies(strategies []Strategies) error {
 	for _, v := range strategies {
 		db.gorm.Table("strategies").Delete(v.Strategy)
@@ -51,8 +65,8 @@ func (db strategiesDB) RemoveStoreStrategies(strategies []Strategies) error {
 func (db strategiesDB) QueryStrategiesList(page int, pageSize int, order string) ([]Strategies, uint64) {
 	var totalRecord int64
 	var strategyList []Strategies
-	queryStateRoot := db.gorm.Table("operator_registered")
-	err := db.gorm.Table("operator_registered").Select("number").Count(&totalRecord).Error
+	queryStateRoot := db.gorm.Table("strategies")
+	err := db.gorm.Table("strategies").Select("number").Count(&totalRecord).Error
 	if err != nil {
 		log.Error("get strategies fail", "err", err)
 	}

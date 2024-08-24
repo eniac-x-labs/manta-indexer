@@ -8,11 +8,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type QueryAddressParams struct {
-	Address string
+type QueryAddressListParams struct {
+	Address  string
+	Page     int
+	PageSize int
+	Order    string
 }
 
-type QueryDTParams struct {
+type QueryListParams struct {
 	Page     int
 	PageSize int
 	Order    string
@@ -37,6 +40,11 @@ type RegisterOperatorListResponse struct {
 	Size    int    `json:"Size"`
 	Total   uint64 `json:"Total"`
 	Records []event.OperatorRegistered
+}
+
+type StrategiesListResponse struct {
+	ListResponse
+	Records []event.Strategies
 }
 
 type OperatorNodeUrlUpdateListResponse struct {

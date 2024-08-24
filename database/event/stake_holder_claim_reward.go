@@ -32,8 +32,7 @@ func (StakeHolderClaimReward) TableName() string {
 
 type StakeHolderClaimRewardView interface {
 	QueryUnHandleStakeHolderClaimReward() ([]StakeHolderClaimReward, error)
-	GetStakeHolderClaimReward(string) (*StakeHolderClaimReward, error)
-	ListStakeHolderClaimReward(page int, pageSize int, order string) ([]StakeHolderClaimReward, uint64)
+	ListStakeHolderClaimReward(address string, page int, pageSize int, order string) ([]StakeHolderClaimReward, uint64)
 }
 
 type StakeHolderClaimRewardDB interface {
@@ -75,27 +74,23 @@ func (shc stakeHolderClaimRewardDB) MarkedStakeHolderClaimRewardHandled(stakeHol
 	return nil
 }
 
-func (shcr stakeHolderClaimRewardDB) GetStakeHolderClaimReward(address string) (*StakeHolderClaimReward, error) {
-	var stakeHolderClaimReward StakeHolderClaimReward
-	result := shcr.gorm.Table("stake_holder_claim_reward").Where(&StakeHolderClaimReward{StakeHolder: common.HexToAddress(address)}).Take(&stakeHolderClaimReward)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, result.Error
-	}
-	return &stakeHolderClaimReward, nil
-}
-
-func (shcr stakeHolderClaimRewardDB) ListStakeHolderClaimReward(page int, pageSize int, order string) ([]StakeHolderClaimReward, uint64) {
+func (shcr stakeHolderClaimRewardDB) ListStakeHolderClaimReward(address string, page int, pageSize int, order string) ([]StakeHolderClaimReward, uint64) {
 	var totalRecord int64
 	var stakeHolderClaimRewardList []StakeHolderClaimReward
 	queryRoot := shcr.gorm.Table("stake_holder_claim_reward")
-	err := shcr.gorm.Table("stake_holder_claim_reward").Select("number").Count(&totalRecord).Error
-	if err != nil {
-		log.Error("list stakeHolderClaimRewardDB count fail", "err", err)
+	if address != "0x00" {
+		err := shcr.gorm.Table("stake_holder_claim_reward").Select("number").Where("operator = ?", address).Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get stakeholder claim reward count fail")
+		}
+		queryRoot.Where("operator = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
+	} else {
+		err := shcr.gorm.Table("stake_holder_claim_reward").Select("number").Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get stakeholder claim reward count fail ")
+		}
+		queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	}
-	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
 		queryRoot.Order("number asc")
 	} else {

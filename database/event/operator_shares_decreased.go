@@ -33,8 +33,7 @@ func (OperatorSharesDecreased) TableName() string {
 
 type OperatorSharesDecreasedView interface {
 	QueryUnHandlerOperatorSharesDecreased() ([]OperatorSharesDecreased, error)
-	GetOperatorSharesDecreased(string) (*OperatorSharesDecreased, error)
-	ListOperatorSharesDecreased(page int, pageSize int, order string) ([]OperatorSharesDecreased, uint64)
+	ListOperatorSharesDecreased(address string, page int, pageSize int, order string) ([]OperatorSharesDecreased, uint64)
 }
 
 type OperatorSharesDecreasedDB interface {
@@ -76,28 +75,23 @@ func (osd operatorSharesDecreasedDB) QueryUnHandlerOperatorSharesDecreased() ([]
 	return operatorSharesDecreasedList, nil
 }
 
-func (osd operatorSharesDecreasedDB) GetOperatorSharesDecreased(address string) (*OperatorSharesDecreased, error) {
-	var operatorSharesDecreased OperatorSharesDecreased
-	result := osd.gorm.Table("operator_shares_decreased").Where(&OperatorSharesDecreased{Staker: common.HexToAddress(address)}).Take(&operatorSharesDecreased)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, result.Error
-	}
-	return &operatorSharesDecreased, nil
-}
-
-func (osd operatorSharesDecreasedDB) ListOperatorSharesDecreased(page int, pageSize int, order string) ([]OperatorSharesDecreased, uint64) {
+func (osd operatorSharesDecreasedDB) ListOperatorSharesDecreased(address string, page int, pageSize int, order string) ([]OperatorSharesDecreased, uint64) {
 	var totalRecord int64
 	var operatorSharesDecreasedList []OperatorSharesDecreased
 	queryRoot := osd.gorm.Table("operator_shares_decreased")
-	err := osd.gorm.Table("operator_shares_decreased").Select("number").Count(&totalRecord).Error
-	if err != nil {
-		log.Error("list operatorSharesDecreasedDB count fail", "err", err)
+	if address != "0x00" {
+		err := osd.gorm.Table("operator_shares_decreased").Select("number").Where("operator = ?", address).Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get operator share decreased count fail")
+		}
+		queryRoot.Where("operator = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
+	} else {
+		err := osd.gorm.Table("operator_shares_decreased").Select("number").Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get operator share decreased count fail ")
+		}
+		queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	}
-
-	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
 		queryRoot.Order("number asc")
 	} else {

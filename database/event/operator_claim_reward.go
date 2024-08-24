@@ -32,7 +32,7 @@ func (OperatorClaimReward) TableName() string {
 type OperatorClaimRewardView interface {
 	QueryUnHandleOperatorClaimReward() ([]OperatorClaimReward, error)
 	GetOperatorClaimReward(string) (*OperatorClaimReward, error)
-	ListOperatorClaimReward(page int, pageSize int, order string) ([]OperatorClaimReward, uint64)
+	ListOperatorClaimReward(address string, page int, pageSize int, order string) ([]OperatorClaimReward, uint64)
 }
 
 type OperatorClaimRewardDB interface {
@@ -86,15 +86,23 @@ func (ocr operatorClaimRewardDB) GetOperatorClaimReward(address string) (*Operat
 	return &operatorClaimReward, nil
 }
 
-func (ocr operatorClaimRewardDB) ListOperatorClaimReward(page int, pageSize int, order string) ([]OperatorClaimReward, uint64) {
+func (ocr operatorClaimRewardDB) ListOperatorClaimReward(address string, page int, pageSize int, order string) ([]OperatorClaimReward, uint64) {
 	var totalRecord int64
 	var operatorClaimRewardList []OperatorClaimReward
 	queryRoot := ocr.gorm.Table("operator_claim_reward")
-	err := ocr.gorm.Table("operator_claim_reward").Select("number").Count(&totalRecord).Error
-	if err != nil {
-		log.Error("list operatorClaimRewardDB count fail", "err", err)
+	if address != "0x00" {
+		err := ocr.gorm.Table("operator_claim_reward").Select("number").Where("operator = ?", address).Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get operator claim reward count fail")
+		}
+		queryRoot.Where("operator = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
+	} else {
+		err := ocr.gorm.Table("operator_claim_reward").Select("number").Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get operator claim reward count fail ")
+		}
+		queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	}
-	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
 		queryRoot.Order("number asc")
 	} else {

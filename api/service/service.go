@@ -2,7 +2,8 @@ package service
 
 import (
 	"strconv"
-	"strings"
+
+	"github.com/ethereum/go-ethereum/log"
 
 	"github.com/eniac-x-labs/manta-indexer/api/models"
 	"github.com/eniac-x-labs/manta-indexer/database/event"
@@ -10,53 +11,48 @@ import (
 )
 
 type Service interface {
-	RegisterOperatorList(*models.QueryDTParams) (*models.RegisterOperatorListResponse, error)
-	RegisterOperator(operator string) (*event.OperatorRegistered, error)
 
-	GetOperatorNodeUrlUpdate(operator string) (*event.OperatorNodeUrlUpdate, error)
-	ListOperatorNodeUrlUpdate(*models.QueryDTParams) (*models.OperatorNodeUrlUpdateListResponse, error)
+	/*
+	* ============== Strategy ==============
+	 */
+	Strategy(strategy string) (*event.Strategies, error)
+	StrategyList(*models.QueryListParams) (*models.StrategiesListResponse, error)
 
-	GetStrategyDeposit(staker string) (*event.StrategyDeposit, error)
-	ListStrategyDeposit(*models.QueryDTParams) (*models.StrategyDepositListResponse, error)
-
-	GetStakeHolder(staker string) (*worker.StakeHolder, error)
-	ListStakeHolder(*models.QueryDTParams) (*models.StakeHolderListResponse, error)
-
+	/*
+	* ============== Operator ==============
+	 */
 	GetOperator(operator string) (*worker.Operators, error)
-	ListOperator(*models.QueryDTParams) (*models.OperatorListResponse, error)
+	ListOperator(*models.QueryListParams) (*models.OperatorListResponse, error)
+	RegisterOperator(operator string) (*event.OperatorRegistered, error)
+	RegisterOperatorList(*models.QueryListParams) (*models.RegisterOperatorListResponse, error)
+	ListOperatorNodeUrlUpdate(*models.QueryAddressListParams) (*models.OperatorNodeUrlUpdateListResponse, error)
+	ListOperatorSharesDecreased(*models.QueryAddressListParams) (*models.OperatorSharesDecreasedListResponse, error)
+	ListOperatorSharesIncreased(*models.QueryAddressListParams) (*models.OperatorSharesIncreasedListResponse, error)
+	ListOperatorAndStakeReward(*models.QueryAddressListParams) (*models.OperatorAndStakeRewardListResponse, error)
+	ListOperatorClaimReward(params *models.QueryAddressListParams) (*models.OperatorClaimRewardListResponse, error)
 
-	GetWithdrawalQueued(guid string) (*event.WithdrawalQueued, error)
-	ListWithdrawalQueued(*models.QueryDTParams) (*models.WithdrawalQueuedListResponse, error)
+	/*
+	* ============== stakeholder ==============
+	 */
+	GetStakeHolder(staker string) (*worker.StakeHolder, error)
+	ListStakeHolder(*models.QueryListParams) (*models.StakeHolderListResponse, error)
+	ListStakerDepositStrategy(*models.QueryAddressListParams) (*models.StrategyDepositListResponse, error)
+	ListStakerDelegated(*models.QueryAddressListParams) (*models.StakerDelegatedListResponse, error)
+	ListStakerUndelegated(*models.QueryAddressListParams) (*models.StakerUndelegatedListResponse, error)
+	ListStakerWithdrawalQueued(*models.QueryAddressListParams) (*models.WithdrawalQueuedListResponse, error)
+	ListStakerWithdrawalCompleted(*models.QueryAddressListParams) (*models.WithdrawalCompletedListResponse, error)
+	ListStakeHolderClaimReward(*models.QueryAddressListParams) (*models.StakeHolderClaimRewardListResponse, error)
 
-	GetWithdrawalCompleted(guid string) (*event.WithdrawalCompleted, error)
-	ListWithdrawalCompleted(*models.QueryDTParams) (*models.WithdrawalCompletedListResponse, error)
-
-	GetStakerDelegated(guid string) (*event.StakerDelegated, error)
-	ListStakerDelegated(*models.QueryDTParams) (*models.StakerDelegatedListResponse, error)
-
-	GetStakerUndelegated(guid string) (*event.StakerUndelegated, error)
-	ListStakerUndelegated(*models.QueryDTParams) (*models.StakerUndelegatedListResponse, error)
-
-	GetStakeHolderClaimReward(guid string) (*event.StakeHolderClaimReward, error)
-	ListStakeHolderClaimReward(*models.QueryDTParams) (*models.StakeHolderClaimRewardListResponse, error)
-
-	GetOperatorSharesDecreased(guid string) (*event.OperatorSharesDecreased, error)
-	ListOperatorSharesDecreased(*models.QueryDTParams) (*models.OperatorSharesDecreasedListResponse, error)
-
-	GetOperatorSharesIncreased(guid string) (*event.OperatorSharesIncreased, error)
-	ListOperatorSharesIncreased(*models.QueryDTParams) (*models.OperatorSharesIncreasedListResponse, error)
-
-	GetOperatorAndStakeReward(guid string) (*event.OperatorAndStakeReward, error)
-	ListOperatorAndStakeReward(*models.QueryDTParams) (*models.OperatorAndStakeRewardListResponse, error)
-
-	GetOperatorClaimReward(guid string) (*event.OperatorClaimReward, error)
-	ListOperatorClaimReward(*models.QueryDTParams) (*models.OperatorClaimRewardListResponse, error)
-
-	QueryDTListParams(page string, pageSize string, order string) (*models.QueryDTParams, error)
+	/*
+	* ============== params check ==============
+	 */
+	QueryListParams(page string, pageSize string, order string) (*models.QueryListParams, error)
+	QueryAddressListParams(address string, page string, pageSize string, order string) (*models.QueryAddressListParams, error)
 }
 
 type HandlerSvc struct {
 	v                           *Validator
+	strategiesView              event.StrategiesView
 	operatorRegisteredView      event.OperatorRegisteredView
 	operatorNodeUrlUpdateView   event.OperatorNodeUrlUpdateView
 	operatorsView               worker.OperatorsView
@@ -88,10 +84,11 @@ func New(v *Validator,
 	operatorSharesIncreasedView event.OperatorSharesIncreasedView,
 	operatorAndStakeRewardView event.OperatorAndStakeRewardView,
 	operatorClaimRewardView event.OperatorClaimRewardView,
-
+	strategiesView event.StrategiesView,
 ) Service {
 	return &HandlerSvc{
 		v:                           v,
+		strategiesView:              strategiesView,
 		operatorRegisteredView:      rgv,
 		operatorNodeUrlUpdateView:   onuu,
 		operatorsView:               operatorsView,
@@ -109,26 +106,7 @@ func New(v *Validator,
 	}
 }
 
-func (h HandlerSvc) RegisterOperator(operator string) (*event.OperatorRegistered, error) {
-	addressToLower := strings.ToLower(operator)
-	operatorRegistered, err := h.operatorRegisteredView.QueryOperatorRegistered(addressToLower)
-	if err != nil {
-		return &event.OperatorRegistered{}, err
-	}
-	return operatorRegistered, err
-}
-
-func (h HandlerSvc) RegisterOperatorList(params *models.QueryDTParams) (*models.RegisterOperatorListResponse, error) {
-	operatorRegisteredList, total := h.operatorRegisteredView.QueryOperatorRegisteredList(params.Page, params.PageSize, params.Order)
-	return &models.RegisterOperatorListResponse{
-		Current: params.Page,
-		Size:    params.PageSize,
-		Total:   total,
-		Records: operatorRegisteredList,
-	}, nil
-}
-
-func (h HandlerSvc) QueryDTListParams(page string, pageSize string, order string) (*models.QueryDTParams, error) {
+func (h HandlerSvc) QueryListParams(page string, pageSize string, order string) (*models.QueryListParams, error) {
 	pageInt, err := strconv.Atoi(page)
 	if err != nil {
 		return nil, err
@@ -142,7 +120,41 @@ func (h HandlerSvc) QueryDTListParams(page string, pageSize string, order string
 	pageSizeVal := h.v.ValidatePageSize(pageSizeInt)
 	orderBy := h.v.ValidateOrder(order)
 
-	return &models.QueryDTParams{
+	return &models.QueryListParams{
+		Page:     pageVal,
+		PageSize: pageSizeVal,
+		Order:    orderBy,
+	}, nil
+}
+
+func (h HandlerSvc) QueryAddressListParams(address string, page string, pageSize string, order string) (*models.QueryAddressListParams, error) {
+	var paraAddress string
+	if address == "0x00" {
+		paraAddress = "0x00"
+	} else {
+		addr, err := h.v.ParseValidateAddress(address)
+		if err != nil {
+			log.Error("invalid address param", "address", address, "err", err)
+			return nil, err
+		}
+		paraAddress = addr.String()
+	}
+
+	pageInt, err := strconv.Atoi(page)
+	if err != nil {
+		return nil, err
+	}
+	pageVal := h.v.ValidatePage(pageInt)
+
+	pageSizeInt, err := strconv.Atoi(pageSize)
+	if err != nil {
+		return nil, err
+	}
+	pageSizeVal := h.v.ValidatePageSize(pageSizeInt)
+	orderBy := h.v.ValidateOrder(order)
+
+	return &models.QueryAddressListParams{
+		Address:  paraAddress,
 		Page:     pageVal,
 		PageSize: pageSizeVal,
 		Order:    orderBy,

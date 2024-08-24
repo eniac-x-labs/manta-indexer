@@ -36,8 +36,7 @@ func (WithdrawalQueued) TableName() string {
 }
 
 type WithdrawalQueuedView interface {
-	GetWithdrawalQueued(string) (*WithdrawalQueued, error)
-	ListWithdrawalQueued(page int, pageSize int, order string) ([]WithdrawalQueued, uint64)
+	ListWithdrawalQueued(address string, page int, pageSize int, order string) ([]WithdrawalQueued, uint64)
 }
 
 type WithdrawalQueuedDB interface {
@@ -57,16 +56,23 @@ func (wq withdrawalQueuedDB) GetWithdrawalQueued(address string) (*WithdrawalQue
 	return &withdrawalQueued, nil
 }
 
-func (wq withdrawalQueuedDB) ListWithdrawalQueued(page int, pageSize int, order string) ([]WithdrawalQueued, uint64) {
+func (wq withdrawalQueuedDB) ListWithdrawalQueued(address string, page int, pageSize int, order string) ([]WithdrawalQueued, uint64) {
 	var totalRecord int64
 	var withdrawalQueuedList []WithdrawalQueued
 	queryRoot := wq.gorm.Table("withdrawal_queued")
-	err := wq.gorm.Table("withdrawal_queued").Select("number").Count(&totalRecord).Error
-	if err != nil {
-		log.Error("list withdrawalQueuedDB count fail", "err", err)
+	if address != "0x00" {
+		err := wq.gorm.Table("withdrawal_queued").Select("number").Where("operator = ?", address).Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get withdrawal queued count fail")
+		}
+		queryRoot.Where("operator = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
+	} else {
+		err := wq.gorm.Table("withdrawal_queued").Select("number").Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get withdrawal queued count fail ")
+		}
+		queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	}
-
-	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
 		queryRoot.Order("number asc")
 	} else {

@@ -34,8 +34,7 @@ func (WithdrawalCompleted) TableName() string {
 type WithdrawalCompletedView interface {
 	QueryUnHandleWithdrawalCompleted() ([]WithdrawalCompleted, error)
 
-	GetWithdrawalCompleted(string) (*WithdrawalCompleted, error)
-	ListWithdrawalCompleted(page int, pageSize int, order string) ([]WithdrawalCompleted, uint64)
+	ListWithdrawalCompleted(address string, page int, pageSize int, order string) ([]WithdrawalCompleted, uint64)
 }
 
 type WithdrawalCompletedDB interface {
@@ -77,28 +76,24 @@ func (wc withdrawalCompletedDB) MarkedWithdrawalCompleted(withdrawalCompletedLis
 	return nil
 }
 
-func (wc withdrawalCompletedDB) GetWithdrawalCompleted(address string) (*WithdrawalCompleted, error) {
-	var withdrawalCompleted WithdrawalCompleted
-	result := wc.gorm.Table("withdrawal_completed").Where(&WithdrawalCompleted{Staker: common.HexToAddress(address)}).Take(&withdrawalCompleted)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, result.Error
-	}
-	return &withdrawalCompleted, nil
-}
-
-func (wc withdrawalCompletedDB) ListWithdrawalCompleted(page int, pageSize int, order string) ([]WithdrawalCompleted, uint64) {
+func (wc withdrawalCompletedDB) ListWithdrawalCompleted(address string, page int, pageSize int, order string) ([]WithdrawalCompleted, uint64) {
 	var totalRecord int64
 	var withdrawalCompletedList []WithdrawalCompleted
 	queryRoot := wc.gorm.Table("withdrawal_completed")
-	err := wc.gorm.Table("withdrawal_completed").Select("number").Count(&totalRecord).Error
-	if err != nil {
-		log.Error("list withdrawalCompletedDB count fail", "err", err)
+	if address != "0x00" {
+		err := wc.gorm.Table("withdrawal_completed").Select("number").Where("operator = ?", address).Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get withdrawal completed count fail")
+		}
+		queryRoot.Where("operator = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
+	} else {
+		err := wc.gorm.Table("withdrawal_completed").Select("number").Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get withdrawal completed count fail ")
+		}
+		queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	}
 
-	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
 		queryRoot.Order("number asc")
 	} else {

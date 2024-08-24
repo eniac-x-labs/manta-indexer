@@ -1,7 +1,6 @@
 package event
 
 import (
-	"errors"
 	"github.com/ethereum/go-ethereum/log"
 	"math/big"
 	"strings"
@@ -30,8 +29,7 @@ func (StakerDelegated) TableName() string {
 }
 
 type StakerDelegatedView interface {
-	GetStakerDelegated(string) (*StakerDelegated, error)
-	ListStakerDelegated(page int, pageSize int, order string) ([]StakerDelegated, uint64)
+	ListStakerDelegated(address string, page int, pageSize int, order string) ([]StakerDelegated, uint64)
 }
 
 type StakerDelegatedDB interface {
@@ -43,27 +41,23 @@ type stakerDelegatedDB struct {
 	gorm *gorm.DB
 }
 
-func (sd stakerDelegatedDB) GetStakerDelegated(address string) (*StakerDelegated, error) {
-	var stakerDelegated StakerDelegated
-	result := sd.gorm.Table("staker_delegated").Where(&StakerDelegated{Staker: common.HexToAddress(address)}).Take(&stakerDelegated)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, result.Error
-	}
-	return &stakerDelegated, nil
-}
-
-func (sd stakerDelegatedDB) ListStakerDelegated(page int, pageSize int, order string) ([]StakerDelegated, uint64) {
+func (sd stakerDelegatedDB) ListStakerDelegated(address string, page int, pageSize int, order string) ([]StakerDelegated, uint64) {
 	var totalRecord int64
 	var stakerDelegatedList []StakerDelegated
 	queryRoot := sd.gorm.Table("staker_delegated")
-	err := sd.gorm.Table("staker_delegated").Select("number").Count(&totalRecord).Error
-	if err != nil {
-		log.Error("list stakerDelegatedDB count fail", "err", err)
+	if address != "0x00" {
+		err := sd.gorm.Table("staker_delegated").Select("number").Where("operator = ?", address).Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get staker delegated count fail")
+		}
+		queryRoot.Where("operator = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
+	} else {
+		err := sd.gorm.Table("staker_delegated").Select("number").Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get staker delegated count fail ")
+		}
+		queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	}
-	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
 		queryRoot.Order("number asc")
 	} else {

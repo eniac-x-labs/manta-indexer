@@ -35,7 +35,7 @@ func (OperatorAndStakeReward) TableName() string {
 type OperatorAndStakeRewardView interface {
 	QueryUnHandleOperatorAndStakeReward(isOperator bool) ([]OperatorAndStakeReward, error)
 	GetOperatorAndStakeReward(string) (*OperatorAndStakeReward, error)
-	ListOperatorAndStakeReward(page int, pageSize int, order string) ([]OperatorAndStakeReward, uint64)
+	ListOperatorAndStakeReward(address string, page int, pageSize int, order string) ([]OperatorAndStakeReward, uint64)
 }
 
 type OperatorAndStakeRewardDB interface {
@@ -98,15 +98,23 @@ func (osr operatorAndStakeRewardDB) GetOperatorAndStakeReward(address string) (*
 	return &operatorAndStakeReward, nil
 }
 
-func (osr operatorAndStakeRewardDB) ListOperatorAndStakeReward(page int, pageSize int, order string) ([]OperatorAndStakeReward, uint64) {
+func (osr operatorAndStakeRewardDB) ListOperatorAndStakeReward(address string, page int, pageSize int, order string) ([]OperatorAndStakeReward, uint64) {
 	var totalRecord int64
 	var operatorAndStakeRewardList []OperatorAndStakeReward
 	queryRoot := osr.gorm.Table("operator_and_stake_reward")
-	err := osr.gorm.Table("operator_and_stake_reward").Select("number").Count(&totalRecord).Error
-	if err != nil {
-		log.Error("list operatorAndStakeRewardDB count fail", "err", err)
+	if address != "0x00" {
+		err := osr.gorm.Table("operator_and_stake_reward").Select("number").Where("operator = ?", address).Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get operator and staker reward count fail")
+		}
+		queryRoot.Where("operator = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
+	} else {
+		err := osr.gorm.Table("operator_and_stake_reward").Select("number").Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get operator and staker reward count fail ")
+		}
+		queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	}
-	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
 		queryRoot.Order("number asc")
 	} else {

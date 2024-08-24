@@ -4,13 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/go-chi/chi/v5"
 	"net"
 	"strconv"
 	"sync/atomic"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/ethereum/go-ethereum/log"
+
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/eniac-x-labs/manta-indexer/api/common/httputil"
@@ -23,48 +25,29 @@ import (
 const ethereumAddressRegex = `^0x[a-fA-F0-9]{40}$`
 
 const (
-	HealthPath                 = "/healthz"
-	RegisterOperatorV1Path     = "/api/v1/operator/register"
-	RegisterOperatorListV1Path = "/api/v1/operator/register/list"
+	HealthPath = "/healthz"
 
-	OperatorNodeUrlUpdateGetV1Path  = "/api/v1/operatorNodeUrlUpdate/get"
-	OperatorNodeUrlUpdateListV1Path = "/api/v1/operatorNodeUrlUpdate/list"
+	StrategyV1Path     = "/api/v1//strategies/strategy"
+	StrategyListV1Path = "/api/v1/strategies/strategy/list"
 
-	OperatorGetV1Path  = "/api/v1/operator/get"
-	OperatorListV1Path = "/api/v1/operator/list"
+	OperatorGetV1Path                 = "/api/v1/operator/get"
+	OperatorListV1Path                = "/api/v1/operator/list"
+	RegisterOperatorV1Path            = "/api/v1/operator/register"
+	RegisterOperatorListV1Path        = "/api/v1/operator/register/list"
+	OperatorNodeUrlUpdateListV1Path   = "/api/v1/operator/node/url/update/list"
+	OperatorSharesIncreasedListV1Path = "/api/v1/operator/shares/increased/list"
+	OperatorSharesDecreasedListV1Path = "/api/v1/operator/shares/decreased/list"
+	OperatorAndStakeRewardListV1Path  = "/api/v1/operator/stake/reward/list"
+	OperatorClaimRewardListV1Path     = "/api/v1/operator/claim/reward/list"
 
-	StakerGetV1Path  = "/api/v1/staker/get"
-	StakerListV1Path = "/api/v1/staker/list"
-
-	StrategyDepositGetV1Path  = "/api/v1/strategyDeposit/get"
-	StrategyDepositListV1Path = "/api/v1/strategyDeposit/list"
-
-	WithdrawalQueuedListV1Path = "/api/v1/withdrawalQueued/list"
-	WithdrawalQueuedGetV1Path  = "/api/v1/withdrawalQueued/get"
-
-	WithdrawalCompletedGetV1Path  = "/api/v1/withdrawalCompleted/get"
-	WithdrawalCompletedListV1Path = "/api/v1/withdrawalCompleted/list"
-
-	StakerDelegatedGetV1Path  = "/api/v1/stakerDelegated/get"
-	StakerDelegatedListV1Path = "/api/v1/stakerDelegated/list"
-
-	StakerUndelegatedGetV1Path  = "/api/v1/stakerUndelegated/get"
-	StakerUndelegatedListV1Path = "/api/v1/stakerUndelegated/list"
-
-	StakeHolderClaimRewardGetV1Path  = "/api/v1/stakeHolderClaimReward/get"
-	StakeHolderClaimRewardListV1Path = "/api/v1/stakeHolderClaimReward/list"
-
-	OperatorSharesDecreasedGetV1Path  = "/api/v1/operatorSharesDecreased/get"
-	OperatorSharesDecreasedListV1Path = "/api/v1/operatorSharesDecreased/list"
-
-	OperatorSharesIncreasedGetV1Path  = "/api/v1/operatorSharesIncreased/get"
-	OperatorSharesIncreasedListV1Path = "/api/v1/operatorSharesIncreased/list"
-
-	OperatorAndStakeRewardGetV1Path  = "/api/v1/operatorAndStakeReward/get"
-	OperatorAndStakeRewardListV1Path = "/api/v1/operatorAndStakeReward/list"
-
-	OperatorClaimRewardGetV1Path  = "/api/v1/operatorClaimReward/get"
-	OperatorClaimRewardListV1Path = "/api/v1/operatorClaimReward/list"
+	StakerGetV1Path                          = "/api/v1/staker/get"
+	StakerListV1Path                         = "/api/v1/staker/list"
+	StakerDepositStrategyListV1Path          = "/api/v1/staker/deposit/strategy/list"
+	StakerDelegatedListV1Path                = "/api/v1/staker/delegated/list"
+	StakerUndelegatedListV1Path              = "/api/v1/staker/undelegated/list"
+	StakeHolderClaimRewardListV1Path         = "/api/v1/staker/claim/reward/list"
+	StakeHolderWithdrawalQueuedListV1Path    = "/api/v1/staker/withdrawal/queued/list"
+	StakeHolderWithdrawalCompletedListV1Path = "/api/v1/staker/withdrawal/completed/list"
 )
 
 type APIConfig struct {
@@ -103,7 +86,7 @@ func (a *API) initRouter(conf config.ServerConfig, cfg *config.Config) {
 
 	svc := service.New(v, a.db.OperatorRegistered, a.db.OperatorNodeUrlUpdate, a.db.Operators, a.db.StakeHolder, a.db.StrategyDeposit,
 		a.db.WithdrawalQueued, a.db.WithdrawalCompleted, a.db.StakerDelegated, a.db.StakerUndelegated, a.db.StakeHolderClaimReward,
-		a.db.OperatorSharesDecreased, a.db.OperatorSharesIncreased, a.db.OperatorAndStakeReward, a.db.OperatorClaimReward)
+		a.db.OperatorSharesDecreased, a.db.OperatorSharesIncreased, a.db.OperatorAndStakeReward, a.db.OperatorClaimReward, a.db.Strategies)
 	apiRouter := chi.NewRouter()
 	h := routes.NewRoutes(apiRouter, svc)
 
@@ -112,43 +95,36 @@ func (a *API) initRouter(conf config.ServerConfig, cfg *config.Config) {
 
 	apiRouter.Use(middleware.Heartbeat(HealthPath))
 
-	apiRouter.Get(fmt.Sprintf(RegisterOperatorV1Path), h.RegisterOperatorHandler)
-	apiRouter.Get(fmt.Sprintf(RegisterOperatorListV1Path), h.RegisterOperatorListHandler)
-	apiRouter.Get(fmt.Sprintf(OperatorNodeUrlUpdateGetV1Path), h.GetOperatorNodeUrlUpdate)
-	apiRouter.Get(fmt.Sprintf(OperatorNodeUrlUpdateListV1Path), h.ListOperatorNodeUrlUpdate)
-	apiRouter.Get(fmt.Sprintf(StrategyDepositGetV1Path), h.GetStrategyDeposit)
-	apiRouter.Get(fmt.Sprintf(StrategyDepositListV1Path), h.ListStrategyDepositHandler)
-	apiRouter.Get(fmt.Sprintf(StakerGetV1Path), h.GetStakeHolder)
-	apiRouter.Get(fmt.Sprintf(StakerListV1Path), h.ListStakeHolderHandler)
+	/*
+	* ============== Strategy ==============
+	 */
+	apiRouter.Get(fmt.Sprintf(StrategyV1Path), h.StrategyHandler)
+	apiRouter.Get(fmt.Sprintf(StrategyListV1Path), h.StrategyListHandler)
+
+	/*
+	* ============== Operator ==============
+	 */
 	apiRouter.Get(fmt.Sprintf(OperatorGetV1Path), h.GetOperator)
 	apiRouter.Get(fmt.Sprintf(OperatorListV1Path), h.ListOperatorHandler)
-
-	apiRouter.Get(fmt.Sprintf(WithdrawalQueuedGetV1Path), h.GetWithdrawalQueued)
-	apiRouter.Get(fmt.Sprintf(WithdrawalQueuedListV1Path), h.ListWithdrawalQueuedHandler)
-
-	apiRouter.Get(fmt.Sprintf(WithdrawalCompletedGetV1Path), h.GetWithdrawalCompleted)
-	apiRouter.Get(fmt.Sprintf(WithdrawalCompletedListV1Path), h.ListWithdrawalCompletedHandler)
-
-	apiRouter.Get(fmt.Sprintf(StakerDelegatedGetV1Path), h.GetStakerDelegated)
-	apiRouter.Get(fmt.Sprintf(StakerDelegatedListV1Path), h.ListStakerDelegatedHandler)
-
-	apiRouter.Get(fmt.Sprintf(StakerUndelegatedGetV1Path), h.GetStakerUndelegated)
-	apiRouter.Get(fmt.Sprintf(StakerUndelegatedListV1Path), h.ListStakerUndelegatedHandler)
-
-	apiRouter.Get(fmt.Sprintf(StakeHolderClaimRewardGetV1Path), h.GetStakeHolderClaimReward)
-	apiRouter.Get(fmt.Sprintf(StakeHolderClaimRewardListV1Path), h.ListStakeHolderClaimRewardHandler)
-
-	apiRouter.Get(fmt.Sprintf(OperatorSharesDecreasedGetV1Path), h.GetOperatorSharesDecreased)
+	apiRouter.Get(fmt.Sprintf(RegisterOperatorV1Path), h.RegisterOperatorHandler)
+	apiRouter.Get(fmt.Sprintf(RegisterOperatorListV1Path), h.RegisterOperatorListHandler)
+	apiRouter.Get(fmt.Sprintf(OperatorNodeUrlUpdateListV1Path), h.ListOperatorNodeUrlUpdate)
 	apiRouter.Get(fmt.Sprintf(OperatorSharesDecreasedListV1Path), h.ListOperatorSharesDecreasedHandler)
-
-	apiRouter.Get(fmt.Sprintf(OperatorSharesIncreasedGetV1Path), h.GetOperatorSharesIncreased)
 	apiRouter.Get(fmt.Sprintf(OperatorSharesIncreasedListV1Path), h.ListOperatorSharesIncreasedHandler)
-
-	apiRouter.Get(fmt.Sprintf(OperatorAndStakeRewardGetV1Path), h.GetOperatorAndStakeReward)
 	apiRouter.Get(fmt.Sprintf(OperatorAndStakeRewardListV1Path), h.ListOperatorAndStakeRewardHandler)
-
-	apiRouter.Get(fmt.Sprintf(OperatorClaimRewardGetV1Path), h.GetOperatorClaimReward)
 	apiRouter.Get(fmt.Sprintf(OperatorClaimRewardListV1Path), h.ListOperatorClaimRewardHandler)
+
+	/*
+	* ============== Stakeholder ==============
+	 */
+	apiRouter.Get(fmt.Sprintf(StakerGetV1Path), h.GetStakeHolder)
+	apiRouter.Get(fmt.Sprintf(StakerListV1Path), h.ListStakeHolderHandler)
+	apiRouter.Get(fmt.Sprintf(StakerDepositStrategyListV1Path), h.ListStakerDepositStrategyHandler)
+	apiRouter.Get(fmt.Sprintf(StakerDelegatedListV1Path), h.ListStakerDelegatedHandler)
+	apiRouter.Get(fmt.Sprintf(StakerUndelegatedListV1Path), h.ListStakerUndelegatedHandler)
+	apiRouter.Get(fmt.Sprintf(StakeHolderClaimRewardListV1Path), h.ListStakeHolderClaimRewardHandler)
+	apiRouter.Get(fmt.Sprintf(StakeHolderWithdrawalQueuedListV1Path), h.ListStakeHolderWithdrawalQueuedHandler)
+	apiRouter.Get(fmt.Sprintf(StakeHolderWithdrawalCompletedListV1Path), h.ListStakeHolderWithdrawalCompletedHandler)
 
 	a.router = apiRouter
 }

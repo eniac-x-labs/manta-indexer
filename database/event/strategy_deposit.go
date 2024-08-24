@@ -35,8 +35,7 @@ func (StrategyDeposit) TableName() string {
 type StrategyDepositView interface {
 	QueryUnHandleStrategyDeposit() ([]StrategyDeposit, error)
 
-	GetStrategyDeposit(string) (*StrategyDeposit, error)
-	ListStrategyDeposit(page int, pageSize int, order string) ([]StrategyDeposit, uint64)
+	ListStrategyDeposit(address string, page int, pageSize int, order string) ([]StrategyDeposit, uint64)
 }
 
 type StrategyDepositDB interface {
@@ -78,28 +77,24 @@ func (sd strategyDepositDB) MarkedStrategyDepositHandled(strategyDeposits []Stra
 	return nil
 }
 
-func (sdv strategyDepositDB) GetStrategyDeposit(address string) (*StrategyDeposit, error) {
-	var strategyDeposit StrategyDeposit
-	result := sdv.gorm.Table("strategy_deposit").Where(&StrategyDeposit{Staker: common.HexToAddress(address)}).Take(&strategyDeposit)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, result.Error
-	}
-	return &strategyDeposit, nil
-}
-
-func (sdv strategyDepositDB) ListStrategyDeposit(page int, pageSize int, order string) ([]StrategyDeposit, uint64) {
+func (sdv strategyDepositDB) ListStrategyDeposit(address string, page int, pageSize int, order string) ([]StrategyDeposit, uint64) {
 	var totalRecord int64
 	var strategyDepositList []StrategyDeposit
 	queryRoot := sdv.gorm.Table("strategy_deposit")
-	err := sdv.gorm.Table("strategy_deposit").Select("number").Count(&totalRecord).Error
-	if err != nil {
-		log.Error("list strategyDepositDB count fail", "err", err)
-	}
 
-	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
+	if address != "0x00" {
+		err := sdv.gorm.Table("strategy_deposit").Select("number").Where("staker = ?", address).Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get operator node url update count fail")
+		}
+		queryRoot.Where("staker = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
+	} else {
+		err := sdv.gorm.Table("strategy_deposit").Select("number").Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get operator node url update count fail ")
+		}
+		queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
+	}
 	if strings.ToLower(order) == "asc" {
 		queryRoot.Order("number asc")
 	} else {
