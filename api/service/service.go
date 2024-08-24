@@ -3,12 +3,12 @@ package service
 import (
 	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
 	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
+	"github.com/eniac-x-labs/manta-indexer/database/event/strategies"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/log"
 
 	"github.com/eniac-x-labs/manta-indexer/api/models"
-	"github.com/eniac-x-labs/manta-indexer/database/event"
 	"github.com/eniac-x-labs/manta-indexer/database/worker"
 )
 
@@ -17,7 +17,7 @@ type Service interface {
 	/*
 	* ============== Strategy ==============
 	 */
-	Strategy(strategy string) (*event.Strategies, error)
+	Strategy(strategy string) (*strategies.Strategies, error)
 	StrategyList(*models.QueryListParams) (*models.StrategiesListResponse, error)
 
 	/*
@@ -55,7 +55,7 @@ type Service interface {
 
 type HandlerSvc struct {
 	v                           *Validator
-	strategiesView              event.StrategiesView
+	strategiesView              strategies.StrategiesView
 	operatorRegisteredView      operator.OperatorRegisteredView
 	operatorNodeUrlUpdateView   operator.OperatorNodeUrlUpdateView
 	operatorsView               worker.OperatorsView
@@ -87,7 +87,7 @@ func New(v *Validator,
 	operatorSharesIncreasedView operator.OperatorSharesIncreasedView,
 	operatorAndStakeRewardView operator.OperatorAndStakeRewardView,
 	operatorClaimRewardView operator.OperatorClaimRewardView,
-	strategiesView event.StrategiesView,
+	strategiesView strategies.StrategiesView,
 ) Service {
 	return &HandlerSvc{
 		v:                           v,

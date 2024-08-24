@@ -7,16 +7,16 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 
 	"github.com/eniac-x-labs/manta-indexer/api/models"
-	"github.com/eniac-x-labs/manta-indexer/database/event"
 	optr "github.com/eniac-x-labs/manta-indexer/database/event/operator"
+	st "github.com/eniac-x-labs/manta-indexer/database/event/strategies"
 	"github.com/eniac-x-labs/manta-indexer/database/worker"
 )
 
-func (h HandlerSvc) Strategy(strategy string) (*event.Strategies, error) {
+func (h HandlerSvc) Strategy(strategy string) (*st.Strategies, error) {
 	addressToLower := strings.ToLower(strategy)
 	strategies, err := h.strategiesView.QueryStrategies(addressToLower)
 	if err != nil {
-		return &event.Strategies{}, err
+		return &st.Strategies{}, err
 	}
 	return strategies, err
 }

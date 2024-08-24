@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
 	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
+	"github.com/eniac-x-labs/manta-indexer/database/event/strategies"
 	"math/big"
 	"strings"
 
@@ -65,8 +66,8 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 	var withdrawalQueues []staker.WithdrawalQueued
 	var WithdrawalCompleteds []staker.WithdrawalCompleted
 	var withdrawalMigrates []staker.WithdrawalMigrated
-	var minWithdrawalDelayBlocksSets []event.MinWithdrawalDelayBlocksSet
-	var strategyWithdrawalDelayBlocksSets []event.StrategyWithdrawalDelayBlocksSet
+	var minWithdrawalDelayBlocksSets []strategies.MinWithdrawalDelayBlocksSet
+	var strategyWithdrawalDelayBlocksSets []strategies.StrategyWithdrawalDelayBlocksSet
 
 	for _, eventItem := range contractEventList {
 		rlpLog := eventItem.RLPLog
@@ -332,7 +333,7 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 			log.Info("parse min withdrawal delay blocks set success",
 				"previousValue", minWithdrawalDelayBlocksSetEvent.PreviousValue,
 				"newValue", minWithdrawalDelayBlocksSetEvent.NewValue)
-			temp := event.MinWithdrawalDelayBlocksSet{
+			temp := strategies.MinWithdrawalDelayBlocksSet{
 				GUID:          uuid.New(),
 				BlockHash:     eventItem.BlockHash,
 				Number:        header.Number,
@@ -358,7 +359,7 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 				"previousValue", strategyWithdrawalDelayBlocksSetEvent.PreviousValue,
 				"newValue", strategyWithdrawalDelayBlocksSetEvent.NewValue)
 
-			temp := event.StrategyWithdrawalDelayBlocksSet{
+			temp := strategies.StrategyWithdrawalDelayBlocksSet{
 				GUID:          uuid.New(),
 				BlockHash:     eventItem.BlockHash,
 				Number:        header.Number,

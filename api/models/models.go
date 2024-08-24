@@ -1,13 +1,14 @@
 package models
 
 import (
-	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
-	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
 	"math/big"
 
-	"github.com/eniac-x-labs/manta-indexer/database/event"
-	"github.com/eniac-x-labs/manta-indexer/database/worker"
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
+	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
+	"github.com/eniac-x-labs/manta-indexer/database/event/strategies"
+	"github.com/eniac-x-labs/manta-indexer/database/worker"
 )
 
 type QueryAddressListParams struct {
@@ -44,7 +45,7 @@ type RegisterOperatorListResponse struct {
 
 type StrategiesListResponse struct {
 	ListResponse
-	Records []event.Strategies `json:"records"`
+	Records []strategies.Strategies `json:"records"`
 }
 
 type OperatorNodeUrlUpdateListResponse struct {

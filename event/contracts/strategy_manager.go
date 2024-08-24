@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
+	"github.com/eniac-x-labs/manta-indexer/database/event/strategies"
 	"math/big"
 
 	"github.com/google/uuid"
@@ -56,8 +57,8 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 	}
 
 	var deposits []staker.StrategyDeposit
-	var strategiesAdd []event.Strategies
-	var strategiesRemove []event.Strategies
+	var strategiesAdd []strategies.Strategies
+	var strategiesRemove []strategies.Strategies
 	for _, eventItem := range contractEventList {
 		rlpLog := eventItem.RLPLog
 
@@ -101,7 +102,7 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 				return err
 			}
 			log.Info("parse strategy added to Deposit whitelist success", "Strategy", strategyAdded.Strategy.String())
-			strategy := event.Strategies{
+			strategy := strategies.Strategies{
 				GUID:      uuid.New(),
 				BlockHash: eventItem.BlockHash,
 				Number:    header.Number,
@@ -120,7 +121,7 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 				return err
 			}
 			log.Info("parse strategy removed from deposit whitelist success", "Strategy", strategyRemoved.Strategy.String())
-			strategy := event.Strategies{
+			strategy := strategies.Strategies{
 				GUID:      uuid.New(),
 				BlockHash: eventItem.BlockHash,
 				Number:    header.Number,
