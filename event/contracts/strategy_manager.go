@@ -3,8 +3,7 @@ package contracts
 import (
 	"context"
 	"fmt"
-	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
-	"github.com/eniac-x-labs/manta-indexer/database/event/strategies"
+
 	"math/big"
 
 	"github.com/google/uuid"
@@ -17,8 +16,12 @@ import (
 	"github.com/eniac-x-labs/manta-indexer/config"
 	"github.com/eniac-x-labs/manta-indexer/database"
 	"github.com/eniac-x-labs/manta-indexer/database/event"
+	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
+	"github.com/eniac-x-labs/manta-indexer/database/event/strategies"
 	"github.com/eniac-x-labs/manta-indexer/synchronizer/retry"
 )
+
+var MantaTokenAddress = "0xFEE297254eC9B60d06f6e5af4E154962f9dCcE88"
 
 type StrategyManager struct {
 	db       *database.DB
@@ -103,13 +106,15 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 			}
 			log.Info("parse strategy added to Deposit whitelist success", "Strategy", strategyAdded.Strategy.String())
 			strategy := strategies.Strategies{
-				GUID:      uuid.New(),
-				BlockHash: eventItem.BlockHash,
-				Number:    header.Number,
-				TxHash:    eventItem.TransactionHash,
-				Strategy:  strategyAdded.Strategy,
-				IsHandle:  0,
-				Timestamp: eventItem.Timestamp,
+				GUID:       uuid.New(),
+				BlockHash:  eventItem.BlockHash,
+				Number:     header.Number,
+				TxHash:     eventItem.TransactionHash,
+				Strategy:   strategyAdded.Strategy,
+				Tvl:        big.NewInt(0),
+				MantaToken: common2.HexToAddress(MantaTokenAddress),
+				IsHandle:   0,
+				Timestamp:  eventItem.Timestamp,
 			}
 			strategiesAdd = append(strategiesAdd, strategy)
 		}
@@ -122,13 +127,15 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 			}
 			log.Info("parse strategy removed from deposit whitelist success", "Strategy", strategyRemoved.Strategy.String())
 			strategy := strategies.Strategies{
-				GUID:      uuid.New(),
-				BlockHash: eventItem.BlockHash,
-				Number:    header.Number,
-				TxHash:    eventItem.TransactionHash,
-				Strategy:  strategyRemoved.Strategy,
-				IsHandle:  0,
-				Timestamp: eventItem.Timestamp,
+				GUID:       uuid.New(),
+				BlockHash:  eventItem.BlockHash,
+				Number:     header.Number,
+				TxHash:     eventItem.TransactionHash,
+				Strategy:   strategyRemoved.Strategy,
+				Tvl:        big.NewInt(0),
+				MantaToken: common2.HexToAddress(MantaTokenAddress),
+				IsHandle:   0,
+				Timestamp:  eventItem.Timestamp,
 			}
 			strategiesRemove = append(strategiesRemove, strategy)
 		}

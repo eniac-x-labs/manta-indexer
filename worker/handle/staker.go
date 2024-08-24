@@ -3,6 +3,7 @@ package handle
 import (
 	"context"
 	"fmt"
+	"github.com/eniac-x-labs/manta-indexer/database/event/strategies"
 
 	"math/big"
 	"time"
@@ -67,6 +68,7 @@ func (sh *StakeHolderHandle) processStrategyDeposit() error {
 		log.Error("Query unhandled strategy deposit fail", "err", err)
 		return err
 	}
+	var strategyList []strategies.Strategies
 	for _, unHandleDeposit := range unHandleDepositList {
 		stkType := worker.StakeHolderType{
 			MantaStake:    unHandleDeposit.Shares,
@@ -74,7 +76,12 @@ func (sh *StakeHolderHandle) processStrategyDeposit() error {
 			ClaimedAmount: big.NewInt(0),
 			Timestamp:     unHandleDeposit.Timestamp,
 		}
-		err := sh.db.StakeHolder.QueryAndUpdateStakeHolder(unHandleDeposit.Staker, stkType)
+		strategy := strategies.Strategies{
+			Strategy: unHandleDeposit.Strategy,
+			Tvl:      unHandleDeposit.Shares,
+		}
+		strategyList = append(strategyList, strategy)
+		err := sh.db.StakeHolder.QueryAndUpdateStakeHolder(unHandleDeposit.Staker.String(), unHandleDeposit.Strategy.String(), stkType)
 		if err != nil {
 			log.Error("processStrategyDeposit query and update operator fail", "err", err)
 			return err
@@ -83,6 +90,12 @@ func (sh *StakeHolderHandle) processStrategyDeposit() error {
 	if len(unHandleDepositList) > 0 {
 		if err := sh.db.StrategyDeposit.MarkedStrategyDepositHandled(unHandleDepositList); err != nil {
 			log.Error("MarkedStrategyDepositHandled fail", "err", err)
+			return err
+		}
+	}
+	if len(strategyList) > 0 {
+		if err := sh.db.Strategies.UpdateStrategyTvlHandled(strategyList); err != nil {
+			log.Error("UpdateStrategyTvlHandled fail", "err", err)
 			return err
 		}
 	}
@@ -101,7 +114,7 @@ func (sh *StakeHolderHandle) processWithdrawalCompleted() error {
 			ClaimedAmount: big.NewInt(0),
 			Timestamp:     unHandleCompleted.Timestamp,
 		}
-		err := sh.db.StakeHolder.QueryAndUpdateStakeHolder(unHandleCompleted.Staker, stkType)
+		err := sh.db.StakeHolder.QueryAndUpdateStakeHolder(unHandleCompleted.Staker.String(), unHandleCompleted.Strategy.String(), stkType)
 		if err != nil {
 			log.Error("processWithdrawalCompleted query and update staker fail", "err", err)
 			return err
@@ -128,7 +141,7 @@ func (sh *StakeHolderHandle) processStakeHolderClaimReward() error {
 			ClaimedAmount: new(big.Int).Neg(unHandleStakeHolderClaimReward.Amount),
 			Timestamp:     unHandleStakeHolderClaimReward.Timestamp,
 		}
-		err := sh.db.StakeHolder.QueryAndUpdateStakeHolder(unHandleStakeHolderClaimReward.StakeHolder, stkType)
+		err := sh.db.StakeHolder.QueryAndUpdateStakeHolder(unHandleStakeHolderClaimReward.StakeHolder.String(), unHandleStakeHolderClaimReward.Strategy.String(), stkType)
 		if err != nil {
 			log.Error("processWithdrawalCompleted query and update staker fail", "err", err)
 			return err

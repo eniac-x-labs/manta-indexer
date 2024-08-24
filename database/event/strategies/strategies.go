@@ -15,13 +15,15 @@ import (
 )
 
 type Strategies struct {
-	GUID      uuid.UUID      `gorm:"primaryKey" json:"guid"`
-	BlockHash common.Hash    `json:"block_hash" gorm:"serializer:bytes"`
-	Number    *big.Int       `json:"number" gorm:"serializer:u256"`
-	TxHash    common.Hash    `json:"tx_hash" gorm:"serializer:bytes"`
-	Strategy  common.Address `json:"strategy" gorm:"serializer:bytes"`
-	IsHandle  uint8          `json:"is_handle"`
-	Timestamp uint64         `json:"timestamp"`
+	GUID       uuid.UUID      `gorm:"primaryKey" json:"guid"`
+	BlockHash  common.Hash    `json:"block_hash" gorm:"serializer:bytes"`
+	Number     *big.Int       `json:"number" gorm:"serializer:u256"`
+	TxHash     common.Hash    `json:"tx_hash" gorm:"serializer:bytes"`
+	Strategy   common.Address `json:"strategy" gorm:"serializer:bytes"`
+	Tvl        *big.Int       `json:"tvl" gorm:"serializer:u256"`
+	MantaToken common.Address `json:"manta_token" gorm:"serializer:bytes"`
+	IsHandle   uint8          `json:"is_handle"`
+	Timestamp  uint64         `json:"timestamp"`
 }
 
 func (Strategies) TableName() string {
@@ -35,12 +37,32 @@ type StrategiesView interface {
 
 type StrategiesDB interface {
 	StrategiesView
+	UpdateStrategyTvlHandled([]Strategies) error
 	RemoveStoreStrategies([]Strategies) error
 	StoreStrategies([]Strategies) error
 }
 
 type strategiesDB struct {
 	gorm *gorm.DB
+}
+
+func (db strategiesDB) UpdateStrategyTvlHandled(strategies []Strategies) error {
+	for i := 0; i < len(strategies); i++ {
+		var strategy = Strategies{}
+		result := db.gorm.Table("strategies").Where(&Strategies{Strategy: strategies[i].Strategy}).Take(&strategy)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				return nil
+			}
+			return result.Error
+		}
+		strategy.Tvl = new(big.Int).And(strategy.Tvl, strategies[i].Tvl)
+		err := db.gorm.Save(strategy).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (db strategiesDB) QueryStrategies(strategy string) (*Strategies, error) {

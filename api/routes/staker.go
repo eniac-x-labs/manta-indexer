@@ -26,10 +26,11 @@ func (h Routes) GetStakeHolderHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Routes) ListStakeHolderHandler(w http.ResponseWriter, r *http.Request) {
+	staker := r.URL.Query().Get("staker")
 	pageQuery := r.URL.Query().Get("page")
 	pageSizeQuery := r.URL.Query().Get("pageSize")
 	order := r.URL.Query().Get("order")
-	params, err := h.svc.QueryListParams(pageQuery, pageSizeQuery, order)
+	params, err := h.svc.QueryAddressListParams(staker, pageQuery, pageSizeQuery, order)
 	if err != nil {
 		http.Error(w, "invalid query params", http.StatusBadRequest)
 		log.Error("error reading request params", "err", err.Error())

@@ -16,6 +16,7 @@ import (
 type StakeHolder struct {
 	GUID            uuid.UUID      `gorm:"primaryKey" json:"guid"`
 	Staker          common.Address `gorm:"serializer:bytes" json:"staker"`
+	Strategy        common.Address `json:"strategy" gorm:"serializer:bytes"`
 	TotalMantaStake *big.Int       `gorm:"serializer:u256" json:"total_manta_stake"`
 	TotalReward     *big.Int       `gorm:"serializer:u256" json:"total_reward"`
 	ClaimedAmount   *big.Int       `gorm:"serializer:u256" json:"claimed_amount"`
@@ -28,12 +29,12 @@ func (StakeHolder) TableName() string {
 
 type StakeHolderView interface {
 	GetStakeHolder(string) (*StakeHolder, error)
-	ListStakeHolder(page int, pageSize int, order string) ([]StakeHolder, uint64)
+	ListStakeHolder(address string, page int, pageSize int, order string) ([]StakeHolder, uint64)
 }
 
 type StakeHolderDB interface {
 	StakeHolderView
-	QueryAndUpdateStakeHolder(common.Address, StakeHolderType) error
+	QueryAndUpdateStakeHolder(string, string, StakeHolderType) error
 	StoreStakerHolder([]StakeHolder) error
 }
 
@@ -41,14 +42,15 @@ type stakeHolderDB struct {
 	gorm *gorm.DB
 }
 
-func (sh *stakeHolderDB) QueryAndUpdateStakeHolder(stakeAddress common.Address, shType StakeHolderType) error {
+func (sh *stakeHolderDB) QueryAndUpdateStakeHolder(stakeAddress string, strategyAddress string, shType StakeHolderType) error {
 	var stakeHolder StakeHolder
-	result := sh.gorm.Where(&StakeHolder{Staker: stakeAddress}).Take(&stakeHolder)
+	result := sh.gorm.Table("staker_holder").Where("staker = ? and strategy = ?", stakeAddress, strategyAddress).Take(&stakeHolder)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			stHolder := StakeHolder{
 				GUID:            uuid.New(),
-				Staker:          stakeAddress,
+				Staker:          common.HexToAddress(stakeAddress),
+				Strategy:        common.HexToAddress(strategyAddress),
 				TotalMantaStake: shType.MantaStake,
 				TotalReward:     shType.Reward,
 				ClaimedAmount:   shType.ClaimedAmount,
@@ -90,15 +92,23 @@ func (shv stakeHolderDB) GetStakeHolder(staker string) (*StakeHolder, error) {
 	return &stakeHolder, nil
 }
 
-func (shv stakeHolderDB) ListStakeHolder(page int, pageSize int, order string) ([]StakeHolder, uint64) {
+func (shv stakeHolderDB) ListStakeHolder(address string, page int, pageSize int, order string) ([]StakeHolder, uint64) {
 	var totalRecord int64
 	var stakeHolderList []StakeHolder
 	queryRoot := shv.gorm.Table("staker_holder")
-	err := shv.gorm.Table("staker_holder").Select("staker").Count(&totalRecord).Error
-	if err != nil {
-		log.Error("list stake holder db count fail", "err", err)
+	if address != "0x00" {
+		err := shv.gorm.Table("staker_holder").Select("total_manta_stake").Where("staker = ?", address).Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get staker holder count fail")
+		}
+		queryRoot.Where("staker = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
+	} else {
+		err := shv.gorm.Table("staker_holder").Select("total_manta_stake").Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get staker holder count fail ")
+		}
+		queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	}
-	queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
 	if strings.ToLower(order) == "asc" {
 		queryRoot.Order("timestamp asc")
 	} else {

@@ -16,8 +16,9 @@ func (h HandlerSvc) GetStakeHolder(staker string) (*worker.StakeHolder, error) {
 	return stakeHolder, err
 }
 
-func (h HandlerSvc) ListStakeHolder(params *models.QueryListParams) (*models.StakeHolderListResponse, error) {
-	stakeHolderList, total := h.stakeHolderView.ListStakeHolder(params.Page, params.PageSize, params.Order)
+func (h HandlerSvc) ListStakeHolder(params *models.QueryAddressListParams) (*models.StakeHolderListResponse, error) {
+	stakerAddress := strings.ToLower(params.Address)
+	stakeHolderList, total := h.stakeHolderView.ListStakeHolder(stakerAddress, params.Page, params.PageSize, params.Order)
 	return &models.StakeHolderListResponse{
 		ListResponse: models.ListResponse{
 			Current: params.Page,

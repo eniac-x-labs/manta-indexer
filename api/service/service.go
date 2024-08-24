@@ -38,7 +38,7 @@ type Service interface {
 	* ============== stakeholder ==============
 	 */
 	GetStakeHolder(staker string) (*worker.StakeHolder, error)
-	ListStakeHolder(*models.QueryListParams) (*models.StakeHolderListResponse, error)
+	ListStakeHolder(*models.QueryAddressListParams) (*models.StakeHolderListResponse, error)
 	ListStakerDepositStrategy(*models.QueryAddressListParams) (*models.StrategyDepositListResponse, error)
 	ListStakerDelegated(*models.QueryAddressListParams) (*models.StakerDelegatedListResponse, error)
 	ListStakerUndelegated(*models.QueryAddressListParams) (*models.StakerUndelegatedListResponse, error)

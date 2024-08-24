@@ -246,6 +246,8 @@ CREATE TABLE IF NOT EXISTS strategies (
     number                      UINT256 NOT NULL,
     tx_hash                     VARCHAR NOT NULL UNIQUE,
     strategy                    VARCHAR NOT NULL,
+    tvl                         UINT256 NOT NULL,
+    manta_token                 VARCHAR NOT NULL,
     is_handle                   SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
@@ -360,6 +362,7 @@ CREATE INDEX IF NOT EXISTS total_operator_to_block_number ON total_operator(to_b
 CREATE TABLE IF NOT EXISTS staker_holder (
     guid                        VARCHAR PRIMARY KEY,
     staker                      VARCHAR NOT NULL,
+    strategy                    VARCHAR NOT NULL,
     total_manta_stake           UINT256 NOT NULL,
     total_reward                UINT256 NOT NULL,
     claimed_amount              UINT256 NOT NULL,
