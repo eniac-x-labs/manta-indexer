@@ -76,6 +76,8 @@ func (osd operatorSharesDecreasedDB) QueryUnHandlerOperatorSharesDecreased() ([]
 }
 
 func (osd operatorSharesDecreasedDB) ListOperatorSharesDecreased(address string, page int, pageSize int, order string) ([]OperatorSharesDecreased, uint64) {
+	address = strings.ToLower(address)
+
 	var totalRecord int64
 	var operatorSharesDecreasedList []OperatorSharesDecreased
 	queryRoot := osd.gorm.Table("operator_shares_decreased")
