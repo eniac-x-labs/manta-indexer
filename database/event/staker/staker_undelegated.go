@@ -1,4 +1,4 @@
-package event
+package staker
 
 import (
 	"github.com/ethereum/go-ethereum/log"

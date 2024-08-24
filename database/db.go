@@ -3,18 +3,20 @@ package database
 import (
 	"context"
 	"fmt"
-	"gorm.io/gorm/logger"
 	"os"
 	"path/filepath"
 
-	"github.com/ethereum/go-ethereum/log"
 	"github.com/pkg/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"github.com/ethereum/go-ethereum/log"
+
 	"github.com/eniac-x-labs/manta-indexer/config"
 	"github.com/eniac-x-labs/manta-indexer/database/common"
 	"github.com/eniac-x-labs/manta-indexer/database/event"
+	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
+	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
 	_ "github.com/eniac-x-labs/manta-indexer/database/utils/serializers"
 	"github.com/eniac-x-labs/manta-indexer/database/worker"
 	"github.com/eniac-x-labs/manta-indexer/synchronizer/retry"
@@ -26,22 +28,22 @@ type DB struct {
 	ContractEvent                    event.ContractEventDB
 	EventBlocks                      event.EventBlocksDB
 	MinWithdrawalDelayBlocksSet      event.MinWithdrawalDelayBlocksSetDB
-	OperatorAndStakeReward           event.OperatorAndStakeRewardDB
-	OperatorClaimReward              event.OperatorClaimRewardDB
-	OperatorModified                 event.OperatorModifiedDB
-	OperatorNodeUrlUpdate            event.OperatorNodeUrlUpdateDB
-	OperatorRegistered               event.OperatorRegisteredDB
-	OperatorSharesDecreased          event.OperatorSharesDecreasedDB
-	OperatorSharesIncreased          event.OperatorSharesIncreasedDB
-	StakeHolderClaimReward           event.StakeHolderClaimRewardDB
-	StakerDelegated                  event.StakerDelegatedDB
-	StakerUndelegated                event.StakerUndelegatedDB
+	OperatorAndStakeReward           operator.OperatorAndStakeRewardDB
+	OperatorClaimReward              operator.OperatorClaimRewardDB
+	OperatorModified                 operator.OperatorModifiedDB
+	OperatorNodeUrlUpdate            operator.OperatorNodeUrlUpdateDB
+	OperatorRegistered               operator.OperatorRegisteredDB
+	OperatorSharesDecreased          operator.OperatorSharesDecreasedDB
+	OperatorSharesIncreased          operator.OperatorSharesIncreasedDB
+	StakeHolderClaimReward           staker.StakeHolderClaimRewardDB
+	StakerDelegated                  staker.StakerDelegatedDB
+	StakerUndelegated                staker.StakerUndelegatedDB
 	Strategies                       event.StrategiesDB
-	StrategyDeposit                  event.StrategyDepositDB
+	StrategyDeposit                  staker.StrategyDepositDB
 	StrategyWithdrawalDelayBlocksSet event.StrategyWithdrawalDelayBlocksSetDB
-	WithdrawalMigrated               event.WithdrawalMigratedDB
-	WithdrawalQueued                 event.WithdrawalQueuedDB
-	WithdrawalCompleted              event.WithdrawalCompletedDB
+	WithdrawalMigrated               staker.WithdrawalMigratedDB
+	WithdrawalQueued                 staker.WithdrawalQueuedDB
+	WithdrawalCompleted              staker.WithdrawalCompletedDB
 	Operators                        worker.OperatorsDB
 	OperatorPublicKeys               worker.OperatorPublicKeysDB
 	StakeHolder                      worker.StakeHolderDB
@@ -61,7 +63,6 @@ func NewDB(ctx context.Context, dbConfig config.DBConfig) (*DB, error) {
 	}
 
 	gormConfig := gorm.Config{
-		Logger:                 logger.Default.LogMode(logger.Info),
 		SkipDefaultTransaction: true,
 		CreateBatchSize:        3_000,
 	}
@@ -85,22 +86,22 @@ func NewDB(ctx context.Context, dbConfig config.DBConfig) (*DB, error) {
 		ContractEvent:                    event.NewContractEventsDB(gorm),
 		EventBlocks:                      event.NewEventBlocksDB(gorm),
 		MinWithdrawalDelayBlocksSet:      event.NewMinWithdrawalDelayBlocksSetDB(gorm),
-		OperatorAndStakeReward:           event.NewOperatorAndStakeRewardDB(gorm),
-		OperatorClaimReward:              event.NewOperatorClaimRewardDB(gorm),
-		OperatorModified:                 event.NewOperatorModifiedDB(gorm),
-		OperatorNodeUrlUpdate:            event.NewOperatorNodeUrlUpdateDB(gorm),
-		OperatorRegistered:               event.NewOperatorRegisteredDB(gorm),
-		OperatorSharesDecreased:          event.NewOperatorSharesDecreasedDB(gorm),
-		OperatorSharesIncreased:          event.NewOperatorSharesIncreasedDB(gorm),
-		StakeHolderClaimReward:           event.NewStakeHolderClaimRewardDB(gorm),
-		StakerDelegated:                  event.NewStakerDelegatedDB(gorm),
-		StakerUndelegated:                event.NewStakerUndelegatedDB(gorm),
+		OperatorAndStakeReward:           operator.NewOperatorAndStakeRewardDB(gorm),
+		OperatorClaimReward:              operator.NewOperatorClaimRewardDB(gorm),
+		OperatorModified:                 operator.NewOperatorModifiedDB(gorm),
+		OperatorNodeUrlUpdate:            operator.NewOperatorNodeUrlUpdateDB(gorm),
+		OperatorRegistered:               operator.NewOperatorRegisteredDB(gorm),
+		OperatorSharesDecreased:          operator.NewOperatorSharesDecreasedDB(gorm),
+		OperatorSharesIncreased:          operator.NewOperatorSharesIncreasedDB(gorm),
+		StakeHolderClaimReward:           staker.NewStakeHolderClaimRewardDB(gorm),
+		StakerDelegated:                  staker.NewStakerDelegatedDB(gorm),
+		StakerUndelegated:                staker.NewStakerUndelegatedDB(gorm),
 		Strategies:                       event.NewStrategiesDB(gorm),
-		StrategyDeposit:                  event.NewStrategyDepositDB(gorm),
+		StrategyDeposit:                  staker.NewStrategyDepositDB(gorm),
 		StrategyWithdrawalDelayBlocksSet: event.NewStrategyWithdrawalDelayBlocksSetDB(gorm),
-		WithdrawalMigrated:               event.NewWithdrawalMigratedDB(gorm),
-		WithdrawalQueued:                 event.NewWithdrawalQueuedDB(gorm),
-		WithdrawalCompleted:              event.NewWithdrawalCompletedDB(gorm),
+		WithdrawalMigrated:               staker.NewWithdrawalMigratedDB(gorm),
+		WithdrawalQueued:                 staker.NewWithdrawalQueuedDB(gorm),
+		WithdrawalCompleted:              staker.NewWithdrawalCompletedDB(gorm),
 		Operators:                        worker.NewOperatorsDB(gorm),
 		OperatorPublicKeys:               worker.NewOperatorPublicKeysDB(gorm),
 		StakeHolder:                      worker.NewStakeHolderDB(gorm),
@@ -117,22 +118,22 @@ func (db *DB) Transaction(fn func(db *DB) error) error {
 			ContractEvent:                    event.NewContractEventsDB(tx),
 			EventBlocks:                      event.NewEventBlocksDB(tx),
 			MinWithdrawalDelayBlocksSet:      event.NewMinWithdrawalDelayBlocksSetDB(tx),
-			OperatorAndStakeReward:           event.NewOperatorAndStakeRewardDB(tx),
-			OperatorClaimReward:              event.NewOperatorClaimRewardDB(tx),
-			OperatorModified:                 event.NewOperatorModifiedDB(tx),
-			OperatorNodeUrlUpdate:            event.NewOperatorNodeUrlUpdateDB(tx),
-			OperatorRegistered:               event.NewOperatorRegisteredDB(tx),
-			OperatorSharesDecreased:          event.NewOperatorSharesDecreasedDB(tx),
-			OperatorSharesIncreased:          event.NewOperatorSharesIncreasedDB(tx),
-			StakeHolderClaimReward:           event.NewStakeHolderClaimRewardDB(tx),
-			StakerDelegated:                  event.NewStakerDelegatedDB(tx),
-			StakerUndelegated:                event.NewStakerUndelegatedDB(tx),
+			OperatorAndStakeReward:           operator.NewOperatorAndStakeRewardDB(tx),
+			OperatorClaimReward:              operator.NewOperatorClaimRewardDB(tx),
+			OperatorModified:                 operator.NewOperatorModifiedDB(tx),
+			OperatorNodeUrlUpdate:            operator.NewOperatorNodeUrlUpdateDB(tx),
+			OperatorRegistered:               operator.NewOperatorRegisteredDB(tx),
+			OperatorSharesDecreased:          operator.NewOperatorSharesDecreasedDB(tx),
+			OperatorSharesIncreased:          operator.NewOperatorSharesIncreasedDB(tx),
+			StakeHolderClaimReward:           staker.NewStakeHolderClaimRewardDB(tx),
+			StakerDelegated:                  staker.NewStakerDelegatedDB(tx),
+			StakerUndelegated:                staker.NewStakerUndelegatedDB(tx),
 			Strategies:                       event.NewStrategiesDB(tx),
-			StrategyDeposit:                  event.NewStrategyDepositDB(tx),
+			StrategyDeposit:                  staker.NewStrategyDepositDB(tx),
 			StrategyWithdrawalDelayBlocksSet: event.NewStrategyWithdrawalDelayBlocksSetDB(tx),
-			WithdrawalMigrated:               event.NewWithdrawalMigratedDB(tx),
-			WithdrawalQueued:                 event.NewWithdrawalQueuedDB(tx),
-			WithdrawalCompleted:              event.NewWithdrawalCompletedDB(tx),
+			WithdrawalMigrated:               staker.NewWithdrawalMigratedDB(tx),
+			WithdrawalQueued:                 staker.NewWithdrawalQueuedDB(tx),
+			WithdrawalCompleted:              staker.NewWithdrawalCompletedDB(tx),
 			Operators:                        worker.NewOperatorsDB(tx),
 			OperatorPublicKeys:               worker.NewOperatorPublicKeysDB(tx),
 			StakeHolder:                      worker.NewStakeHolderDB(tx),

@@ -48,7 +48,7 @@ func (h Routes) StrategyListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h Routes) GetOperator(w http.ResponseWriter, r *http.Request) {
+func (h Routes) GetOperatorHandler(w http.ResponseWriter, r *http.Request) {
 	operator := r.URL.Query().Get("operator")
 	if operator == "" {
 		http.Error(w, "invalid query params", http.StatusBadRequest)
@@ -121,7 +121,7 @@ func (h Routes) RegisterOperatorListHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	registerOperatorsRet, err := h.svc.RegisterOperatorList(params)
+	registerOperatorsRet, err := h.svc.ListRegisterOperator(params)
 	if err != nil {
 		http.Error(w, "Internal server error reading register operator list", http.StatusInternalServerError)
 		log.Error("Unable to read register operator list from DB", "err", err.Error())
@@ -134,7 +134,7 @@ func (h Routes) RegisterOperatorListHandler(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func (h Routes) ListOperatorNodeUrlUpdate(w http.ResponseWriter, r *http.Request) {
+func (h Routes) ListOperatorNodeUrlUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	operator := r.URL.Query().Get("operator")
 	pageQuery := r.URL.Query().Get("page")
 	pageSizeQuery := r.URL.Query().Get("pageSize")
@@ -180,6 +180,32 @@ func (h Routes) ListOperatorSharesIncreasedHandler(w http.ResponseWriter, r *htt
 	if err != nil {
 		log.Error("Error writing response", "err", err.Error())
 	}
+}
+
+func (h Routes) ListOperatorReceiveStakerDelegateHandler(w http.ResponseWriter, r *http.Request) {
+	operator := r.URL.Query().Get("operator")
+	pageQuery := r.URL.Query().Get("page")
+	pageSizeQuery := r.URL.Query().Get("pageSize")
+	order := r.URL.Query().Get("order")
+	params, err := h.svc.QueryAddressListParams(operator, pageQuery, pageSizeQuery, order)
+	if err != nil {
+		http.Error(w, "invalid query params", http.StatusBadRequest)
+		log.Error("error reading request params", "err", err.Error())
+		return
+	}
+
+	tempList, err := h.svc.ListOperatorSharesDecreased(params)
+	if err != nil {
+		http.Error(w, "Internal server error reading ListOperatorSharesDecreasedHandler", http.StatusInternalServerError)
+		log.Error("Unable to read ListOperatorSharesDecreasedHandler from DB", "err", err.Error())
+		return
+	}
+
+	err = jsonResponse(w, tempList, http.StatusOK)
+	if err != nil {
+		log.Error("Error writing response", "err", err.Error())
+	}
+
 }
 
 func (h Routes) ListOperatorSharesDecreasedHandler(w http.ResponseWriter, r *http.Request) {

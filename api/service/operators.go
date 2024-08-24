@@ -2,11 +2,13 @@ package service
 
 import (
 	"encoding/json"
-	"github.com/eniac-x-labs/manta-indexer/database/event"
-	"github.com/ethereum/go-ethereum/log"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/log"
+
 	"github.com/eniac-x-labs/manta-indexer/api/models"
+	"github.com/eniac-x-labs/manta-indexer/database/event"
+	optr "github.com/eniac-x-labs/manta-indexer/database/event/operator"
 	"github.com/eniac-x-labs/manta-indexer/database/worker"
 )
 
@@ -52,16 +54,16 @@ func (h HandlerSvc) ListOperator(params *models.QueryListParams) (*models.Operat
 	}, nil
 }
 
-func (h HandlerSvc) RegisterOperator(operator string) (*event.OperatorRegistered, error) {
+func (h HandlerSvc) RegisterOperator(operator string) (*optr.OperatorRegistered, error) {
 	addressToLower := strings.ToLower(operator)
 	operatorRegistered, err := h.operatorRegisteredView.QueryOperatorRegistered(addressToLower)
 	if err != nil {
-		return &event.OperatorRegistered{}, err
+		return &optr.OperatorRegistered{}, err
 	}
 	return operatorRegistered, err
 }
 
-func (h HandlerSvc) RegisterOperatorList(params *models.QueryListParams) (*models.RegisterOperatorListResponse, error) {
+func (h HandlerSvc) ListRegisterOperator(params *models.QueryListParams) (*models.RegisterOperatorListResponse, error) {
 	operatorRegisteredList, total := h.operatorRegisteredView.QueryOperatorRegisteredList(params.Page, params.PageSize, params.Order)
 	return &models.RegisterOperatorListResponse{
 		ListResponse: models.ListResponse{
@@ -82,6 +84,19 @@ func (h HandlerSvc) ListOperatorNodeUrlUpdate(params *models.QueryAddressListPar
 			Total:   total,
 		},
 		Records: operatorNodeUrlUpdateList,
+	}, nil
+}
+
+func (h HandlerSvc) ListOperatorReceiveStakerDelegate(params *models.QueryAddressListParams) (*models.OperatorReceiveStakerDelegateListResponse, error) {
+	operaterAddress := strings.ToLower(params.Address)
+	operateDelegatedList, total := h.stakerDelegatedView.ListOperatorReceiveStakerDelegated(operaterAddress, params.Page, params.PageSize, params.Order)
+	return &models.OperatorReceiveStakerDelegateListResponse{
+		ListResponse: models.ListResponse{
+			Current: params.Page,
+			Size:    params.PageSize,
+			Total:   total,
+		},
+		Records: operateDelegatedList,
 	}, nil
 }
 

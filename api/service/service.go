@@ -1,6 +1,8 @@
 package service
 
 import (
+	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
+	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/log"
@@ -23,9 +25,10 @@ type Service interface {
 	 */
 	GetOperator(operator string) (*worker.Operators, error)
 	ListOperator(*models.QueryListParams) (*models.OperatorListResponse, error)
-	RegisterOperator(operator string) (*event.OperatorRegistered, error)
-	RegisterOperatorList(*models.QueryListParams) (*models.RegisterOperatorListResponse, error)
+	RegisterOperator(operator string) (*operator.OperatorRegistered, error)
+	ListRegisterOperator(*models.QueryListParams) (*models.RegisterOperatorListResponse, error)
 	ListOperatorNodeUrlUpdate(*models.QueryAddressListParams) (*models.OperatorNodeUrlUpdateListResponse, error)
+	ListOperatorReceiveStakerDelegate(*models.QueryAddressListParams) (*models.OperatorReceiveStakerDelegateListResponse, error)
 	ListOperatorSharesDecreased(*models.QueryAddressListParams) (*models.OperatorSharesDecreasedListResponse, error)
 	ListOperatorSharesIncreased(*models.QueryAddressListParams) (*models.OperatorSharesIncreasedListResponse, error)
 	ListOperatorAndStakeReward(*models.QueryAddressListParams) (*models.OperatorAndStakeRewardListResponse, error)
@@ -53,37 +56,37 @@ type Service interface {
 type HandlerSvc struct {
 	v                           *Validator
 	strategiesView              event.StrategiesView
-	operatorRegisteredView      event.OperatorRegisteredView
-	operatorNodeUrlUpdateView   event.OperatorNodeUrlUpdateView
+	operatorRegisteredView      operator.OperatorRegisteredView
+	operatorNodeUrlUpdateView   operator.OperatorNodeUrlUpdateView
 	operatorsView               worker.OperatorsView
 	stakeHolderView             worker.StakeHolderView
-	strategyDepositView         event.StrategyDepositView
-	withdrawalQueuedView        event.WithdrawalQueuedView
-	withdrawalCompletedView     event.WithdrawalCompletedView
-	stakerDelegatedView         event.StakerDelegatedView
-	stakerUndelegatedView       event.StakerUndelegatedView
-	stakeHolderClaimRewardView  event.StakeHolderClaimRewardView
-	operatorSharesDecreasedView event.OperatorSharesDecreasedView
-	operatorSharesIncreasedView event.OperatorSharesIncreasedView
-	operatorAndStakeRewardView  event.OperatorAndStakeRewardView
-	operatorClaimRewardView     event.OperatorClaimRewardView
+	strategyDepositView         staker.StrategyDepositView
+	withdrawalQueuedView        staker.WithdrawalQueuedView
+	withdrawalCompletedView     staker.WithdrawalCompletedView
+	stakerDelegatedView         staker.StakerDelegatedView
+	stakerUndelegatedView       staker.StakerUndelegatedView
+	stakeHolderClaimRewardView  staker.StakeHolderClaimRewardView
+	operatorSharesDecreasedView operator.OperatorSharesDecreasedView
+	operatorSharesIncreasedView operator.OperatorSharesIncreasedView
+	operatorAndStakeRewardView  operator.OperatorAndStakeRewardView
+	operatorClaimRewardView     operator.OperatorClaimRewardView
 }
 
 func New(v *Validator,
-	rgv event.OperatorRegisteredView,
-	onuu event.OperatorNodeUrlUpdateView,
+	rgv operator.OperatorRegisteredView,
+	onuu operator.OperatorNodeUrlUpdateView,
 	operatorsView worker.OperatorsView,
 	stakeHolderView worker.StakeHolderView,
-	strategyDepositView event.StrategyDepositView,
-	withdrawalQueuedView event.WithdrawalQueuedView,
-	withdrawalCompletedView event.WithdrawalCompletedView,
-	stakerDelegatedView event.StakerDelegatedView,
-	stakerUndelegatedView event.StakerUndelegatedView,
-	stakeHolderClaimRewardView event.StakeHolderClaimRewardView,
-	operatorSharesDecreasedView event.OperatorSharesDecreasedView,
-	operatorSharesIncreasedView event.OperatorSharesIncreasedView,
-	operatorAndStakeRewardView event.OperatorAndStakeRewardView,
-	operatorClaimRewardView event.OperatorClaimRewardView,
+	strategyDepositView staker.StrategyDepositView,
+	withdrawalQueuedView staker.WithdrawalQueuedView,
+	withdrawalCompletedView staker.WithdrawalCompletedView,
+	stakerDelegatedView staker.StakerDelegatedView,
+	stakerUndelegatedView staker.StakerUndelegatedView,
+	stakeHolderClaimRewardView staker.StakeHolderClaimRewardView,
+	operatorSharesDecreasedView operator.OperatorSharesDecreasedView,
+	operatorSharesIncreasedView operator.OperatorSharesIncreasedView,
+	operatorAndStakeRewardView operator.OperatorAndStakeRewardView,
+	operatorClaimRewardView operator.OperatorClaimRewardView,
 	strategiesView event.StrategiesView,
 ) Service {
 	return &HandlerSvc{
