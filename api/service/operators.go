@@ -62,9 +62,11 @@ func (h HandlerSvc) RegisterOperator(operator string) (*event.OperatorRegistered
 func (h HandlerSvc) RegisterOperatorList(params *models.QueryListParams) (*models.RegisterOperatorListResponse, error) {
 	operatorRegisteredList, total := h.operatorRegisteredView.QueryOperatorRegisteredList(params.Page, params.PageSize, params.Order)
 	return &models.RegisterOperatorListResponse{
-		Current: params.Page,
-		Size:    params.PageSize,
-		Total:   total,
+		ListResponse: models.ListResponse{
+			Current: params.Page,
+			Size:    params.PageSize,
+			Total:   total,
+		},
 		Records: operatorRegisteredList,
 	}, nil
 }
