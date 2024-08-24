@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 )
 
-func (h Routes) GetStakeHolder(w http.ResponseWriter, r *http.Request) {
+func (h Routes) GetStakeHolderHandler(w http.ResponseWriter, r *http.Request) {
 	staker := r.URL.Query().Get("staker")
 	if staker == "" {
 		http.Error(w, "invalid query params", http.StatusBadRequest)

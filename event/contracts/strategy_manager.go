@@ -3,6 +3,7 @@ package contracts
 import (
 	"context"
 	"fmt"
+	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
 	"math/big"
 
 	"github.com/google/uuid"
@@ -54,7 +55,7 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 		return err
 	}
 
-	var deposits []event.StrategyDeposit
+	var deposits []staker.StrategyDeposit
 	var strategiesAdd []event.Strategies
 	var strategiesRemove []event.Strategies
 	for _, eventItem := range contractEventList {
@@ -78,7 +79,7 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 				"strategy", depositEvent.Strategy.String(),
 				"shares", depositEvent.Shares.String())
 
-			deposit := event.StrategyDeposit{
+			deposit := staker.StrategyDeposit{
 				GUID:       uuid.New(),
 				BlockHash:  eventItem.BlockHash,
 				Number:     header.Number,

@@ -10,10 +10,9 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/ethereum/go-ethereum/log"
-
-	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/eniac-x-labs/manta-indexer/api/common/httputil"
 	"github.com/eniac-x-labs/manta-indexer/api/routes"
@@ -27,14 +26,15 @@ const ethereumAddressRegex = `^0x[a-fA-F0-9]{40}$`
 const (
 	HealthPath = "/healthz"
 
-	StrategyV1Path     = "/api/v1//strategies/strategy"
+	StrategyV1Path     = "/api/v1/strategies/strategy"
 	StrategyListV1Path = "/api/v1/strategies/strategy/list"
 
 	OperatorGetV1Path                 = "/api/v1/operator/get"
 	OperatorListV1Path                = "/api/v1/operator/list"
-	RegisterOperatorV1Path            = "/api/v1/operator/register"
-	RegisterOperatorListV1Path        = "/api/v1/operator/register/list"
+	OperatorRegisterV1Path            = "/api/v1/operator/register"
+	OperatorRegisterListV1Path        = "/api/v1/operator/register/list"
 	OperatorNodeUrlUpdateListV1Path   = "/api/v1/operator/node/url/update/list"
+	OperatorReceiveStakerDelegateList = "/api/v1/operator/receiver/staker/delegate/list"
 	OperatorSharesIncreasedListV1Path = "/api/v1/operator/shares/increased/list"
 	OperatorSharesDecreasedListV1Path = "/api/v1/operator/shares/decreased/list"
 	OperatorAndStakeRewardListV1Path  = "/api/v1/operator/stake/reward/list"
@@ -104,11 +104,12 @@ func (a *API) initRouter(conf config.ServerConfig, cfg *config.Config) {
 	/*
 	* ============== Operator ==============
 	 */
-	apiRouter.Get(fmt.Sprintf(OperatorGetV1Path), h.GetOperator)
+	apiRouter.Get(fmt.Sprintf(OperatorGetV1Path), h.GetOperatorHandler)
 	apiRouter.Get(fmt.Sprintf(OperatorListV1Path), h.ListOperatorHandler)
-	apiRouter.Get(fmt.Sprintf(RegisterOperatorV1Path), h.RegisterOperatorHandler)
-	apiRouter.Get(fmt.Sprintf(RegisterOperatorListV1Path), h.RegisterOperatorListHandler)
-	apiRouter.Get(fmt.Sprintf(OperatorNodeUrlUpdateListV1Path), h.ListOperatorNodeUrlUpdate)
+	apiRouter.Get(fmt.Sprintf(OperatorRegisterV1Path), h.RegisterOperatorHandler)
+	apiRouter.Get(fmt.Sprintf(OperatorRegisterListV1Path), h.RegisterOperatorListHandler)
+	apiRouter.Get(fmt.Sprintf(OperatorNodeUrlUpdateListV1Path), h.ListOperatorNodeUrlUpdateHandler)
+	apiRouter.Get(fmt.Sprintf(OperatorReceiveStakerDelegateList), h.ListOperatorReceiveStakerDelegateHandler)
 	apiRouter.Get(fmt.Sprintf(OperatorSharesDecreasedListV1Path), h.ListOperatorSharesDecreasedHandler)
 	apiRouter.Get(fmt.Sprintf(OperatorSharesIncreasedListV1Path), h.ListOperatorSharesIncreasedHandler)
 	apiRouter.Get(fmt.Sprintf(OperatorAndStakeRewardListV1Path), h.ListOperatorAndStakeRewardHandler)
@@ -117,7 +118,7 @@ func (a *API) initRouter(conf config.ServerConfig, cfg *config.Config) {
 	/*
 	* ============== Stakeholder ==============
 	 */
-	apiRouter.Get(fmt.Sprintf(StakerGetV1Path), h.GetStakeHolder)
+	apiRouter.Get(fmt.Sprintf(StakerGetV1Path), h.GetStakeHolderHandler)
 	apiRouter.Get(fmt.Sprintf(StakerListV1Path), h.ListStakeHolderHandler)
 	apiRouter.Get(fmt.Sprintf(StakerDepositStrategyListV1Path), h.ListStakerDepositStrategyHandler)
 	apiRouter.Get(fmt.Sprintf(StakerDelegatedListV1Path), h.ListStakerDelegatedHandler)

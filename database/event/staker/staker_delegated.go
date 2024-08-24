@@ -1,7 +1,6 @@
-package event
+package staker
 
 import (
-	"github.com/ethereum/go-ethereum/log"
 	"math/big"
 	"strings"
 
@@ -9,6 +8,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 
 	_ "github.com/eniac-x-labs/manta-indexer/database/utils/serializers"
 )
@@ -30,6 +30,7 @@ func (StakerDelegated) TableName() string {
 
 type StakerDelegatedView interface {
 	ListStakerDelegated(address string, page int, pageSize int, order string) ([]StakerDelegated, uint64)
+	ListOperatorReceiveStakerDelegated(address string, page int, pageSize int, order string) ([]StakerDelegated, uint64)
 }
 
 type StakerDelegatedDB interface {
@@ -41,7 +42,7 @@ type stakerDelegatedDB struct {
 	gorm *gorm.DB
 }
 
-func (sd stakerDelegatedDB) ListStakerDelegated(address string, page int, pageSize int, order string) ([]StakerDelegated, uint64) {
+func (sd stakerDelegatedDB) ListOperatorReceiveStakerDelegated(address string, page int, pageSize int, order string) ([]StakerDelegated, uint64) {
 	var totalRecord int64
 	var stakerDelegatedList []StakerDelegated
 	queryRoot := sd.gorm.Table("staker_delegated")
@@ -51,6 +52,35 @@ func (sd stakerDelegatedDB) ListStakerDelegated(address string, page int, pageSi
 			log.Error("get staker delegated count fail")
 		}
 		queryRoot.Where("operator = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
+	} else {
+		err := sd.gorm.Table("staker_delegated").Select("number").Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get staker delegated count fail ")
+		}
+		queryRoot.Offset((page - 1) * pageSize).Limit(pageSize)
+	}
+	if strings.ToLower(order) == "asc" {
+		queryRoot.Order("number asc")
+	} else {
+		queryRoot.Order("number desc")
+	}
+	qErr := queryRoot.Find(&stakerDelegatedList).Error
+	if qErr != nil {
+		log.Error("list stakerDelegatedDB fail", "err", qErr)
+	}
+	return stakerDelegatedList, uint64(totalRecord)
+}
+
+func (sd stakerDelegatedDB) ListStakerDelegated(address string, page int, pageSize int, order string) ([]StakerDelegated, uint64) {
+	var totalRecord int64
+	var stakerDelegatedList []StakerDelegated
+	queryRoot := sd.gorm.Table("staker_delegated")
+	if address != "0x00" {
+		err := sd.gorm.Table("staker_delegated").Select("number").Where("staker = ?", address).Count(&totalRecord).Error
+		if err != nil {
+			log.Error("get staker delegated count fail")
+		}
+		queryRoot.Where("staker = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
 	} else {
 		err := sd.gorm.Table("staker_delegated").Select("number").Count(&totalRecord).Error
 		if err != nil {

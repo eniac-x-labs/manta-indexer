@@ -3,6 +3,8 @@ package contracts
 import (
 	"context"
 	"fmt"
+	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
+	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
 	"math/big"
 	"strings"
 
@@ -54,15 +56,15 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 		return err
 	}
 
-	var operatorNodeUrlUpdates []event.OperatorNodeUrlUpdate
-	var operatorRegisters []event.OperatorRegistered
-	var stakerDelegates []event.StakerDelegated
-	var operatorSharesIncreases []event.OperatorSharesIncreased
-	var operatorDetailsModifies []event.OperatorModified
-	var operatorSharesDecreases []event.OperatorSharesDecreased
-	var withdrawalQueues []event.WithdrawalQueued
-	var WithdrawalCompleteds []event.WithdrawalCompleted
-	var withdrawalMigrates []event.WithdrawalMigrated
+	var operatorNodeUrlUpdates []operator.OperatorNodeUrlUpdate
+	var operatorRegisters []operator.OperatorRegistered
+	var stakerDelegates []staker.StakerDelegated
+	var operatorSharesIncreases []operator.OperatorSharesIncreased
+	var operatorDetailsModifies []operator.OperatorModified
+	var operatorSharesDecreases []operator.OperatorSharesDecreased
+	var withdrawalQueues []staker.WithdrawalQueued
+	var WithdrawalCompleteds []staker.WithdrawalCompleted
+	var withdrawalMigrates []staker.WithdrawalMigrated
 	var minWithdrawalDelayBlocksSets []event.MinWithdrawalDelayBlocksSet
 	var strategyWithdrawalDelayBlocksSets []event.StrategyWithdrawalDelayBlocksSet
 
@@ -86,7 +88,7 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 				"operator", operatorNodeUrlUpdatedEvent.Operator.String(),
 				"metadataURI", operatorNodeUrlUpdatedEvent.MetadataURI)
 
-			temp := event.OperatorNodeUrlUpdate{
+			temp := operator.OperatorNodeUrlUpdate{
 				GUID:        uuid.New(),
 				BlockHash:   eventItem.BlockHash,
 				Number:      header.Number,
@@ -113,7 +115,7 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 			tempStakerOptOutWindowBlocks := new(big.Int)
 			tempStakerOptOutWindowBlocks.SetUint64(uint64(operatorRegisteredEvent.OperatorDetails.StakerOptOutWindowBlocks))
 
-			temp := event.OperatorRegistered{
+			temp := operator.OperatorRegistered{
 				GUID:                     uuid.New(),
 				BlockHash:                eventItem.BlockHash,
 				Number:                   header.Number,
@@ -139,7 +141,7 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 				"operator", stakerDelegatedEvnet.Operator.String(),
 				"staker", stakerDelegatedEvnet.Staker.String())
 
-			temp := event.StakerDelegated{
+			temp := staker.StakerDelegated{
 				GUID:      uuid.New(),
 				BlockHash: eventItem.BlockHash,
 				Number:    header.Number,
@@ -163,7 +165,7 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 				"operator", operatorSharesIncreasedEvent.Operator.String(),
 				"staker", operatorSharesIncreasedEvent.Staker.String())
 
-			temp := event.OperatorSharesIncreased{
+			temp := operator.OperatorSharesIncreased{
 				GUID:      uuid.New(),
 				BlockHash: eventItem.BlockHash,
 				Number:    header.Number,
@@ -190,7 +192,7 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 			tempStakerOptOutWindowBlocks := new(big.Int)
 			tempStakerOptOutWindowBlocks.SetUint64(uint64(operatorDetailsModifiedEvent.NewOperatorDetails.StakerOptOutWindowBlocks))
 
-			temp := event.OperatorModified{
+			temp := operator.OperatorModified{
 				GUID:                     uuid.New(),
 				BlockHash:                eventItem.BlockHash,
 				Number:                   header.Number,
@@ -217,7 +219,7 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 				"operator", operatorSharesDecreasedEvent.Operator.String(),
 				"staker", operatorSharesDecreasedEvent.Staker.String())
 
-			temp := event.OperatorSharesDecreased{
+			temp := operator.OperatorSharesDecreased{
 				GUID:      uuid.New(),
 				BlockHash: eventItem.BlockHash,
 				Number:    header.Number,
@@ -245,7 +247,7 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 			startBlockBigInt := new(big.Int)
 			startBlockBigInt.SetUint64(uint64(withdrawalQueuedEvent.Withdrawal.StartBlock))
 
-			temp := event.WithdrawalQueued{
+			temp := staker.WithdrawalQueued{
 				GUID:           uuid.New(),
 				BlockHash:      eventItem.BlockHash,
 				Number:         header.Number,
@@ -280,7 +282,7 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 				"Shares", withdrawalCompleted.Shares.String(),
 			)
 
-			temp := event.WithdrawalCompleted{
+			temp := staker.WithdrawalCompleted{
 				GUID:      uuid.New(),
 				BlockHash: eventItem.BlockHash,
 				Number:    header.Number,
@@ -306,7 +308,7 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 				"oldWithdrawalRoot", common2.BytesToHash(withdrawalMigratedEvent.OldWithdrawalRoot[:]).String(),
 				"newWithdrawalRoot", common2.BytesToHash(withdrawalMigratedEvent.NewWithdrawalRoot[:]).String())
 
-			temp := event.WithdrawalMigrated{
+			temp := staker.WithdrawalMigrated{
 				GUID:              uuid.New(),
 				BlockHash:         eventItem.BlockHash,
 				Number:            header.Number,

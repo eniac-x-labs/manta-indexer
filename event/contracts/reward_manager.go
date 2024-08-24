@@ -3,6 +3,8 @@ package contracts
 import (
 	"context"
 	"fmt"
+	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
+	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -53,9 +55,9 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 		return err
 	}
 
-	var operatorAndStakeRewardList []event.OperatorAndStakeReward
-	var operatorClaimRewardList []event.OperatorClaimReward
-	var stakeHolderClaimRewardList []event.StakeHolderClaimReward
+	var operatorAndStakeRewardList []operator.OperatorAndStakeReward
+	var operatorClaimRewardList []operator.OperatorClaimReward
+	var stakeHolderClaimRewardList []staker.StakeHolderClaimReward
 	for _, eventItem := range contractEventList {
 		rlpLog := eventItem.RLPLog
 
@@ -77,7 +79,7 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 				"stakerFee", operatorAndStakeRewardEvent.StakerFee.String(),
 				"operatorFee", operatorAndStakeRewardEvent.OperatorFee.String())
 
-			temp := event.OperatorAndStakeReward{
+			temp := operator.OperatorAndStakeReward{
 				GUID:             uuid.New(),
 				BlockHash:        eventItem.BlockHash,
 				Number:           header.Number,
@@ -103,7 +105,7 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 				"operator", operatorClaimRewardEvent.Operator.String(),
 				"amount", operatorClaimRewardEvent.Amount.String())
 
-			temp := event.OperatorClaimReward{
+			temp := operator.OperatorClaimReward{
 				GUID:      uuid.New(),
 				BlockHash: eventItem.BlockHash,
 				Number:    header.Number,
@@ -127,7 +129,7 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 				"strategy", stakeHolderClaimRewardEvent.Strategy.String(),
 				"amount", stakeHolderClaimRewardEvent.Amount.String())
 
-			temp := event.StakeHolderClaimReward{
+			temp := staker.StakeHolderClaimReward{
 				GUID:        uuid.New(),
 				BlockHash:   eventItem.BlockHash,
 				Number:      header.Number,

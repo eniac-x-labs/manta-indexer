@@ -1,6 +1,8 @@
 package models
 
 import (
+	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
+	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
 	"math/big"
 
 	"github.com/eniac-x-labs/manta-indexer/database/event"
@@ -37,7 +39,7 @@ type RegisterOperatorResponse struct {
 
 type RegisterOperatorListResponse struct {
 	ListResponse
-	Records []event.OperatorRegistered `json:"records"`
+	Records []operator.OperatorRegistered `json:"records"`
 }
 
 type StrategiesListResponse struct {
@@ -47,12 +49,17 @@ type StrategiesListResponse struct {
 
 type OperatorNodeUrlUpdateListResponse struct {
 	ListResponse
-	Records []event.OperatorNodeUrlUpdate `json:"records"`
+	Records []operator.OperatorNodeUrlUpdate `json:"records"`
+}
+
+type OperatorReceiveStakerDelegateListResponse struct {
+	ListResponse
+	Records []staker.StakerDelegated `json:"records"`
 }
 
 type StrategyDepositListResponse struct {
 	ListResponse
-	Records []event.StrategyDeposit `json:"records"`
+	Records []staker.StrategyDeposit `json:"records"`
 }
 
 type StakeHolderListResponse struct {
@@ -67,45 +74,45 @@ type OperatorListResponse struct {
 
 type WithdrawalQueuedListResponse struct {
 	ListResponse
-	Records []event.WithdrawalQueued `json:"records"`
+	Records []staker.WithdrawalQueued `json:"records"`
 }
 
 type WithdrawalCompletedListResponse struct {
 	ListResponse
-	Records []event.WithdrawalCompleted `json:"records"`
+	Records []staker.WithdrawalCompleted `json:"records"`
 }
 
 type StakerDelegatedListResponse struct {
 	ListResponse
-	Records []event.StakerDelegated `json:"records"`
+	Records []staker.StakerDelegated `json:"records"`
 }
 
 type StakerUndelegatedListResponse struct {
 	ListResponse
-	Records []event.StakerUndelegated `json:"records"`
+	Records []staker.StakerUndelegated `json:"records"`
 }
 
 type StakeHolderClaimRewardListResponse struct {
 	ListResponse
-	Records []event.StakeHolderClaimReward `json:"records"`
+	Records []staker.StakeHolderClaimReward `json:"records"`
 }
 
 type OperatorSharesDecreasedListResponse struct {
 	ListResponse
-	Records []event.OperatorSharesDecreased `json:"records"`
+	Records []operator.OperatorSharesDecreased `json:"records"`
 }
 
 type OperatorSharesIncreasedListResponse struct {
 	ListResponse
-	Records []event.OperatorSharesIncreased `json:"records"`
+	Records []operator.OperatorSharesIncreased `json:"records"`
 }
 
 type OperatorAndStakeRewardListResponse struct {
 	ListResponse
-	Records []event.OperatorAndStakeReward `json:"records"`
+	Records []operator.OperatorAndStakeReward `json:"records"`
 }
 
 type OperatorClaimRewardListResponse struct {
 	ListResponse
-	Records []event.OperatorClaimReward `json:"records"`
+	Records []operator.OperatorClaimReward `json:"records"`
 }
