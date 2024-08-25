@@ -60,7 +60,7 @@ func (wc withdrawalCompletedDB) QueryUnHandleWithdrawalCompleted() ([]Withdrawal
 func (wc withdrawalCompletedDB) MarkedWithdrawalCompleted(withdrawalCompletedList []WithdrawalCompleted) error {
 	for i := 0; i < len(withdrawalCompletedList); i++ {
 		var withdrawalCompleted = WithdrawalCompleted{}
-		result := wc.gorm.Table("withdrawal_completed").Where(&WithdrawalCompleted{GUID: withdrawalCompletedList[i].GUID}).Take(&withdrawalCompleted)
+		result := wc.gorm.Table("withdrawal_completed").Where("guid = ?", withdrawalCompletedList[i].GUID).Take(&withdrawalCompleted)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				return nil

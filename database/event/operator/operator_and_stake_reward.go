@@ -88,7 +88,7 @@ func (oas operatorAndStakeRewardDB) MarkedOperatorAndStakeRewardHandled(rewards 
 
 func (osr operatorAndStakeRewardDB) GetOperatorAndStakeReward(address string) (*OperatorAndStakeReward, error) {
 	var operatorAndStakeReward OperatorAndStakeReward
-	result := osr.gorm.Table("operator_and_stake_reward").Where(&OperatorAndStakeReward{Operator: common.HexToAddress(address)}).Take(&operatorAndStakeReward)
+	result := osr.gorm.Table("operator_and_stake_reward").Where("operator = ?", strings.ToLower(address)).Take(&operatorAndStakeReward)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil

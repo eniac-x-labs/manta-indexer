@@ -37,7 +37,7 @@ type StrategiesView interface {
 
 type StrategiesDB interface {
 	StrategiesView
-	UpdateStrategyTvlHandled([]Strategies) error
+	UpdateStrategyTvlHandled([]StrategyType) error
 	RemoveStoreStrategies([]Strategies) error
 	StoreStrategies([]Strategies) error
 }
@@ -46,18 +46,19 @@ type strategiesDB struct {
 	gorm *gorm.DB
 }
 
-func (db strategiesDB) UpdateStrategyTvlHandled(strategies []Strategies) error {
-	for i := 0; i < len(strategies); i++ {
-		var strategy = Strategies{}
-		result := db.gorm.Table("strategies").Where(&Strategies{Strategy: strategies[i].Strategy}).Take(&strategy)
+func (db strategiesDB) UpdateStrategyTvlHandled(strategyList []StrategyType) error {
+	for i := 0; i < len(strategyList); i++ {
+		var strategy Strategies
+		result := db.gorm.Table("strategies").Where("strategy = ?", strings.ToLower(strategyList[i].Strategy)).Take(&strategy)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				return nil
 			}
 			return result.Error
 		}
-		strategy.Tvl = new(big.Int).And(strategy.Tvl, strategies[i].Tvl)
-		err := db.gorm.Save(strategy).Error
+		tempTvl := new(big.Int).Add(strategy.Tvl, strategyList[i].Tvl)
+		strategy.Tvl = tempTvl
+		err := db.gorm.Table("strategies").Save(strategy).Error
 		if err != nil {
 			return err
 		}
@@ -67,7 +68,7 @@ func (db strategiesDB) UpdateStrategyTvlHandled(strategies []Strategies) error {
 
 func (db strategiesDB) QueryStrategies(strategy string) (*Strategies, error) {
 	var strategyTemp Strategies
-	result := db.gorm.Table("strategies").Where("strategy = ?", strategy).Take(&strategyTemp)
+	result := db.gorm.Table("strategies").Where("strategy = ?", strings.ToLower(strategy)).Take(&strategyTemp)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil

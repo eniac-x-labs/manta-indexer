@@ -44,8 +44,9 @@ type stakeHolderDB struct {
 
 func (sh *stakeHolderDB) QueryAndUpdateStakeHolder(stakeAddress string, strategyAddress string, shType StakeHolderType) error {
 	var stakeHolder StakeHolder
-	result := sh.gorm.Table("staker_holder").Where("staker = ? and strategy = ?", stakeAddress, strategyAddress).Take(&stakeHolder)
+	result := sh.gorm.Table("staker_holder").Where("staker = ? and strategy = ?", strings.ToLower(stakeAddress), strings.ToLower(strategyAddress)).Take(&stakeHolder)
 	if result.Error != nil {
+		log.Warn("staker holder query warning", "staker", stakeAddress, "strategy", strategyAddress, "err", result.Error)
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			stHolder := StakeHolder{
 				GUID:            uuid.New(),
@@ -82,7 +83,7 @@ func (sh *stakeHolderDB) QueryAndUpdateStakeHolder(stakeAddress string, strategy
 
 func (shv stakeHolderDB) GetStakeHolder(staker string) (*StakeHolder, error) {
 	var stakeHolder StakeHolder
-	result := shv.gorm.Table("staker_holder").Where("staker = ?", staker).Take(&stakeHolder)
+	result := shv.gorm.Table("staker_holder").Where("staker = ?", strings.ToLower(staker)).Take(&stakeHolder)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil

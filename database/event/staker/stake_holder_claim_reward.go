@@ -58,7 +58,7 @@ func (shc stakeHolderClaimRewardDB) QueryUnHandleStakeHolderClaimReward() ([]Sta
 func (shc stakeHolderClaimRewardDB) MarkedStakeHolderClaimRewardHandled(stakeHolderClaimRewards []StakeHolderClaimReward) error {
 	for i := 0; i < len(stakeHolderClaimRewards); i++ {
 		var stakeHolderClaimReward = StakeHolderClaimReward{}
-		result := shc.gorm.Table("stake_holder_claim_reward").Where(&StakeHolderClaimReward{GUID: stakeHolderClaimRewards[i].GUID}).Take(&stakeHolderClaimReward)
+		result := shc.gorm.Table("stake_holder_claim_reward").Where("guid = ?", stakeHolderClaimRewards[i].GUID).Take(&stakeHolderClaimReward)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				return nil

@@ -61,7 +61,7 @@ func (sd strategyDepositDB) QueryUnHandleStrategyDeposit() ([]StrategyDeposit, e
 func (sd strategyDepositDB) MarkedStrategyDepositHandled(strategyDeposits []StrategyDeposit) error {
 	for i := 0; i < len(strategyDeposits); i++ {
 		var strategyDeposit = StrategyDeposit{}
-		result := sd.gorm.Table("strategy_deposit").Where(&StrategyDeposit{GUID: strategyDeposits[i].GUID}).Take(&strategyDeposit)
+		result := sd.gorm.Table("strategy_deposit").Where("guid = ?", strategyDeposits[i].GUID).Take(&strategyDeposit)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				return nil
