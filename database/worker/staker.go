@@ -62,7 +62,7 @@ func (sh *stakeHolderDB) QueryAndUpdateStakeHolder(stakeAddress string, strategy
 				log.Error("create stake holder fail", "err", err)
 			}
 		}
-		return result.Error
+		return nil
 	}
 	if shType.MantaStake != nil {
 		stakeHolder.TotalMantaStake = new(big.Int).And(stakeHolder.TotalMantaStake, shType.MantaStake)

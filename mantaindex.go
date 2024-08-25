@@ -71,15 +71,15 @@ func NewMantaIndexer(ctx context.Context, cfg *config.Config, shutdown context.C
 }
 
 func (ew *MantaIndexer) Start(ctx context.Context) error {
-	//err := ew.synchronizer.Start()
-	//if err != nil {
-	//	return err
-	//}
-	//err = ew.eventProcessor.Start()
-	//if err != nil {
-	//	return err
-	//}
-	err := ew.workerProcessor.Start()
+	err := ew.synchronizer.Start()
+	if err != nil {
+		return err
+	}
+	err = ew.eventProcessor.Start()
+	if err != nil {
+		return err
+	}
+	err = ew.workerProcessor.Start()
 	if err != nil {
 		return err
 	}
@@ -87,15 +87,15 @@ func (ew *MantaIndexer) Start(ctx context.Context) error {
 }
 
 func (ew *MantaIndexer) Stop(ctx context.Context) error {
-	//err := ew.synchronizer.Close()
-	//if err != nil {
-	//	return err
-	//}
-	//err = ew.eventProcessor.Close()
-	//if err != nil {
-	//	return err
-	//}
-	err := ew.workerProcessor.Close()
+	err := ew.synchronizer.Close()
+	if err != nil {
+		return err
+	}
+	err = ew.eventProcessor.Close()
+	if err != nil {
+		return err
+	}
+	err = ew.workerProcessor.Close()
 	if err != nil {
 		return err
 	}
