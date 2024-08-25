@@ -79,11 +79,11 @@ func (shcr stakeHolderClaimRewardDB) ListStakeHolderClaimReward(address string, 
 	var stakeHolderClaimRewardList []StakeHolderClaimReward
 	queryRoot := shcr.gorm.Table("stake_holder_claim_reward")
 	if address != "0x00" {
-		err := shcr.gorm.Table("stake_holder_claim_reward").Select("number").Where("operator = ?", address).Count(&totalRecord).Error
+		err := shcr.gorm.Table("stake_holder_claim_reward").Select("number").Where("stake_holder = ?", address).Count(&totalRecord).Error
 		if err != nil {
 			log.Error("get stakeholder claim reward count fail")
 		}
-		queryRoot.Where("operator = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
+		queryRoot.Where("stake_holder = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
 	} else {
 		err := shcr.gorm.Table("stake_holder_claim_reward").Select("number").Count(&totalRecord).Error
 		if err != nil {

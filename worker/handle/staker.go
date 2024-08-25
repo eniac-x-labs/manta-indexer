@@ -3,6 +3,7 @@ package handle
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"math/big"
 	"time"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/eniac-x-labs/manta-indexer/common/tasks"
 	"github.com/eniac-x-labs/manta-indexer/database"
+	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
 	"github.com/eniac-x-labs/manta-indexer/database/event/strategies"
 	"github.com/eniac-x-labs/manta-indexer/database/worker"
 )
@@ -110,6 +112,9 @@ func (sh *StakeHolderHandle) processWithdrawalCompleted() error {
 	if err != nil {
 		return err
 	}
+
+	var withdrawalQueuedList []staker.WithdrawalQueuedType
+	var strategyList []strategies.StrategyType
 	for _, unHandleCompleted := range unHandleCompletedList {
 		stkType := worker.StakeHolderType{
 			MantaStake:    new(big.Int).Neg(unHandleCompleted.Shares),
@@ -122,13 +127,40 @@ func (sh *StakeHolderHandle) processWithdrawalCompleted() error {
 			log.Error("processWithdrawalCompleted query and update staker fail", "err", err)
 			return err
 		}
+		withdrawalQueued := staker.WithdrawalQueuedType{
+			Staker:     strings.ToLower(unHandleCompleted.Staker.String()),
+			Strategies: strings.ToLower(unHandleCompleted.Strategy.String()),
+		}
+		withdrawalQueuedList = append(withdrawalQueuedList, withdrawalQueued)
+
+		strategy := strategies.StrategyType{
+			Strategy: unHandleCompleted.Strategy.String(),
+			Tvl:      new(big.Int).Neg(unHandleCompleted.Shares),
+		}
+		strategyList = append(strategyList, strategy)
 	}
-	if len(unHandleCompletedList) > 0 {
-		if err := sh.db.WithdrawalCompleted.MarkedWithdrawalCompleted(unHandleCompletedList); err != nil {
-			log.Error("MarkedWithdrawalCompleted fail", "err", err)
+	log.Info("process withdrawal completed", "unHandleCompletedList number", len(unHandleCompletedList), "withdrawalQueuedList number", len(withdrawalQueuedList))
+	if len(strategyList) > 0 {
+		if err := sh.db.Strategies.UpdateStrategyTvlHandled(strategyList); err != nil {
+			log.Error("update strategy tvl handled fail", "err", err)
 			return err
 		}
 	}
+
+	if len(withdrawalQueuedList) > 0 {
+		if err := sh.db.WithdrawalQueued.MarkedWithdrawalQueuedHandled(withdrawalQueuedList); err != nil {
+			log.Error("marked withdrawal queued handled fail", "err", err)
+			return err
+		}
+	}
+
+	if len(unHandleCompletedList) > 0 {
+		if err := sh.db.WithdrawalCompleted.MarkedWithdrawalCompleted(unHandleCompletedList); err != nil {
+			log.Error("marked withdrawal completed fail", "err", err)
+			return err
+		}
+	}
+
 	return nil
 }
 

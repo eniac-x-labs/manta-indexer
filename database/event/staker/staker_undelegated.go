@@ -46,11 +46,11 @@ func (su stakerUndelegatedDB) ListStakerUndelegated(address string, page int, pa
 	var stakerUndelegatedList []StakerUndelegated
 	queryRoot := su.gorm.Table("staker_undelegated")
 	if address != "0x00" {
-		err := su.gorm.Table("staker_undelegated").Select("number").Where("operator = ?", address).Count(&totalRecord).Error
+		err := su.gorm.Table("staker_undelegated").Select("number").Where("staker = ?", address).Count(&totalRecord).Error
 		if err != nil {
 			log.Error("get staker undelegated count fail")
 		}
-		queryRoot.Where("operator = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
+		queryRoot.Where("staker = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
 	} else {
 		err := su.gorm.Table("staker_undelegated").Select("number").Count(&totalRecord).Error
 		if err != nil {

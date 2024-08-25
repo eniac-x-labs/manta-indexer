@@ -2,7 +2,6 @@ package staker
 
 import (
 	"errors"
-	"github.com/ethereum/go-ethereum/log"
 	"math/big"
 	"strings"
 
@@ -10,6 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 
 	_ "github.com/eniac-x-labs/manta-indexer/database/utils/serializers"
 )
@@ -23,10 +23,10 @@ type WithdrawalQueued struct {
 	Staker         common.Address `json:"staker" gorm:"serializer:bytes"`
 	DelegatedTo    common.Address `json:"delegated_to" gorm:"serializer:bytes"`
 	Withdrawer     common.Address `json:"withdrawer" gorm:"serializer:bytes"`
+	Strategies     common.Address `json:"strategies" gorm:"serializer:bytes"`
+	Shares         *big.Int       `json:"shares" gorm:"serializer:u256"`
 	Nonce          *big.Int       `json:"nonce" gorm:"serializer:u256"`
 	StartBlock     *big.Int       `json:"start_block" gorm:"serializer:u256"`
-	Strategies     string         `json:"strategies"`
-	Shares         string         `json:"shares"`
 	IsHandle       uint8          `json:"is_handle"`
 	Timestamp      uint64         `json:"timestamp"`
 }
@@ -41,6 +41,7 @@ type WithdrawalQueuedView interface {
 
 type WithdrawalQueuedDB interface {
 	WithdrawalQueuedView
+	MarkedWithdrawalQueuedHandled([]WithdrawalQueuedType) error
 	StoreWithdrawalQueued([]WithdrawalQueued) error
 }
 
@@ -61,11 +62,11 @@ func (wq withdrawalQueuedDB) ListWithdrawalQueued(address string, page int, page
 	var withdrawalQueuedList []WithdrawalQueued
 	queryRoot := wq.gorm.Table("withdrawal_queued")
 	if address != "0x00" {
-		err := wq.gorm.Table("withdrawal_queued").Select("number").Where("operator = ?", address).Count(&totalRecord).Error
+		err := wq.gorm.Table("withdrawal_queued").Select("number").Where("staker = ?", address).Count(&totalRecord).Error
 		if err != nil {
 			log.Error("get withdrawal queued count fail")
 		}
-		queryRoot.Where("operator = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
+		queryRoot.Where("staker = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
 	} else {
 		err := wq.gorm.Table("withdrawal_queued").Select("number").Count(&totalRecord).Error
 		if err != nil {
@@ -87,6 +88,31 @@ func (wq withdrawalQueuedDB) ListWithdrawalQueued(address string, page int, page
 
 type withdrawalQueuedDB struct {
 	gorm *gorm.DB
+}
+
+func (db withdrawalQueuedDB) MarkedWithdrawalQueuedHandled(withdrawalQueuedTypeList []WithdrawalQueuedType) error {
+	for _, withdrawalQueuedType := range withdrawalQueuedTypeList {
+		log.Info("withdrawal queued type", "staker", withdrawalQueuedType.Staker, "strategies", withdrawalQueuedType.Strategies)
+		var withdrawalQueuedListTemp []WithdrawalQueued
+		result := db.gorm.Table("withdrawal_queued").Where("staker = ? and strategies = ?", strings.ToLower(withdrawalQueuedType.Staker), strings.ToLower(withdrawalQueuedType.Strategies)).Find(&withdrawalQueuedListTemp)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				log.Warn("Not found", "err", result.Error)
+				return nil
+			}
+			return result.Error
+		}
+		for _, withdrawalQueued := range withdrawalQueuedListTemp {
+			log.Info("withdrawal queued", "staker", withdrawalQueued.Staker, "strategies", withdrawalQueued.Strategies)
+			withdrawalQueued.IsHandle = 1
+			err := db.gorm.Table("withdrawal_queued").Save(withdrawalQueued).Error
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	return nil
 }
 
 func (db withdrawalQueuedDB) StoreWithdrawalQueued(withdrawalQueuedList []WithdrawalQueued) error {

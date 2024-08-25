@@ -172,7 +172,7 @@ CREATE TABLE IF NOT EXISTS withdrawal_queued (
     nonce                       UINT256 NOT NULL,
     start_block                 UINT256 NOT NULL,
     strategies                  VARCHAR NOT NULL,
-    shares                      VARCHAR NOT NULL,
+    shares                      UINT256 NOT NULL,
     is_handle                   SMALLINT NOT NULL DEFAULT 0,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );

@@ -59,6 +59,7 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 
 	var operatorNodeUrlUpdates []operator.OperatorNodeUrlUpdate
 	var operatorRegisters []operator.OperatorRegistered
+	var stakerUndelegates []staker.StakerUndelegated
 	var stakerDelegates []staker.StakerDelegated
 	var operatorSharesIncreases []operator.OperatorSharesIncreased
 	var operatorDetailsModifies []operator.OperatorModified
@@ -153,6 +154,30 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 				Timestamp: eventItem.Timestamp,
 			}
 			stakerDelegates = append(stakerDelegates, temp)
+		}
+
+		// StakerDelegated
+		if eventItem.EventSignature.String() == dm.DmAbi.Events["StakerUndelegated"].ID.String() {
+			stakerUnDelegatedEvnet, err := dm.DmFilter.ParseStakerUndelegated(*rlpLog)
+			if err != nil {
+				log.Error("parse staker delegate event fail", "err", err)
+				return err
+			}
+			log.Info("parse staker undelegate success",
+				"operator", stakerUnDelegatedEvnet.Operator.String(),
+				"staker", stakerUnDelegatedEvnet.Staker.String())
+
+			undelegateTemp := staker.StakerUndelegated{
+				GUID:      uuid.New(),
+				BlockHash: eventItem.BlockHash,
+				Number:    header.Number,
+				TxHash:    eventItem.TransactionHash,
+				Operator:  stakerUnDelegatedEvnet.Operator,
+				Staker:    stakerUnDelegatedEvnet.Staker,
+				IsHandle:  0,
+				Timestamp: eventItem.Timestamp,
+			}
+			stakerUndelegates = append(stakerUndelegates, undelegateTemp)
 		}
 
 		// OperatorSharesIncreased
@@ -254,18 +279,16 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 				Number:         header.Number,
 				TxHash:         eventItem.TransactionHash,
 				WithdrawalRoot: common2.BytesToHash(withdrawalQueuedEvent.WithdrawalRoot[:]),
-
-				Staker:      withdrawalQueuedEvent.Withdrawal.Staker,
-				DelegatedTo: withdrawalQueuedEvent.Withdrawal.DelegatedTo,
-				Withdrawer:  withdrawalQueuedEvent.Withdrawal.Withdrawer,
-				Nonce:       withdrawalQueuedEvent.Withdrawal.Nonce,
-				StartBlock:  startBlockBigInt,
-				Strategies:  addressListToString(withdrawalQueuedEvent.Withdrawal.Strategies),
-				Shares:      bigIntListToString(withdrawalQueuedEvent.Withdrawal.Shares),
-				IsHandle:    0,
-				Timestamp:   eventItem.Timestamp,
+				Staker:         withdrawalQueuedEvent.Withdrawal.Staker,
+				DelegatedTo:    withdrawalQueuedEvent.Withdrawal.DelegatedTo,
+				Withdrawer:     withdrawalQueuedEvent.Withdrawal.Withdrawer,
+				Nonce:          withdrawalQueuedEvent.Withdrawal.Nonce,
+				StartBlock:     startBlockBigInt,
+				Strategies:     withdrawalQueuedEvent.Withdrawal.Strategies[0], // todo: batch handle
+				Shares:         withdrawalQueuedEvent.Withdrawal.Shares[0],     // todo: batch handle
+				IsHandle:       0,
+				Timestamp:      eventItem.Timestamp,
 			}
-
 			withdrawalQueues = append(withdrawalQueues, temp)
 		}
 
@@ -393,6 +416,13 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 					return err
 				}
 			}
+
+			if len(stakerUndelegates) > 0 {
+				if err := tx.StakerUndelegated.StoreStakerUndelegated(stakerUndelegates); err != nil {
+					return err
+				}
+			}
+
 			if len(operatorSharesIncreases) > 0 {
 				if err := tx.OperatorSharesIncreased.StoreOperatorSharesIncreased(operatorSharesIncreases); err != nil {
 					return err

@@ -19,8 +19,8 @@ type WithdrawalCompleted struct {
 	BlockHash common.Hash    `json:"block_hash" gorm:"serializer:bytes"`
 	Number    *big.Int       `json:"number" gorm:"serializer:u256"`
 	TxHash    common.Hash    `json:"tx_hash" gorm:"serializer:bytes"`
-	Operator  common.Address `json:"staker" gorm:"serializer:bytes"`
-	Staker    common.Address `json:"manta_token" gorm:"serializer:bytes"`
+	Operator  common.Address `json:"operator" gorm:"serializer:bytes"`
+	Staker    common.Address `json:"staker" gorm:"serializer:bytes"`
 	Strategy  common.Address `json:"strategy" gorm:"serializer:bytes"`
 	Shares    *big.Int       `json:"shares" gorm:"serializer:u256"`
 	IsHandle  uint8          `json:"is_handle"`
@@ -68,7 +68,7 @@ func (wc withdrawalCompletedDB) MarkedWithdrawalCompleted(withdrawalCompletedLis
 			return result.Error
 		}
 		withdrawalCompleted.IsHandle = 1
-		err := wc.gorm.Save(withdrawalCompleted).Error
+		err := wc.gorm.Table("withdrawal_completed").Save(withdrawalCompleted).Error
 		if err != nil {
 			return err
 		}
@@ -81,11 +81,11 @@ func (wc withdrawalCompletedDB) ListWithdrawalCompleted(address string, page int
 	var withdrawalCompletedList []WithdrawalCompleted
 	queryRoot := wc.gorm.Table("withdrawal_completed")
 	if address != "0x00" {
-		err := wc.gorm.Table("withdrawal_completed").Select("number").Where("operator = ?", address).Count(&totalRecord).Error
+		err := wc.gorm.Table("withdrawal_completed").Select("number").Where("staker = ?", address).Count(&totalRecord).Error
 		if err != nil {
 			log.Error("get withdrawal completed count fail")
 		}
-		queryRoot.Where("operator = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
+		queryRoot.Where("staker = ?", address).Offset((page - 1) * pageSize).Limit(pageSize)
 	} else {
 		err := wc.gorm.Table("withdrawal_completed").Select("number").Count(&totalRecord).Error
 		if err != nil {
