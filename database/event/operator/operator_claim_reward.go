@@ -76,7 +76,7 @@ func (oc operatorClaimRewardDB) MarkedOperatorClaimRewardHandled(rewards []Opera
 
 func (ocr operatorClaimRewardDB) GetOperatorClaimReward(address string) (*OperatorClaimReward, error) {
 	var operatorClaimReward OperatorClaimReward
-	result := ocr.gorm.Table("operator_claim_reward").Where(&OperatorClaimReward{Operator: common.HexToAddress(address)}).Take(&operatorClaimReward)
+	result := ocr.gorm.Table("operator_claim_reward").Where("operator = ?", strings.ToLower(address)).Take(&operatorClaimReward)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil

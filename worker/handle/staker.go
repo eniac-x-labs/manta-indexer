@@ -3,7 +3,6 @@ package handle
 import (
 	"context"
 	"fmt"
-	"github.com/eniac-x-labs/manta-indexer/database/event/strategies"
 
 	"math/big"
 	"time"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/eniac-x-labs/manta-indexer/common/tasks"
 	"github.com/eniac-x-labs/manta-indexer/database"
+	"github.com/eniac-x-labs/manta-indexer/database/event/strategies"
 	"github.com/eniac-x-labs/manta-indexer/database/worker"
 )
 
@@ -68,7 +68,7 @@ func (sh *StakeHolderHandle) processStrategyDeposit() error {
 		log.Error("Query unhandled strategy deposit fail", "err", err)
 		return err
 	}
-	var strategyList []strategies.Strategies
+	var strategyList []strategies.StrategyType
 	for _, unHandleDeposit := range unHandleDepositList {
 		stkType := worker.StakeHolderType{
 			MantaStake:    unHandleDeposit.Shares,
@@ -76,26 +76,29 @@ func (sh *StakeHolderHandle) processStrategyDeposit() error {
 			ClaimedAmount: big.NewInt(0),
 			Timestamp:     unHandleDeposit.Timestamp,
 		}
-		strategy := strategies.Strategies{
-			Strategy: unHandleDeposit.Strategy,
+		strategy := strategies.StrategyType{
+			Strategy: unHandleDeposit.Strategy.String(),
 			Tvl:      unHandleDeposit.Shares,
 		}
 		strategyList = append(strategyList, strategy)
+		log.Info("processStrategyDeposit query and update stake holder", "Staker", unHandleDeposit.Staker.String(), "Strategy", unHandleDeposit.Strategy.String())
 		err := sh.db.StakeHolder.QueryAndUpdateStakeHolder(unHandleDeposit.Staker.String(), unHandleDeposit.Strategy.String(), stkType)
 		if err != nil {
 			log.Error("processStrategyDeposit query and update operator fail", "err", err)
 			return err
 		}
 	}
-	if len(unHandleDepositList) > 0 {
-		if err := sh.db.StrategyDeposit.MarkedStrategyDepositHandled(unHandleDepositList); err != nil {
-			log.Error("MarkedStrategyDepositHandled fail", "err", err)
-			return err
-		}
-	}
+	log.Info("process strategy deposit", "unHandleDepositList", len(unHandleDepositList), "strategyList", len(strategyList))
 	if len(strategyList) > 0 {
 		if err := sh.db.Strategies.UpdateStrategyTvlHandled(strategyList); err != nil {
 			log.Error("UpdateStrategyTvlHandled fail", "err", err)
+			return err
+		}
+	}
+
+	if len(unHandleDepositList) > 0 {
+		if err := sh.db.StrategyDeposit.MarkedStrategyDepositHandled(unHandleDepositList); err != nil {
+			log.Error("MarkedStrategyDepositHandled fail", "err", err)
 			return err
 		}
 	}

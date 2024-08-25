@@ -49,7 +49,7 @@ type operatorRegisteredDB struct {
 
 func (or operatorRegisteredDB) QueryOperatorRegistered(operator string) (*OperatorRegistered, error) {
 	var operatorRegistered OperatorRegistered
-	result := or.gorm.Table("operator_registered").Where(&OperatorRegistered{Operator: common.HexToAddress(operator)}).Take(&operatorRegistered)
+	result := or.gorm.Table("operator_registered").Where("operator = ?", strings.ToLower(operator)).Take(&operatorRegistered)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil
