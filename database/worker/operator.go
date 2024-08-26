@@ -50,7 +50,7 @@ type operatorsDB struct {
 
 func (op *operatorsDB) QueryAndUpdateOperator(operator common.Address, opType OperatorsType) error {
 	var operatorEntity Operators
-	result := op.gorm.Where(&Operators{Operator: operator}).Take(&operatorEntity)
+	result := op.gorm.Table("operators").Where("operator = ?", strings.ToLower(operator.String())).Take(&operatorEntity)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil
@@ -72,20 +72,30 @@ func (op *operatorsDB) QueryAndUpdateOperator(operator common.Address, opType Op
 	}
 	if opType.TotalMantaStake != nil {
 		totalStake := new(big.Int).Add(operatorEntity.TotalMantaStake, opType.TotalMantaStake)
+		if totalStake.Cmp(big.NewInt(0)) <= 0 {
+			log.Warn("totalStake less than zero", "totalStake", totalStake)
+			totalStake = big.NewInt(0)
+		} else {
+			operatorEntity.RateReturn = new(big.Int).Div(operatorEntity.TotalStakeReward, totalStake).String()
+		}
 		operatorEntity.TotalMantaStake = totalStake
-		operatorEntity.RateReturn = new(big.Int).Div(operatorEntity.TotalStakeReward, totalStake).String()
 	}
 	if opType.TotalStakeReward != nil {
 		totalStakeReward := new(big.Int).Add(operatorEntity.TotalStakeReward, opType.TotalStakeReward)
+		if totalStakeReward.Cmp(big.NewInt(0)) <= 0 {
+			totalStakeReward = big.NewInt(0)
+		}
 		operatorEntity.TotalStakeReward = totalStakeReward
-		operatorEntity.RateReturn = new(big.Int).Div(totalStakeReward, operatorEntity.TotalMantaStake).String()
+		if operatorEntity.TotalMantaStake.Cmp(big.NewInt(0)) > 0 {
+			operatorEntity.RateReturn = new(big.Int).Div(totalStakeReward, operatorEntity.TotalMantaStake).String()
+		}
 	}
 	if operatorEntity.Status != 0 {
 		operatorEntity.Status = opType.Status
 	}
 	err := op.gorm.Save(operatorEntity).Error
 	if err != nil {
-		log.Error("Update node url fail", "err", err)
+		log.Error("update operator information fail", "err", err)
 		return err
 	}
 	return nil

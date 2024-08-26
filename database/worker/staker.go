@@ -65,13 +65,13 @@ func (sh *stakeHolderDB) QueryAndUpdateStakeHolder(stakeAddress string, strategy
 		return nil
 	}
 	if shType.MantaStake != nil {
-		stakeHolder.TotalMantaStake = new(big.Int).And(stakeHolder.TotalMantaStake, shType.MantaStake)
+		stakeHolder.TotalMantaStake = new(big.Int).Add(stakeHolder.TotalMantaStake, shType.MantaStake)
 	}
 	if shType.Reward != nil {
-		stakeHolder.TotalReward = new(big.Int).And(stakeHolder.TotalReward, shType.Reward)
+		stakeHolder.TotalReward = new(big.Int).Add(stakeHolder.TotalReward, shType.Reward)
 	}
 	if shType.ClaimedAmount != nil {
-		stakeHolder.ClaimedAmount = new(big.Int).And(stakeHolder.ClaimedAmount, shType.ClaimedAmount)
+		stakeHolder.ClaimedAmount = new(big.Int).Add(stakeHolder.ClaimedAmount, shType.ClaimedAmount)
 	}
 	err := sh.gorm.Save(stakeHolder).Error
 	if err != nil {

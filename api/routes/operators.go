@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/log"
 	"net/http"
 )
@@ -53,6 +54,10 @@ func (h Routes) GetOperatorHandler(w http.ResponseWriter, r *http.Request) {
 	if operator == "" {
 		http.Error(w, "invalid query params", http.StatusBadRequest)
 		log.Error("error GetOperator reading request params")
+		return
+	}
+	if !common.IsHexAddress(operator) {
+		http.Error(w, "invalid operator address", http.StatusBadRequest)
 		return
 	}
 	temp, err := h.svc.GetOperator(operator)

@@ -49,7 +49,7 @@ type operatorSharesIncreasedDB struct {
 func (osi operatorSharesIncreasedDB) MarkedOperatorSharesIncreasedHandled(unHandleOperatorSharesIncreased []OperatorSharesIncreased) error {
 	for i := 0; i < len(unHandleOperatorSharesIncreased); i++ {
 		var operatorSharesIncreased = OperatorSharesIncreased{}
-		result := osi.gorm.Table("operator_shares_increased").Where(&OperatorRegistered{GUID: unHandleOperatorSharesIncreased[i].GUID}).Take(&operatorSharesIncreased)
+		result := osi.gorm.Table("operator_shares_increased").Where("guid = ?", unHandleOperatorSharesIncreased[i].GUID).Take(&operatorSharesIncreased)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				return nil
