@@ -1,6 +1,7 @@
 package event
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/log"
 )
 
 type ContractEvent struct {
@@ -57,6 +59,7 @@ type ContractEventsView interface {
 type ContractEventDB interface {
 	ContractEventsView
 	StoreContractEvents([]ContractEvent) error
+	DelBlockByBlockHash([]string) error
 }
 
 type contractEventDB struct {
@@ -124,4 +127,19 @@ func (db *contractEventDB) ContractEventsWithFilter(filter ContractEvent, fromHe
 	}
 
 	return events, nil
+}
+
+func (db *contractEventDB) DelBlockByBlockHash(blockHashList []string) error {
+	if len(blockHashList) == 0 {
+		return nil
+	}
+
+	result := db.gorm.Debug().Table("contract_events").Where("block_hash IN ?", blockHashList).Delete(&ContractEvent{})
+	resultJson, _ := json.Marshal(result)
+	log.Info("contract_events DelBlockByBlockHash resultJson ", "info", resultJson)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
 }

@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"errors"
 	"gorm.io/gorm"
 	"math/big"
@@ -10,6 +11,7 @@ import (
 	"github.com/eniac-x-labs/manta-indexer/database/utils"
 	_ "github.com/eniac-x-labs/manta-indexer/database/utils/serializers"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 )
 
 type BlockHeader struct {
@@ -27,11 +29,13 @@ type BlocksView interface {
 	BlockHeaderWithFilter(BlockHeader) (*BlockHeader, error)
 	BlockHeaderWithScope(func(db *gorm.DB) *gorm.DB) (*BlockHeader, error)
 	LatestBlockHeader() (*BlockHeader, error)
+	LatestBlockHeaderList(maxSize uint64) ([]*BlockHeader, error)
 }
 
 type BlocksDB interface {
 	BlocksView
 	StoreBlockHeaders([]BlockHeader) error
+	DelBlockByNumber([]string) error
 }
 
 type blocksDB struct {
@@ -74,9 +78,41 @@ func (b blocksDB) LatestBlockHeader() (*BlockHeader, error) {
 	return &header, nil
 }
 
+func (b blocksDB) LatestBlockHeaderList(maxSize uint64) ([]*BlockHeader, error) {
+	var headers []*BlockHeader
+	result := b.gorm.Debug().Table("block_headers").
+		Order("number DESC").
+		Limit(int(maxSize)).
+		Find(&headers)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return headers, nil
+}
+
 func (b blocksDB) StoreBlockHeaders(headers []BlockHeader) error {
 	result := b.gorm.CreateInBatches(&headers, len(headers))
 	return result.Error
+}
+
+func (b blocksDB) DelBlockByNumber(numberList []string) error {
+	if len(numberList) == 0 {
+		return nil
+	}
+
+	result := b.gorm.Debug().Where("number IN ?", numberList).Delete(&BlockHeader{})
+
+	resultJson, _ := json.Marshal(result)
+	log.Info("blocks DelBlockByNumber resultJson ", "info", resultJson)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
 }
 
 func NewBlocksDB(db *gorm.DB) BlocksDB {
