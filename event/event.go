@@ -41,19 +41,19 @@ type EventProcessor struct {
 }
 
 func NewEventProcessor(db *database.DB, eventBlocksConfig *EventProcessorConfig, shutdown context.CancelCauseFunc) (*EventProcessor, error) {
-	delegationManager, err := contracts.NewDelegationManager(db)
+	delegationManager, err := contracts.NewDelegationManager()
 	if err != nil {
 		log.Error("new delegation manager fail", "err", err)
 		return nil, err
 	}
 
-	rewardManager, err := contracts.NewRewardManager(db)
+	rewardManager, err := contracts.NewRewardManager()
 	if err != nil {
 		log.Error("new reward manager fail", "err", err)
 		return nil, err
 	}
 
-	strategyManager, err := contracts.NewStrategyManager(db)
+	strategyManager, err := contracts.NewStrategyManager()
 	if err != nil {
 		log.Error("new strategy manager fail", "err", err)
 		return nil, err
@@ -107,7 +107,7 @@ func (ep *EventProcessor) processEvent() error {
 	if ep.LatestBlockHeader != nil {
 		lastBlockNumber = ep.LatestBlockHeader.Number
 	}
-	log.Info("Process event latest block number", "lastBlockNumber", lastBlockNumber)
+	log.Info("process event latest block number", "lastBlockNumber", lastBlockNumber)
 	latestHeaderScope := func(db *gorm.DB) *gorm.DB {
 		newQuery := db.Session(&gorm.Session{NewDB: true})
 		headers := newQuery.Model(common.BlockHeader{}).Where("number > ?", lastBlockNumber)
@@ -140,28 +140,28 @@ func (ep *EventProcessor) processEvent() error {
 		eventBlocks = append(eventBlocks, evBlock)
 	}
 
-	log.Info("Parse contract event start", "fromHeight", fromHeight.String(), "toHeight", toHeight.String())
+	log.Info("parse contract event start", "fromHeight", fromHeight.String(), "toHeight", toHeight.String())
 
 	if err := ep.db.Transaction(func(tx *database.DB) error {
-		err := ep.delegationManager.ProcessDelegationEvent(fromHeight, toHeight)
+		err := ep.delegationManager.ProcessDelegationEvent(tx, fromHeight, toHeight)
 		if err != nil {
 			log.Error("process delegation event fail", "err", err)
 			return err
 		}
 
-		err = ep.rewardManager.ProcessRewardManager(fromHeight, toHeight)
+		err = ep.rewardManager.ProcessRewardManager(tx, fromHeight, toHeight)
 		if err != nil {
 			log.Error("process reward manager event fail", "err", err)
 			return err
 		}
 
-		err = ep.strategyManager.ProcessStrategyManager(fromHeight, toHeight)
+		err = ep.strategyManager.ProcessStrategyManager(tx, fromHeight, toHeight)
 		if err != nil {
 			log.Error("process strategy manager event fail", "err", err)
 			return err
 		}
 
-		err = ep.db.EventBlocks.StoreEventBlocks(eventBlocks)
+		err = tx.EventBlocks.StoreEventBlocks(eventBlocks)
 		if err != nil {
 			log.Error("store event block fail", "err", err)
 			return err

@@ -3,30 +3,31 @@ package contracts
 import (
 	"context"
 	"fmt"
-	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
-	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
+
 	"math/big"
+
+	"github.com/google/uuid"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	common2 "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/google/uuid"
 
 	"github.com/eniac-x-labs/manta-indexer/bindings/rm"
 	"github.com/eniac-x-labs/manta-indexer/config"
 	"github.com/eniac-x-labs/manta-indexer/database"
 	"github.com/eniac-x-labs/manta-indexer/database/event"
+	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
+	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
 	"github.com/eniac-x-labs/manta-indexer/synchronizer/retry"
 )
 
 type RewardManager struct {
-	db       *database.DB
 	RmAbi    *abi.ABI
 	RmFilter *rm.RewardManagerFilterer
 	rmCtx    context.Context
 }
 
-func NewRewardManager(db *database.DB) (*RewardManager, error) {
+func NewRewardManager() (*RewardManager, error) {
 	rewardManagerAbi, err := rm.RewardManagerMetaData.GetAbi()
 	if err != nil {
 		log.Error("get delegate manager abi fail", "err", err)
@@ -40,16 +41,15 @@ func NewRewardManager(db *database.DB) (*RewardManager, error) {
 	}
 
 	return &RewardManager{
-		db:       db,
 		RmAbi:    rewardManagerAbi,
 		RmFilter: rewardManagerUnpack,
 		rmCtx:    context.Background(),
 	}, nil
 }
 
-func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big.Int) error {
+func (rm *RewardManager) ProcessRewardManager(db *database.DB, fromHeight *big.Int, toHeight *big.Int) error {
 	contractEventFilter := event.ContractEvent{ContractAddress: common2.HexToAddress(config.RewardManagerAddress)}
-	contractEventList, err := rm.db.ContractEvent.ContractEventsWithFilter(contractEventFilter, fromHeight, toHeight)
+	contractEventList, err := db.ContractEvent.ContractEventsWithFilter(contractEventFilter, fromHeight, toHeight)
 	if err != nil {
 		log.Error("get contracts event list fail", "err", err)
 		return err
@@ -61,7 +61,7 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 	for _, eventItem := range contractEventList {
 		rlpLog := eventItem.RLPLog
 
-		header, err := rm.db.Blocks.BlockHeader(eventItem.BlockHash)
+		header, err := db.Blocks.BlockHeader(eventItem.BlockHash)
 		if err != nil {
 			log.Error("ProcessRewardManager db Blocks BlockHeader by BlockHash fail", "err", err)
 			return err
@@ -146,7 +146,7 @@ func (rm *RewardManager) ProcessRewardManager(fromHeight *big.Int, toHeight *big
 
 	retryStrategy := &retry.ExponentialStrategy{Min: 1000, Max: 20_000, MaxJitter: 250}
 	if _, err := retry.Do[interface{}](rm.rmCtx, 10, retryStrategy, func() (interface{}, error) {
-		if err := rm.db.Transaction(func(tx *database.DB) error {
+		if err := db.Transaction(func(tx *database.DB) error {
 			if err := tx.OperatorAndStakeReward.StoreOperatorAndStakeReward(operatorAndStakeRewardList); err != nil {
 				return err
 			}
