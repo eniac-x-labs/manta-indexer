@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	DelegationManagerAddress = "0xfA693AE48f65ff6CE0dB1E8B5F70428A14EaDa63"
-	RewardManagerAddress     = "0x1C4Fc5013D0C9D82A2113241995D73db4137ae33"
-	StrategyManagerAddress   = "0x2B489659b279FB4994E674632B983E4F3b5186D3"
+	DelegationManagerAddress = "0xc4ecA769e70E9C09B6361B3093E3CB36AAf9f88A"
+	RewardManagerAddress     = "0xF0003Af10A6989bb1c753936F42959BFec35585e"
+	StrategyManagerAddress   = "0xD403950CE42E2d4f5c8A569759582fE4460AD205"
 )
 
 type MantaLayerContracts struct {
