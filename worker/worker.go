@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+
 	"github.com/ethereum/go-ethereum/log"
 
 	"github.com/eniac-x-labs/manta-indexer/database"

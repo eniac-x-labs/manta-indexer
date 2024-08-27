@@ -24,13 +24,12 @@ import (
 var MantaTokenAddress = "0xFEE297254eC9B60d06f6e5af4E154962f9dCcE88"
 
 type StrategyManager struct {
-	db       *database.DB
 	SmAbi    *abi.ABI
 	SmFilter *sm.StrategyManagerFilterer
 	smCtx    context.Context
 }
 
-func NewStrategyManager(db *database.DB) (*StrategyManager, error) {
+func NewStrategyManager() (*StrategyManager, error) {
 	strategyAbi, err := sm.StrategyManagerMetaData.GetAbi()
 	if err != nil {
 		log.Error("get strategy manager abi fail", "err", err)
@@ -44,16 +43,15 @@ func NewStrategyManager(db *database.DB) (*StrategyManager, error) {
 	}
 
 	return &StrategyManager{
-		db:       db,
 		SmAbi:    strategyAbi,
 		SmFilter: strategyUnpack,
 		smCtx:    context.Background(),
 	}, nil
 }
 
-func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight *big.Int) error {
+func (sm *StrategyManager) ProcessStrategyManager(db *database.DB, fromHeight *big.Int, toHeight *big.Int) error {
 	contractEventFilter := event.ContractEvent{ContractAddress: common2.HexToAddress(config.StrategyManagerAddress)}
-	contractEventList, err := sm.db.ContractEvent.ContractEventsWithFilter(contractEventFilter, fromHeight, toHeight)
+	contractEventList, err := db.ContractEvent.ContractEventsWithFilter(contractEventFilter, fromHeight, toHeight)
 	if err != nil {
 		log.Error("get contracts event list fail", "err", err)
 		return err
@@ -65,7 +63,7 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 	for _, eventItem := range contractEventList {
 		rlpLog := eventItem.RLPLog
 
-		header, err := sm.db.Blocks.BlockHeader(eventItem.BlockHash)
+		header, err := db.Blocks.BlockHeader(eventItem.BlockHash)
 		if err != nil {
 			log.Error("ProcessStrategyManager db Blocks BlockHeader by BlockHash fail", "err", err)
 			return err
@@ -143,7 +141,7 @@ func (sm *StrategyManager) ProcessStrategyManager(fromHeight *big.Int, toHeight 
 
 	retryStrategy := &retry.ExponentialStrategy{Min: 1000, Max: 20_000, MaxJitter: 250}
 	if _, err := retry.Do[interface{}](sm.smCtx, 10, retryStrategy, func() (interface{}, error) {
-		if err := sm.db.Transaction(func(tx *database.DB) error {
+		if err := db.Transaction(func(tx *database.DB) error {
 			if len(deposits) > 0 {
 				if err := tx.StrategyDeposit.StoreStrategyDeposit(deposits); err != nil {
 					return err

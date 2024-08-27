@@ -3,32 +3,33 @@ package contracts
 import (
 	"context"
 	"fmt"
-	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
-	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
-	"github.com/eniac-x-labs/manta-indexer/database/event/strategies"
+
 	"math/big"
 	"strings"
+
+	"github.com/google/uuid"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	common2 "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/google/uuid"
 
 	"github.com/eniac-x-labs/manta-indexer/bindings/dm"
 	"github.com/eniac-x-labs/manta-indexer/config"
 	"github.com/eniac-x-labs/manta-indexer/database"
 	"github.com/eniac-x-labs/manta-indexer/database/event"
+	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
+	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
+	"github.com/eniac-x-labs/manta-indexer/database/event/strategies"
 	"github.com/eniac-x-labs/manta-indexer/synchronizer/retry"
 )
 
 type DelegationManager struct {
-	db       *database.DB
 	DmAbi    *abi.ABI
 	DmFilter *dm.DelegationManagerFilterer
 	dmCtx    context.Context
 }
 
-func NewDelegationManager(db *database.DB) (*DelegationManager, error) {
+func NewDelegationManager() (*DelegationManager, error) {
 	delegationAbi, err := dm.DelegationManagerMetaData.GetAbi()
 	if err != nil {
 		log.Error("get delegate manager abi fail", "err", err)
@@ -42,16 +43,15 @@ func NewDelegationManager(db *database.DB) (*DelegationManager, error) {
 	}
 
 	return &DelegationManager{
-		db:       db,
 		DmAbi:    delegationAbi,
 		DmFilter: DelegationManagerUnpack,
 		dmCtx:    context.Background(),
 	}, nil
 }
 
-func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeight *big.Int) error {
+func (dm *DelegationManager) ProcessDelegationEvent(db *database.DB, fromHeight *big.Int, toHeight *big.Int) error {
 	contractEventFilter := event.ContractEvent{ContractAddress: common2.HexToAddress(config.DelegationManagerAddress)}
-	contractEventList, err := dm.db.ContractEvent.ContractEventsWithFilter(contractEventFilter, fromHeight, toHeight)
+	contractEventList, err := db.ContractEvent.ContractEventsWithFilter(contractEventFilter, fromHeight, toHeight)
 	if err != nil {
 		log.Error("get contracts event list fail", "err", err)
 		return err
@@ -73,7 +73,7 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 	for _, eventItem := range contractEventList {
 		rlpLog := eventItem.RLPLog
 
-		header, err := dm.db.Blocks.BlockHeader(eventItem.BlockHash)
+		header, err := db.Blocks.BlockHeader(eventItem.BlockHash)
 		if err != nil {
 			log.Error("ProcessDelegationEvent db Blocks BlockHeader by BlockHash fail", "err", err)
 			return err
@@ -400,7 +400,7 @@ func (dm *DelegationManager) ProcessDelegationEvent(fromHeight *big.Int, toHeigh
 
 	retryStrategy := &retry.ExponentialStrategy{Min: 1000, Max: 20_000, MaxJitter: 250}
 	if _, err := retry.Do[interface{}](dm.dmCtx, 10, retryStrategy, func() (interface{}, error) {
-		if err := dm.db.Transaction(func(tx *database.DB) error {
+		if err := db.Transaction(func(tx *database.DB) error {
 			if len(operatorNodeUrlUpdates) > 0 {
 				if err := tx.OperatorNodeUrlUpdate.StoreOperatorNodeUrlUpdate(operatorNodeUrlUpdates); err != nil {
 					return err

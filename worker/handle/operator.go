@@ -13,6 +13,7 @@ import (
 	"github.com/eniac-x-labs/manta-indexer/common/tasks"
 	"github.com/eniac-x-labs/manta-indexer/database"
 	"github.com/eniac-x-labs/manta-indexer/database/worker"
+	"github.com/eniac-x-labs/manta-indexer/synchronizer/retry"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -108,15 +109,28 @@ func (oh *OperatorHandle) processOperator() error {
 		}
 		operators = append(operators, operator)
 	}
-	if len(operators) > 0 {
-		if err := oh.db.Operators.StoreOperators(operators); err != nil {
-			log.Error("StoreOperators fail", "err", err)
-			return err
+
+	retryStrategy := &retry.ExponentialStrategy{Min: 1000, Max: 20_000, MaxJitter: 250}
+	if _, err := retry.Do[interface{}](oh.resourceCtx, 10, retryStrategy, func() (interface{}, error) {
+		if err := oh.db.Transaction(func(tx *database.DB) error {
+			if len(operators) > 0 {
+				if err := tx.Operators.StoreOperators(operators); err != nil {
+					log.Error("Store operators fail", "err", err)
+					return err
+				}
+				if err := tx.OperatorRegistered.MarkedOperatorRegisteredHandled(unHandleRegisteredList); err != nil {
+					log.Error("Marked operator registered handled fail", "err", err)
+					return err
+				}
+			}
+			return nil
+		}); err != nil {
+			log.Info("unable to persist batch", err)
+			return nil, fmt.Errorf("unable to persist batch: %w", err)
 		}
-		if err := oh.db.OperatorRegistered.MarkedOperatorRegisteredHandled(unHandleRegisteredList); err != nil {
-			log.Error("MarkedOperatorRegisteredHandled fail", "err", err)
-			return err
-		}
+		return nil, nil
+	}); err != nil {
+		return err
 	}
 	return nil
 }
@@ -144,11 +158,24 @@ func (oh *OperatorHandle) processOperatorNodeUrlUpdate() error {
 			return err
 		}
 	}
-	if len(unHandleUrlUpdateList) > 0 {
-		if err := oh.db.OperatorNodeUrlUpdate.MarkedOperatorNodeUrlUpdateHandled(unHandleUrlUpdateList); err != nil {
-			log.Error("MarkedOperatorNodeUrlUpdateHandled fail", "err", err)
-			return err
+
+	retryStrategy := &retry.ExponentialStrategy{Min: 1000, Max: 20_000, MaxJitter: 250}
+	if _, err := retry.Do[interface{}](oh.resourceCtx, 10, retryStrategy, func() (interface{}, error) {
+		if err := oh.db.Transaction(func(tx *database.DB) error {
+			if len(unHandleUrlUpdateList) > 0 {
+				if err := tx.OperatorNodeUrlUpdate.MarkedOperatorNodeUrlUpdateHandled(unHandleUrlUpdateList); err != nil {
+					log.Error("Marked operator node url update handled fail", "err", err)
+					return err
+				}
+			}
+			return nil
+		}); err != nil {
+			log.Info("unable to persist batch", err)
+			return nil, fmt.Errorf("unable to persist batch: %w", err)
 		}
+		return nil, nil
+	}); err != nil {
+		return err
 	}
 	return nil
 }
@@ -156,7 +183,7 @@ func (oh *OperatorHandle) processOperatorNodeUrlUpdate() error {
 func (oh *OperatorHandle) processOperatorSharesDecreased() error {
 	decreasedList, err := oh.db.OperatorSharesDecreased.QueryUnHandlerOperatorSharesDecreased()
 	if err != nil {
-		log.Error("QueryUnHandlerOperatorSharesDecreased fail", "err", err)
+		log.Error("Query UnHandler operator shares decreased fail", "err", err)
 		return err
 	}
 	for _, decreased := range decreasedList {
@@ -172,16 +199,30 @@ func (oh *OperatorHandle) processOperatorSharesDecreased() error {
 		}
 		err := oh.db.Operators.QueryAndUpdateOperator(decreased.Operator, opType)
 		if err != nil {
-			log.Error("QueryAndUpdateOperator fail", "err", err)
+			log.Error("Query and update operator fail", "err", err)
 			return err
 		}
 	}
-	if len(decreasedList) > 0 {
-		if err := oh.db.OperatorSharesDecreased.MarkedOperatorSharesDecreasedHandled(decreasedList); err != nil {
-			log.Error("MarkedOperatorSharesDecreasedHandled fail", "err", err)
-			return err
+
+	retryStrategy := &retry.ExponentialStrategy{Min: 1000, Max: 20_000, MaxJitter: 250}
+	if _, err := retry.Do[interface{}](oh.resourceCtx, 10, retryStrategy, func() (interface{}, error) {
+		if err := oh.db.Transaction(func(tx *database.DB) error {
+			if len(decreasedList) > 0 {
+				if err := oh.db.OperatorSharesDecreased.MarkedOperatorSharesDecreasedHandled(decreasedList); err != nil {
+					log.Error("Marked operator shares decreased dandled fail", "err", err)
+					return err
+				}
+			}
+			return nil
+		}); err != nil {
+			log.Info("unable to persist batch", err)
+			return nil, fmt.Errorf("unable to persist batch: %w", err)
 		}
+		return nil, nil
+	}); err != nil {
+		return err
 	}
+
 	return nil
 }
 
@@ -208,12 +249,25 @@ func (oh *OperatorHandle) processOperatorSharesIncreased() error {
 			return err
 		}
 	}
-	if len(increasedList) > 0 {
-		if err := oh.db.OperatorSharesIncreased.MarkedOperatorSharesIncreasedHandled(increasedList); err != nil {
-			log.Error("MarkedOperatorSharesIncreasedHandled fail", "err", err)
-			return err
+	retryStrategy := &retry.ExponentialStrategy{Min: 1000, Max: 20_000, MaxJitter: 250}
+	if _, err := retry.Do[interface{}](oh.resourceCtx, 10, retryStrategy, func() (interface{}, error) {
+		if err := oh.db.Transaction(func(tx *database.DB) error {
+			if len(increasedList) > 0 {
+				if err := tx.OperatorSharesIncreased.MarkedOperatorSharesIncreasedHandled(increasedList); err != nil {
+					log.Error("Marked operator shares increased handled fail", "err", err)
+					return err
+				}
+			}
+			return nil
+		}); err != nil {
+			log.Info("unable to persist batch", err)
+			return nil, fmt.Errorf("unable to persist batch: %w", err)
 		}
+		return nil, nil
+	}); err != nil {
+		return err
 	}
+
 	return nil
 }
 
@@ -240,12 +294,25 @@ func (oh *OperatorHandle) processOperatorRewardIncreased() error {
 			return err
 		}
 	}
-	if len(operatorAndStakeRewardList) > 0 {
-		if err := oh.db.OperatorAndStakeReward.MarkedOperatorAndStakeRewardHandled(operatorAndStakeRewardList, true); err != nil {
-			log.Error("MarkedOperatorAndStakeRewardHandled fail", "err", err)
-			return err
+	retryStrategy := &retry.ExponentialStrategy{Min: 1000, Max: 20_000, MaxJitter: 250}
+	if _, err := retry.Do[interface{}](oh.resourceCtx, 10, retryStrategy, func() (interface{}, error) {
+		if err := oh.db.Transaction(func(tx *database.DB) error {
+			if len(operatorAndStakeRewardList) > 0 {
+				if err := tx.OperatorAndStakeReward.MarkedOperatorAndStakeRewardHandled(operatorAndStakeRewardList, true); err != nil {
+					log.Error("Marked operator and stake reward handled fail", "err", err)
+					return err
+				}
+			}
+			return nil
+		}); err != nil {
+			log.Info("unable to persist batch", err)
+			return nil, fmt.Errorf("unable to persist batch: %w", err)
 		}
+		return nil, nil
+	}); err != nil {
+		return err
 	}
+
 	return nil
 }
 
@@ -272,11 +339,24 @@ func (oh *OperatorHandle) processOperatorRewardDecreased() error {
 			return err
 		}
 	}
-	if len(operatorClaimRewardList) > 0 {
-		if err := oh.db.OperatorClaimReward.MarkedOperatorClaimRewardHandled(operatorClaimRewardList); err != nil {
-			log.Error("MarkedOperatorClaimRewardHandled fail", "err", err)
-			return err
+
+	retryStrategy := &retry.ExponentialStrategy{Min: 1000, Max: 20_000, MaxJitter: 250}
+	if _, err := retry.Do[interface{}](oh.resourceCtx, 10, retryStrategy, func() (interface{}, error) {
+		if err := oh.db.Transaction(func(tx *database.DB) error {
+			if len(operatorClaimRewardList) > 0 {
+				if err := tx.OperatorClaimReward.MarkedOperatorClaimRewardHandled(operatorClaimRewardList); err != nil {
+					log.Error("MarkedOperatorClaimRewardHandled fail", "err", err)
+					return err
+				}
+			}
+			return nil
+		}); err != nil {
+			log.Info("unable to persist batch", err)
+			return nil, fmt.Errorf("unable to persist batch: %w", err)
 		}
+		return nil, nil
+	}); err != nil {
+		return err
 	}
 	return nil
 }
