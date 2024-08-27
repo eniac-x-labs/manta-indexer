@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"fmt"
-	"github.com/eniac-x-labs/manta-indexer/database/event/strategies"
 	"os"
 	"path/filepath"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/eniac-x-labs/manta-indexer/database/event"
 	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
 	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
+	"github.com/eniac-x-labs/manta-indexer/database/event/strategies"
 	_ "github.com/eniac-x-labs/manta-indexer/database/utils/serializers"
 	"github.com/eniac-x-labs/manta-indexer/database/worker"
 	"github.com/eniac-x-labs/manta-indexer/synchronizer/retry"

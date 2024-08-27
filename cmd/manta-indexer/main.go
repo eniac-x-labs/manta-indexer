@@ -19,7 +19,7 @@ func main() {
 	app := NewCli(GitCommit, GitData)
 	ctx := opio.WithInterruptBlocker(context.Background())
 	if err := app.RunContext(ctx, os.Args); err != nil {
-		log.Error("Application failed")
+		log.Error("Application failed", err)
 		os.Exit(1)
 	}
 }

@@ -2,6 +2,8 @@ package synchronizer
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 
 	"math/big"
@@ -42,14 +44,14 @@ type Synchronizer struct {
 }
 
 func NewSynchronizer(cfg *config.Config, db *database.DB, client node.EthClient, shutdown context.CancelCauseFunc) (*Synchronizer, error) {
-	latestHeader, err := db.Blocks.LatestBlockHeader()
+	dbLatestHeader, err := db.Blocks.LatestBlockHeader()
 	if err != nil {
 		return nil, err
 	}
 	var fromHeader *types.Header
-	if latestHeader != nil {
-		log.Info("sync detected last indexed block", "number", latestHeader.Number, "hash", latestHeader.Hash)
-		fromHeader = latestHeader.RLPHeader.Header()
+	if dbLatestHeader != nil {
+		log.Info("sync detected last indexed block", "number", dbLatestHeader.Number, "hash", dbLatestHeader.Hash)
+		fromHeader = dbLatestHeader.RLPHeader.Header()
 	} else if cfg.Chain.StartingHeight > 0 {
 		log.Info("no sync indexed state starting from supplied ethereum height", "height", cfg.Chain.StartingHeight)
 		header, err := client.BlockHeaderByNumber(big.NewInt(int64(cfg.Chain.StartingHeight)))
@@ -87,7 +89,23 @@ func (syncer *Synchronizer) Start() error {
 			if len(syncer.headers) > 0 {
 				log.Info("retrying previous batch")
 			} else {
-				newHeaders, err := syncer.headerTraversal.NextHeaders(uint64(syncer.chainCfg.BlockStep))
+				newHeaders, err := syncer.headerTraversal.NextHeaders(syncer.chainCfg.BlockStep)
+				if errors.Is(err, node.ErrHeaderTraversalCheckHeaderByHashDelDbData) {
+					err := syncer.delBatch(syncer.chainCfg.BlockStep)
+					if err != nil {
+						log.Info("synchronizer delBatch", "err", err)
+						continue
+					} else {
+						dbLatestHeader, err := syncer.db.Blocks.LatestBlockHeader()
+						if err != nil {
+							log.Info("synchronizer delBatch after LatestBlockHeader ", "err", err)
+						}
+						latestHeader := dbLatestHeader.RLPHeader.Header()
+						syncer.headerTraversal.ChangeLastTraversedHeaderByDelAfter(latestHeader)
+						syncer.headers = nil
+					}
+					continue
+				}
 				if err != nil {
 					log.Error("error querying for headers", "err", err)
 					continue
@@ -186,6 +204,53 @@ func (syncer *Synchronizer) processBatch(headers []types.Header, chainCfg *confi
 		return err
 	}
 	return nil
+}
+
+// delBatch
+func (syncer *Synchronizer) delBatch(maxSize uint64) error {
+	dbList, err := syncer.db.Blocks.LatestBlockHeaderList(maxSize)
+	if err != nil {
+		log.Error("synchronizer delBatch dbList", "error", err)
+		return err
+	}
+
+	if len(dbList) == 0 {
+		return nil
+	}
+
+	var tempDbBlockHashList []string
+	var tempDbBlockNumberList []string
+
+	for _, tempHeader := range dbList {
+		tempDbBlockHashList = append(tempDbBlockHashList, tempHeader.Hash.String())
+		tempDbBlockNumberList = append(tempDbBlockNumberList, tempHeader.Number.String())
+	}
+
+	tempDbBlockHashListJson, _ := json.Marshal(tempDbBlockHashList)
+	log.Info("synchronizer delBatch tempDbBlockHashList 2", "info", string(tempDbBlockHashListJson))
+	tempDbBlockNumberListJson, _ := json.Marshal(tempDbBlockNumberList)
+	log.Info("synchronizer delBatch tempDbBlockNumberList 2", "info", string(tempDbBlockNumberListJson))
+
+	retryStrategy := &retry.ExponentialStrategy{Min: 1000, Max: 20_000, MaxJitter: 250}
+	if _, err := retry.Do[interface{}](syncer.resourceCtx, 10, retryStrategy, func() (interface{}, error) {
+		if err := syncer.db.Transaction(func(tx *database.DB) error {
+			if err := tx.Blocks.DelBlockByNumber(tempDbBlockNumberList); err != nil {
+				return err
+			}
+			if err := tx.ContractEvent.DelBlockByBlockHash(tempDbBlockHashList); err != nil {
+				return err
+			}
+			return nil
+		}); err != nil {
+			log.Info("unable to persist batch", err)
+			return nil, fmt.Errorf("unable to persist batch: %w", err)
+		}
+		return nil, nil
+	}); err != nil {
+		return err
+	}
+	return nil
+
 }
 
 func (syncer *Synchronizer) Close() error {
