@@ -3,10 +3,11 @@ package handle
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"math/big"
+	"strings"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/ethereum/go-ethereum/log"
 
@@ -54,9 +55,28 @@ func (sh *StakeHolderHandle) Start() error {
 				log.Error("Process strategy deposit fail", "err", err)
 				return err
 			}
+
+			err = sh.processDelegated()
+			if err != nil {
+				log.Error("Process delegated fail", "err", err)
+				return err
+			}
+
+			err = sh.processUnDelegated()
+			if err != nil {
+				log.Error("Process undelegated fail", "err", err)
+				return err
+			}
+
 			err = sh.processWithdrawalCompleted()
 			if err != nil {
 				log.Error("Process withdraw completed fail", "err", err)
+				return err
+			}
+
+			err = sh.processStakeHolderClaimReward()
+			if err != nil {
+				log.Error("Process staker holder claim fail", "err", err)
 				return err
 			}
 		}
@@ -73,7 +93,7 @@ func (sh *StakeHolderHandle) processStrategyDeposit() error {
 	}
 	var strategyList []strategies.StrategyType
 	for _, unHandleDeposit := range unHandleDepositList {
-		stkType := worker.StakeHolderType{
+		stkType := worker.StakeStrategyOperatorType{
 			MantaStake:    unHandleDeposit.Shares,
 			Reward:        big.NewInt(0),
 			ClaimedAmount: big.NewInt(0),
@@ -85,7 +105,7 @@ func (sh *StakeHolderHandle) processStrategyDeposit() error {
 		}
 		strategyList = append(strategyList, strategy)
 		log.Info("process strategy deposit query and update stake holder", "Staker", unHandleDeposit.Staker.String(), "Strategy", unHandleDeposit.Strategy.String())
-		err := sh.db.StakeHolder.QueryAndUpdateStakeHolder(unHandleDeposit.Staker.String(), unHandleDeposit.Strategy.String(), stkType)
+		err := sh.db.StakeStrategy.QueryAndUpdateStakeStrategy(unHandleDeposit.Staker.String(), unHandleDeposit.Strategy.String(), stkType)
 		if err != nil {
 			log.Error("process strategy deposit query and update operator fail", "err", err)
 			return err
@@ -121,6 +141,90 @@ func (sh *StakeHolderHandle) processStrategyDeposit() error {
 	return nil
 }
 
+func (sh *StakeHolderHandle) processDelegated() error {
+	unhandleStakeDelegatedList, err := sh.db.StakerDelegated.QueryUnHandleStakerDelegated()
+	if err != nil {
+		return err
+	}
+	var stakerOperatorList []worker.StakerOperator
+	for _, unStakerDelegated := range unhandleStakeDelegatedList {
+		stakerOperator := worker.StakerOperator{
+			GUID:          uuid.New(),
+			Staker:        unStakerDelegated.Staker,
+			Operator:      unStakerDelegated.Operator,
+			TotalStake:    big.NewInt(0),
+			TotalReward:   big.NewInt(0),
+			ClaimedAmount: big.NewInt(0),
+			Timestamp:     unStakerDelegated.Timestamp,
+		}
+		stakerOperatorList = append(stakerOperatorList, stakerOperator)
+	}
+	log.Info("process strategy delegated", "unhandleStakeDelegatedList", len(unhandleStakeDelegatedList), "stakerOperatorList", len(stakerOperatorList))
+
+	retryStrategy := &retry.ExponentialStrategy{Min: 1000, Max: 20_000, MaxJitter: 250}
+	if _, err := retry.Do[interface{}](sh.resourceCtx, 10, retryStrategy, func() (interface{}, error) {
+		if err := sh.db.Transaction(func(tx *database.DB) error {
+			if len(stakerOperatorList) > 0 {
+				if err := tx.StakerOperator.StoreStakerOperator(stakerOperatorList); err != nil {
+					log.Error("update strategy operator handled fail", "err", err)
+					return err
+				}
+			}
+			if len(unhandleStakeDelegatedList) > 0 {
+				if err := tx.StakerDelegated.MarkedStakerDelegated(unhandleStakeDelegatedList); err != nil {
+					log.Error("marked stake delegate handled fail", "err", err)
+					return err
+				}
+			}
+			return nil
+		}); err != nil {
+			log.Info("unable to persist batch", err)
+			return nil, fmt.Errorf("unable to persist batch: %w", err)
+		}
+		return nil, nil
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (sh *StakeHolderHandle) processUnDelegated() error {
+	unhandleStakerUndelegatedList, err := sh.db.StakerUndelegated.QueryUnHandleStakerUndelegated()
+	if err != nil {
+		log.Error("query un handle stake undelegated fail", "err", err)
+		return err
+	}
+
+	for _, unhandleStakerUndelegated := range unhandleStakerUndelegatedList {
+		err := sh.db.StakerOperator.QueryAndUpdateStakerOperator(unhandleStakerUndelegated.Staker.String(), unhandleStakerUndelegated.Operator.String(), big.NewInt(0))
+		if err != nil {
+			log.Error("process staker undelegate query, update staker and operator fail", "err", err)
+			return err
+		}
+	}
+
+	retryStrategy := &retry.ExponentialStrategy{Min: 1000, Max: 20_000, MaxJitter: 250}
+	if _, err := retry.Do[interface{}](sh.resourceCtx, 10, retryStrategy, func() (interface{}, error) {
+		if err := sh.db.Transaction(func(tx *database.DB) error {
+			if len(unhandleStakerUndelegatedList) > 0 {
+				if err := tx.StakerUndelegated.MarkedStakerUnDelegated(unhandleStakerUndelegatedList); err != nil {
+					log.Error("marked staker undelegated fail", "err", err)
+					return err
+				}
+			}
+			return nil
+		}); err != nil {
+			log.Info("unable to persist batch", err)
+			return nil, fmt.Errorf("unable to persist batch: %w", err)
+		}
+		return nil, nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (sh *StakeHolderHandle) processWithdrawalCompleted() error {
 	unHandleCompletedList, err := sh.db.WithdrawalCompleted.QueryUnHandleWithdrawalCompleted()
 	if err != nil {
@@ -130,13 +234,13 @@ func (sh *StakeHolderHandle) processWithdrawalCompleted() error {
 	var withdrawalQueuedList []staker.WithdrawalQueuedType
 	var strategyList []strategies.StrategyType
 	for _, unHandleCompleted := range unHandleCompletedList {
-		stkType := worker.StakeHolderType{
+		stkType := worker.StakeStrategyOperatorType{
 			MantaStake:    new(big.Int).Neg(unHandleCompleted.Shares),
 			Reward:        big.NewInt(0),
 			ClaimedAmount: big.NewInt(0),
 			Timestamp:     unHandleCompleted.Timestamp,
 		}
-		err := sh.db.StakeHolder.QueryAndUpdateStakeHolder(unHandleCompleted.Staker.String(), unHandleCompleted.Strategy.String(), stkType)
+		err := sh.db.StakeStrategy.QueryAndUpdateStakeStrategy(unHandleCompleted.Staker.String(), unHandleCompleted.Strategy.String(), stkType)
 		if err != nil {
 			log.Error("process withdrawal completed query and update staker fail", "err", err)
 			return err
@@ -196,13 +300,13 @@ func (sh *StakeHolderHandle) processStakeHolderClaimReward() error {
 		return err
 	}
 	for _, unHandleStakeHolderClaimReward := range unHandleStakeHolderClaimRewardList {
-		stkType := worker.StakeHolderType{
+		stkType := worker.StakeStrategyOperatorType{
 			MantaStake:    big.NewInt(0),
 			Reward:        big.NewInt(0),
 			ClaimedAmount: new(big.Int).Neg(unHandleStakeHolderClaimReward.Amount),
 			Timestamp:     unHandleStakeHolderClaimReward.Timestamp,
 		}
-		err := sh.db.StakeHolder.QueryAndUpdateStakeHolder(unHandleStakeHolderClaimReward.StakeHolder.String(), unHandleStakeHolderClaimReward.Strategy.String(), stkType)
+		err := sh.db.StakeStrategy.QueryAndUpdateStakeStrategy(unHandleStakeHolderClaimReward.StakeHolder.String(), unHandleStakeHolderClaimReward.Strategy.String(), stkType)
 		if err != nil {
 			log.Error("process withdrawal completed query and update staker fail", "err", err)
 			return err

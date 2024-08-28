@@ -7,18 +7,18 @@ import (
 	"github.com/eniac-x-labs/manta-indexer/database/worker"
 )
 
-func (h HandlerSvc) GetStakeHolder(staker string) (*worker.StakeHolder, error) {
+func (h HandlerSvc) GetStakeHolder(staker string) (*worker.StakeStrategy, error) {
 	stakerAddress := strings.ToLower(staker)
-	stakeHolder, err := h.stakeHolderView.GetStakeHolder(stakerAddress)
+	stakeStrategyList, err := h.stakeStrategyView.GetStakeStrategy(stakerAddress)
 	if err != nil {
-		return &worker.StakeHolder{}, err
+		return &worker.StakeStrategy{}, err
 	}
-	return stakeHolder, err
+	return stakeStrategyList, err
 }
 
 func (h HandlerSvc) ListStakeHolder(params *models.QueryAddressListParams) (*models.StakeHolderListResponse, error) {
 	stakerAddress := strings.ToLower(params.Address)
-	stakeHolderList, total := h.stakeHolderView.ListStakeHolder(stakerAddress, params.Page, params.PageSize, params.Order)
+	stakeHolderList, total := h.stakeStrategyView.ListStakeStrategy(stakerAddress, params.Page, params.PageSize, params.Order)
 	return &models.StakeHolderListResponse{
 		ListResponse: models.ListResponse{
 			Current: params.Page,
@@ -26,6 +26,20 @@ func (h HandlerSvc) ListStakeHolder(params *models.QueryAddressListParams) (*mod
 			Total:   total,
 		},
 		Records: stakeHolderList,
+	}, nil
+}
+
+func (h HandlerSvc) ListStakeOperator(operatorAddress string, params *models.QueryAddressListParams) (*models.StakeOperatorListResponse, error) {
+	operatorAddr := strings.ToLower(operatorAddress)
+	stakeAddr := strings.ToLower(params.Address)
+	stakerOperatorHolderList, total := h.stakerOperatorView.ListStakerOperator(operatorAddr, stakeAddr, params.Page, params.PageSize, params.Order)
+	return &models.StakeOperatorListResponse{
+		ListResponse: models.ListResponse{
+			Current: params.Page,
+			Size:    params.PageSize,
+			Total:   total,
+		},
+		Records: stakerOperatorHolderList,
 	}, nil
 }
 

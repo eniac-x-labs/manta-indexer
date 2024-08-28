@@ -1,7 +1,7 @@
 package staker
 
 import (
-	"github.com/ethereum/go-ethereum/log"
+	"errors"
 	"math/big"
 	"strings"
 
@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 
 	_ "github.com/eniac-x-labs/manta-indexer/database/utils/serializers"
 )
@@ -29,16 +30,47 @@ func (StakerUndelegated) TableName() string {
 }
 
 type StakerUndelegatedView interface {
+	QueryUnHandleStakerUndelegated() ([]StakerUndelegated, error)
 	ListStakerUndelegated(address string, page int, pageSize int, order string) ([]StakerUndelegated, uint64)
 }
 
 type StakerUndelegatedDB interface {
 	StakerUndelegatedView
+	MarkedStakerUnDelegated(stakerUnDelegatedList []StakerUndelegated) error
 	StoreStakerUndelegated([]StakerUndelegated) error
 }
 
 type stakerUndelegatedDB struct {
 	gorm *gorm.DB
+}
+
+func (su stakerUndelegatedDB) QueryUnHandleStakerUndelegated() ([]StakerUndelegated, error) {
+	var stakerUndelegatedList []StakerUndelegated
+	err := su.gorm.Table("staker_undelegated").Where("is_handle = ?", 0).Find(&stakerUndelegatedList).Error
+	if err != nil {
+		log.Error("get strategy undelegated fail", "err", err)
+		return nil, err
+	}
+	return stakerUndelegatedList, nil
+}
+
+func (su stakerUndelegatedDB) MarkedStakerUnDelegated(stakerUnDelegatedList []StakerUndelegated) error {
+	for i := 0; i < len(stakerUnDelegatedList); i++ {
+		var stakerUndelegated = StakerUndelegated{}
+		result := su.gorm.Table("staker_undelegated").Where("guid = ?", stakerUnDelegatedList[i].GUID).Take(&stakerUndelegated)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				return nil
+			}
+			return result.Error
+		}
+		stakerUndelegated.IsHandle = 1
+		err := su.gorm.Save(stakerUndelegated).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (su stakerUndelegatedDB) ListStakerUndelegated(address string, page int, pageSize int, order string) ([]StakerUndelegated, uint64) {

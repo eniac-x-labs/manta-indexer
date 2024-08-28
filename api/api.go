@@ -42,6 +42,7 @@ const (
 
 	StakerGetV1Path                          = "/api/v1/staker/get"
 	StakerListV1Path                         = "/api/v1/staker/list"
+	StakerOperatorListV1Path                 = "/api/v1/staker/operator/list"
 	StakerDepositStrategyListV1Path          = "/api/v1/staker/deposit/strategy/list"
 	StakerDelegatedListV1Path                = "/api/v1/staker/delegated/list"
 	StakerUndelegatedListV1Path              = "/api/v1/staker/undelegated/list"
@@ -84,7 +85,7 @@ func (a *API) initFromConfig(ctx context.Context, cfg *config.Config) error {
 func (a *API) initRouter(conf config.ServerConfig, cfg *config.Config) {
 	v := new(service.Validator)
 
-	svc := service.New(v, a.db.OperatorRegistered, a.db.OperatorNodeUrlUpdate, a.db.Operators, a.db.StakeHolder, a.db.StrategyDeposit,
+	svc := service.New(v, a.db.OperatorRegistered, a.db.OperatorNodeUrlUpdate, a.db.Operators, a.db.StakeStrategy, a.db.StakerOperator, a.db.StrategyDeposit,
 		a.db.WithdrawalQueued, a.db.WithdrawalCompleted, a.db.StakerDelegated, a.db.StakerUndelegated, a.db.StakeHolderClaimReward,
 		a.db.OperatorSharesDecreased, a.db.OperatorSharesIncreased, a.db.OperatorAndStakeReward, a.db.OperatorClaimReward, a.db.Strategies)
 	apiRouter := chi.NewRouter()
@@ -120,6 +121,7 @@ func (a *API) initRouter(conf config.ServerConfig, cfg *config.Config) {
 	 */
 	apiRouter.Get(fmt.Sprintf(StakerGetV1Path), h.GetStakeHolderHandler)
 	apiRouter.Get(fmt.Sprintf(StakerListV1Path), h.ListStakeHolderHandler)
+	apiRouter.Get(fmt.Sprintf(StakerOperatorListV1Path), h.ListStakeOperatorHandler)
 	apiRouter.Get(fmt.Sprintf(StakerDepositStrategyListV1Path), h.ListStakerDepositStrategyHandler)
 	apiRouter.Get(fmt.Sprintf(StakerDelegatedListV1Path), h.ListStakerDelegatedHandler)
 	apiRouter.Get(fmt.Sprintf(StakerUndelegatedListV1Path), h.ListStakerUndelegatedHandler)

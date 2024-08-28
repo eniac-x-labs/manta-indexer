@@ -17,7 +17,7 @@ type OperatorsType struct {
 	Status                   uint8
 }
 
-type StakeHolderType struct {
+type StakeStrategyOperatorType struct {
 	MantaStake    *big.Int
 	Reward        *big.Int
 	ClaimedAmount *big.Int

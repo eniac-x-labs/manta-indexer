@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
@@ -29,17 +30,48 @@ func (StakerDelegated) TableName() string {
 }
 
 type StakerDelegatedView interface {
+	QueryUnHandleStakerDelegated() ([]StakerDelegated, error)
 	ListStakerDelegated(address string, page int, pageSize int, order string) ([]StakerDelegated, uint64)
 	ListOperatorReceiveStakerDelegated(address string, page int, pageSize int, order string) ([]StakerDelegated, uint64)
 }
 
 type StakerDelegatedDB interface {
 	StakerDelegatedView
+	MarkedStakerDelegated([]StakerDelegated) error
 	StoreStakerDelegated([]StakerDelegated) error
 }
 
 type stakerDelegatedDB struct {
 	gorm *gorm.DB
+}
+
+func (sd stakerDelegatedDB) QueryUnHandleStakerDelegated() ([]StakerDelegated, error) {
+	var stakerDelegatedList []StakerDelegated
+	err := sd.gorm.Table("staker_delegated").Where("is_handle = ?", 0).Find(&stakerDelegatedList).Error
+	if err != nil {
+		log.Error("get strategy delegated fail", "err", err)
+		return nil, err
+	}
+	return stakerDelegatedList, nil
+}
+
+func (sd stakerDelegatedDB) MarkedStakerDelegated(stakerDelegatedList []StakerDelegated) error {
+	for i := 0; i < len(stakerDelegatedList); i++ {
+		var stakerDelegated = StakerDelegated{}
+		result := sd.gorm.Table("staker_delegated").Where("guid = ?", stakerDelegatedList[i].GUID).Take(&stakerDelegated)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				return nil
+			}
+			return result.Error
+		}
+		stakerDelegated.IsHandle = 1
+		err := sd.gorm.Save(stakerDelegated).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (sd stakerDelegatedDB) ListOperatorReceiveStakerDelegated(address string, page int, pageSize int, order string) ([]StakerDelegated, uint64) {
@@ -95,7 +127,7 @@ func (sd stakerDelegatedDB) ListStakerDelegated(address string, page int, pageSi
 	}
 	qErr := queryRoot.Find(&stakerDelegatedList).Error
 	if qErr != nil {
-		log.Error("list stakerDelegatedDB fail", "err", qErr)
+		log.Error("list stakeDelegatedDB fail", "err", qErr)
 	}
 	return stakerDelegatedList, uint64(totalRecord)
 }

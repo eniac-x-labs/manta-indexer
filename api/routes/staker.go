@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/ethereum/go-ethereum/common"
 	"net/http"
 
 	"github.com/ethereum/go-ethereum/log"
@@ -48,6 +49,38 @@ func (h Routes) ListStakeHolderHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error("Error writing response", "err", err.Error())
 	}
+}
+
+func (h Routes) ListStakeOperatorHandler(w http.ResponseWriter, r *http.Request) {
+	staker := r.URL.Query().Get("staker")
+	operator := r.URL.Query().Get("operator")
+	pageQuery := r.URL.Query().Get("page")
+	pageSizeQuery := r.URL.Query().Get("pageSize")
+	order := r.URL.Query().Get("order")
+
+	if !common.IsHexAddress(operator) {
+		http.Error(w, "invalid operator address", http.StatusBadRequest)
+		return
+	}
+	params, err := h.svc.QueryAddressListParams(staker, pageQuery, pageSizeQuery, order)
+	if err != nil {
+		http.Error(w, "invalid query params", http.StatusBadRequest)
+		log.Error("error reading request params", "err", err.Error())
+		return
+	}
+
+	tempList, err := h.svc.ListStakeOperator(operator, params)
+	if err != nil {
+		http.Error(w, "Internal server error reading ListStakeOperator", http.StatusInternalServerError)
+		log.Error("Unable to read ListStakeOperator from DB", "err", err.Error())
+		return
+	}
+
+	err = jsonResponse(w, tempList, http.StatusOK)
+	if err != nil {
+		log.Error("Error writing response", "err", err.Error())
+	}
+
 }
 
 func (h Routes) ListStakerDepositStrategyHandler(w http.ResponseWriter, r *http.Request) {

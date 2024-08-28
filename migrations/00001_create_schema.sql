@@ -359,13 +359,26 @@ CREATE TABLE IF NOT EXISTS total_operator (
 );
 CREATE INDEX IF NOT EXISTS total_operator_to_block_number ON total_operator(to_block_number);
 
-CREATE TABLE IF NOT EXISTS staker_holder (
+CREATE TABLE IF NOT EXISTS staker_strategy (
     guid                        VARCHAR PRIMARY KEY,
     staker                      VARCHAR NOT NULL,
     strategy                    VARCHAR NOT NULL,
-    total_manta_stake           UINT256 NOT NULL,
+    total_stake                 UINT256 NOT NULL,
     total_reward                UINT256 NOT NULL,
     claimed_amount              UINT256 NOT NULL,
     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
 );
-CREATE INDEX IF NOT EXISTS staker_holder_staker ON staker_holder(staker);
+CREATE INDEX IF NOT EXISTS staker_strategy_staker ON staker_strategy(staker);
+
+
+CREATE TABLE IF NOT EXISTS staker_operator (
+     guid                        VARCHAR PRIMARY KEY,
+     staker                      VARCHAR NOT NULL,
+     operator                    VARCHAR NOT NULL,
+     total_stake                 UINT256 NOT NULL,
+     total_reward                UINT256 NOT NULL,
+     claimed_amount              UINT256 NOT NULL,
+     timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+);
+CREATE INDEX IF NOT EXISTS staker_operator_staker ON staker_operator(staker);
+

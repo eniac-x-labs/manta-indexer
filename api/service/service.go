@@ -37,8 +37,10 @@ type Service interface {
 	/*
 	* ============== stakeholder ==============
 	 */
-	GetStakeHolder(staker string) (*worker.StakeHolder, error)
+	GetStakeHolder(staker string) (*worker.StakeStrategy, error)
 	ListStakeHolder(*models.QueryAddressListParams) (*models.StakeHolderListResponse, error)
+	ListStakeOperator(string, *models.QueryAddressListParams) (*models.StakeOperatorListResponse, error)
+
 	ListStakerDepositStrategy(*models.QueryAddressListParams) (*models.StrategyDepositListResponse, error)
 	ListStakerDelegated(*models.QueryAddressListParams) (*models.StakerDelegatedListResponse, error)
 	ListStakerUndelegated(*models.QueryAddressListParams) (*models.StakerUndelegatedListResponse, error)
@@ -59,7 +61,8 @@ type HandlerSvc struct {
 	operatorRegisteredView      operator.OperatorRegisteredView
 	operatorNodeUrlUpdateView   operator.OperatorNodeUrlUpdateView
 	operatorsView               worker.OperatorsView
-	stakeHolderView             worker.StakeHolderView
+	stakeStrategyView           worker.StakeStrategyView
+	stakerOperatorView          worker.StakerOperatorView
 	strategyDepositView         staker.StrategyDepositView
 	withdrawalQueuedView        staker.WithdrawalQueuedView
 	withdrawalCompletedView     staker.WithdrawalCompletedView
@@ -76,7 +79,8 @@ func New(v *Validator,
 	rgv operator.OperatorRegisteredView,
 	onuu operator.OperatorNodeUrlUpdateView,
 	operatorsView worker.OperatorsView,
-	stakeHolderView worker.StakeHolderView,
+	stakeStrategyView worker.StakeStrategyView,
+	stakerOperatorView worker.StakerOperatorView,
 	strategyDepositView staker.StrategyDepositView,
 	withdrawalQueuedView staker.WithdrawalQueuedView,
 	withdrawalCompletedView staker.WithdrawalCompletedView,
@@ -95,7 +99,8 @@ func New(v *Validator,
 		operatorRegisteredView:      rgv,
 		operatorNodeUrlUpdateView:   onuu,
 		operatorsView:               operatorsView,
-		stakeHolderView:             stakeHolderView,
+		stakeStrategyView:           stakeStrategyView,
+		stakerOperatorView:          stakerOperatorView,
 		strategyDepositView:         strategyDepositView,
 		withdrawalQueuedView:        withdrawalQueuedView,
 		withdrawalCompletedView:     withdrawalCompletedView,

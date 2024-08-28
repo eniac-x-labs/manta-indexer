@@ -154,7 +154,7 @@ func (oh *OperatorHandle) processOperatorNodeUrlUpdate() error {
 		}
 		err := oh.db.Operators.QueryAndUpdateOperator(unHandleUrlUpdate.Operator, opType)
 		if err != nil {
-			log.Error("QueryAndUpdateOperator fail", "err", err)
+			log.Error("processOperatorNodeUrlUpdate: query and update operator fail", "err", err)
 			return err
 		}
 	}
@@ -199,7 +199,12 @@ func (oh *OperatorHandle) processOperatorSharesDecreased() error {
 		}
 		err := oh.db.Operators.QueryAndUpdateOperator(decreased.Operator, opType)
 		if err != nil {
-			log.Error("Query and update operator fail", "err", err)
+			log.Error("processOperatorSharesDecreased: query and update operator fail", "err", err)
+			return err
+		}
+		err = oh.db.StakerOperator.QueryAndUpdateStakerOperator(decreased.Staker.String(), decreased.Operator.String(), new(big.Int).Neg(decreased.Shares))
+		if err != nil {
+			log.Error("processOperatorSharesDecreased: query and update staker operator fail", "err", err)
 			return err
 		}
 	}
@@ -245,7 +250,12 @@ func (oh *OperatorHandle) processOperatorSharesIncreased() error {
 		}
 		err := oh.db.Operators.QueryAndUpdateOperator(increased.Operator, opType)
 		if err != nil {
-			log.Error("QueryAndUpdateOperator fail", "err", err)
+			log.Error("processOperatorSharesIncreased: query and update operator fail", "err", err)
+			return err
+		}
+		err = oh.db.StakerOperator.QueryAndUpdateStakerOperator(increased.Staker.String(), increased.Operator.String(), increased.Shares)
+		if err != nil {
+			log.Error("processOperatorSharesIncreased: query and update staker operator fail", "err", err)
 			return err
 		}
 	}
@@ -290,7 +300,7 @@ func (oh *OperatorHandle) processOperatorRewardIncreased() error {
 		}
 		err := oh.db.Operators.QueryAndUpdateOperator(operatorAndStakeReward.Operator, opType)
 		if err != nil {
-			log.Error("QueryAndUpdateOperator fail", "err", err)
+			log.Error("processOperatorRewardIncreased: Query unHandle operator claim reward fail", "err", err)
 			return err
 		}
 	}
@@ -319,7 +329,7 @@ func (oh *OperatorHandle) processOperatorRewardIncreased() error {
 func (oh *OperatorHandle) processOperatorRewardDecreased() error {
 	operatorClaimRewardList, err := oh.db.OperatorClaimReward.QueryUnHandleOperatorClaimReward()
 	if err != nil {
-		log.Error("QueryUnHandleOperatorClaimReward fail", "err", err)
+		log.Error("Query unHandle operator claim reward fail", "err", err)
 		return err
 	}
 	for _, operatorClaimReward := range operatorClaimRewardList {
@@ -335,7 +345,7 @@ func (oh *OperatorHandle) processOperatorRewardDecreased() error {
 		}
 		err := oh.db.Operators.QueryAndUpdateOperator(operatorClaimReward.Operator, opType)
 		if err != nil {
-			log.Error("QueryAndUpdateOperator fail", "err", err)
+			log.Error("processOperatorRewardDecreased: Query and update operator fail", "err", err)
 			return err
 		}
 	}
@@ -345,7 +355,7 @@ func (oh *OperatorHandle) processOperatorRewardDecreased() error {
 		if err := oh.db.Transaction(func(tx *database.DB) error {
 			if len(operatorClaimRewardList) > 0 {
 				if err := tx.OperatorClaimReward.MarkedOperatorClaimRewardHandled(operatorClaimRewardList); err != nil {
-					log.Error("MarkedOperatorClaimRewardHandled fail", "err", err)
+					log.Error("Marked operator claim reward handled fail", "err", err)
 					return err
 				}
 			}

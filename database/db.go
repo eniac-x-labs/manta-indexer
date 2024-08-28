@@ -47,7 +47,8 @@ type DB struct {
 	WithdrawalCompleted              staker.WithdrawalCompletedDB
 	Operators                        worker.OperatorsDB
 	OperatorPublicKeys               worker.OperatorPublicKeysDB
-	StakeHolder                      worker.StakeHolderDB
+	StakerOperator                   worker.StakerOperatorDB
+	StakeStrategy                    worker.StakeStrategyDB
 	TotalOperator                    worker.TotalOperatorDB
 }
 
@@ -105,7 +106,8 @@ func NewDB(ctx context.Context, dbConfig config.DBConfig) (*DB, error) {
 		WithdrawalCompleted:              staker.NewWithdrawalCompletedDB(gorm),
 		Operators:                        worker.NewOperatorsDB(gorm),
 		OperatorPublicKeys:               worker.NewOperatorPublicKeysDB(gorm),
-		StakeHolder:                      worker.NewStakeHolderDB(gorm),
+		StakerOperator:                   worker.NewStakerOperatorDB(gorm),
+		StakeStrategy:                    worker.NewStakeStrategyDB(gorm),
 		TotalOperator:                    worker.NewTotalOperatorDB(gorm),
 	}
 	return db, nil
@@ -137,7 +139,8 @@ func (db *DB) Transaction(fn func(db *DB) error) error {
 			WithdrawalCompleted:              staker.NewWithdrawalCompletedDB(tx),
 			Operators:                        worker.NewOperatorsDB(tx),
 			OperatorPublicKeys:               worker.NewOperatorPublicKeysDB(tx),
-			StakeHolder:                      worker.NewStakeHolderDB(tx),
+			StakerOperator:                   worker.NewStakerOperatorDB(tx),
+			StakeStrategy:                    worker.NewStakeStrategyDB(tx),
 			TotalOperator:                    worker.NewTotalOperatorDB(tx),
 		}
 		return fn(txDB)

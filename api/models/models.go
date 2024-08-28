@@ -65,7 +65,12 @@ type StrategyDepositListResponse struct {
 
 type StakeHolderListResponse struct {
 	ListResponse
-	Records []worker.StakeHolder `json:"records"`
+	Records []worker.StakeStrategy `json:"records"`
+}
+
+type StakeOperatorListResponse struct {
+	ListResponse
+	Records []worker.StakerOperator `json:"records"`
 }
 
 type OperatorListResponse struct {
