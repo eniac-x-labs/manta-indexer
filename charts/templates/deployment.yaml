@@ -80,6 +80,29 @@ spec:
             {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+        - name: {{ .Release.Name }}-api
+          command:
+            - manta-indexer
+            - api
+          env:
+           {{- range .Values.initContainers }}
+             {{- range .env }}
+                - name: {{ .name }}
+                  value: "{{ .value }}"
+             {{- end }}
+           {{- end }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            {{- range $index, $val := .Values.ports }}
+            - name: {{ $val.name }}
+              containerPort: {{ $val.portNumber }}
+              protocol: TCP
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
       initContainers:
         - name: {{ .Release.Name }}-migrate
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
