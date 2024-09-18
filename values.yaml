@@ -15,7 +15,7 @@ initContainers:
     image: manta-indexer
     env:
       - name: MANTA_INDEXER_MIGRATIONS_DIR
-        value: "./migrations"
+        value: "/app/manta-indexer/migrations"
       - name: MANTA_INDEXER_CHAIN_ID
         value: "1"
       - name: MANTA_INDEXER_CHAIN_RPC
