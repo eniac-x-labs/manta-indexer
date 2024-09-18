@@ -81,10 +81,10 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: IfNotPresent
           env:
-            { { - range .Values.initContainers[ 0 ].env } }
-            - name: { { .name } }
-              value: "{{ .value }}"
-            { { - end } }
+            {{ - range $index, $val := .Values.initContainers[0].env }}
+            - name: {{ $val.name }}
+              value: {{ $val.value }}
+            {{ - end }}
           command:
           - manta-indexer
           - migrate
