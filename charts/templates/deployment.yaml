@@ -84,7 +84,7 @@ spec:
             {{- range $index, $val := .Values.initContainers[0].env }}
             - name: {{ $val.name }}
               value: {{ $val.value }}
-            {{ - end }}
+            {{- end }}
           command:
           - manta-indexer
           - migrate
