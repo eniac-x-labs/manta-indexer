@@ -31,9 +31,9 @@ spec:
         - name: {{ .Release.Name }}
           envFrom:
           - configMapRef:
-              name: selaginella-config
+              name: manta-indexer-config
           - secretRef:
-              name: selaginella-secret
+              name: manta-indexer-secret
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -56,13 +56,13 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
         - name: {{ .Release.Name }}-exporter
           command:
-          - selaginella
+          - manta-indexer
           - exporter
           envFrom:
           - configMapRef:
-              name: selaginella-config
+              name: manta-indexer-config
           - secretRef:
-              name: selaginella-secret
+              name: manta-indexer-secret
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -80,7 +80,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: IfNotPresent
           command:
-          - selaginella
+          - manta-indexer
           - migrate
       {{- with .Values.nodeSelector }}
       nodeSelector:

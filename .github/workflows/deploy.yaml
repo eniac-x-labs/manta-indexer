@@ -10,7 +10,7 @@ on:
         - mainnet
 env:
   AWS_REGION : "ap-southeast-1"
-  app: selaginella
+  app: manta-indexer
 permissions:
   id-token: write
   contents: read  
