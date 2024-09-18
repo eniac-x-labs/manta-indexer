@@ -27,6 +27,15 @@ spec:
       serviceAccountName: {{ include "app.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: { { .Values.initContainers[ 0 ].name } }
+          image: { { .Values.initContainers[ 0 ].image } }
+          command: { { .Values.initContainers[ 0 ].command | toJson } }
+          env:
+            { { - range .Values.initContainers[ 0 ].env } }
+            - name: { { .name } }
+              value: "{{ .value }}"
+            { { - end } }
       containers:
         - name: {{ .Release.Name }}
           envFrom:
