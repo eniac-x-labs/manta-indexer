@@ -13,7 +13,6 @@ image:
 initContainers:
   - name: init-manta-indexer
     image: manta-indexer
-    command: ['sh', '-c', 'echo Init container running...']
     env:
       - name: MANTA_INDEXER_MIGRATIONS_DIR
         value: "./migrations"

@@ -25,17 +25,8 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "app.serviceAccountName" . }}
-      securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      initContainers:
-        - name: { { .Values.initContainers[ 0 ].name } }
-          image: { { .Values.initContainers[ 0 ].image } }
-          command: { { .Values.initContainers[ 0 ].command | toJson } }
-          env:
-            { { - range .Values.initContainers[ 0 ].env } }
-            - name: { { .name } }
-              value: "{{ .value }}"
-            { { - end } }
+      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
+
       containers:
         - name: {{ .Release.Name }}
           envFrom:
@@ -88,6 +79,11 @@ spec:
         - name: {{ .Release.Name }}-migrate
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: IfNotPresent
+          env:
+            { { - range .Values.initContainers[ 0 ].env } }
+            - name: { { .name } }
+              value: "{{ .value }}"
+            { { - end } }
           command:
           - manta-indexer
           - migrate
