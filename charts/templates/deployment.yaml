@@ -84,13 +84,6 @@ spec:
           command:
             - manta-indexer
             - api
-          env:
-           {{- range .Values.initContainers }}
-             {{- range .env }}
-                - name: {{ .name }}
-                  value: "{{ .value }}"
-             {{- end }}
-           {{- end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -101,14 +94,16 @@ spec:
               containerPort: {{ $val.portNumber }}
               protocol: TCP
             {{- end }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 4001
-            initialDelaySeconds: 3
-            periodSeconds: 10
       initContainers:
         - name: {{ .Release.Name }}-migrate
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
