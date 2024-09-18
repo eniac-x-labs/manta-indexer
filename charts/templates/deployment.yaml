@@ -55,15 +55,17 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-        - name: {{ .Release.Name }}-exporter
+        - name: {{ .Release.Name }}-indexer
           command:
           - manta-indexer
-          - exporter
-          envFrom:
-          - configMapRef:
-              name: manta-indexer-config
-          - secretRef:
-              name: manta-indexer-secret
+          - index
+          env:
+           {{- range $index, $val := .Values.initContainers }}
+             {{- range $index, $val := .$val.env }}
+               - name: {{ $val.name }}
+                 value: "{{ $val.value }}"
+             {{- end }}
+           {{- end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -79,12 +81,13 @@ spec:
       initContainers:
         - name: {{ .Release.Name }}-migrate
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: IfNotPresent
           env:
-            {{- range $index, $val := .Values.initContainers.env }}
+           {{- range $index, $val := .Values.initContainers }}
+             {{- range $index, $val := .$val.env }}
             - name: {{ $val.name }}
-              value: {{ $val.value }}
-            {{- end }}
+              value: "{{ $val.value }}"
+             {{- end }}
+           {{- end }}
           command:
           - manta-indexer
           - migrate
