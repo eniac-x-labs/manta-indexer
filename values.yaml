@@ -39,7 +39,7 @@ initContainers:
       - name: MANTA_INDEXER_MASTER_DB_PORT
         value: "5432"
       - name: MANTA_INDEXER_MASTER_DB_USER
-        value: "guoshijiang"
+        value: "postgres"
       - name: MANTA_INDEXER_MASTER_DB_PASSWORD
         value: "DappLink2024!"
       - name: MANTA_INDEXER_MASTER_DB_NAME
@@ -49,7 +49,7 @@ initContainers:
       - name: MANTA_INDEXER_SLAVE_DB_PORT
         value: "5432"
       - name: MANTA_INDEXER_SLAVE_DB_USER
-        value: "guoshijiang"
+        value: "postgres"
       - name: MANTA_INDEXER_SLAVE_DB_PASSWORD
         value: "DappLink2024!"
       - name: MANTA_INDEXER_SLAVE_DB_NAME
