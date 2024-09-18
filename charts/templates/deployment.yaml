@@ -81,7 +81,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: IfNotPresent
           env:
-            {{- range $index, $val := .Values.initContainers[0].env }}
+            {{- range $index, $val := .Values.initContainers[ 0 ].env }}
             - name: {{ $val.name }}
               value: {{ $val.value }}
             {{- end }}
