@@ -60,12 +60,12 @@ spec:
           - manta-indexer
           - index
           env:
-           {{- range $index, $val := .Values.initContainers }}
-             {{- range $index, $val := .$val.env }}
-               - name: {{ $val.name }}
-                 value: "{{ $val.value }}"
-             {{- end }}
-           {{- end }}
+            {{- range .Values.initContainers }}
+              {{- range .env }}
+              - name: {{ .name }}
+                value: "{{ .value }}"
+              {{- end }}
+            {{- end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -82,12 +82,12 @@ spec:
         - name: {{ .Release.Name }}-migrate
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           env:
-           {{- range $index, $val := .Values.initContainers }}
-             {{- range $index, $val := .$val.env }}
-            - name: {{ $val.name }}
-              value: "{{ $val.value }}"
-             {{- end }}
-           {{- end }}
+            {{- range .Values.initContainers }}
+              {{- range .env }}
+              - name: {{ .name }}
+                value: "{{ .value }}"
+              {{- end }}
+            {{- end }}
           command:
           - manta-indexer
           - migrate
