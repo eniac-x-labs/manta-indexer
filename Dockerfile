@@ -14,7 +14,7 @@ COPY . /app/manta-indexer
 
 WORKDIR /app/manta-indexer
 
-RUN make build
+RUN make
 
 FROM alpine:3.18
 
@@ -26,4 +26,4 @@ WORKDIR /app
 ENV SELAGINELLA_MIGRATIONS_DIR="/app/manta-indexer/migrations"
 ENV SELAGINELLA_CONFIG="/app/manta-indexer/manta-indexer.yaml"
 
-CMD ["manta-indexer", "grpc", "--config", "/app/manta-indexer/manta-indexer.yaml"]
+CMD ["manta-indexer", "api"]
