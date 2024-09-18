@@ -29,7 +29,7 @@ func (StakerOperator) TableName() string {
 
 type StakerOperatorView interface {
 	GetStakerOperator(string) (*StakerOperator, error)
-	ListStakerOperator(operator string, staker string, page int, pageSize int, order string) ([]StakerOperator, uint64)
+	ListStakerOperator(staker string, page int, pageSize int, order string) ([]StakerOperator, uint64)
 }
 
 type StakerOperatorDB interface {
@@ -51,9 +51,8 @@ func (sh *stakerOperatorDB) QueryAndUpdateStakerOperator(stakeAddress string, op
 		}
 		return nil
 	}
-	stakerOperator.Operator = common.Address{}
-	stakerOperator.TotalStake = big.NewInt(0)
 	if mantaStake.Cmp(big.NewInt(0)) == 0 {
+		stakerOperator.Operator = common.Address{}
 		stakerOperator.TotalStake = big.NewInt(0)
 	} else {
 		stakerOperator.TotalStake = new(big.Int).Add(stakerOperator.TotalStake, mantaStake)
@@ -78,16 +77,16 @@ func (shv stakerOperatorDB) GetStakerOperator(staker string) (*StakerOperator, e
 	return &stakerOperator, nil
 }
 
-func (shv stakerOperatorDB) ListStakerOperator(operator string, staker string, page int, pageSize int, order string) ([]StakerOperator, uint64) {
+func (shv stakerOperatorDB) ListStakerOperator(staker string, page int, pageSize int, order string) ([]StakerOperator, uint64) {
 	var totalRecord int64
 	var stakerOperatorList []StakerOperator
 	queryRoot := shv.gorm.Table("staker_operator")
-	if operator != "0x00" && staker != "0x00" {
-		err := shv.gorm.Table("staker_operator").Select("total_stake").Where("operator = ? and staker = ?", operator, staker).Count(&totalRecord).Error
+	if staker != "0x00" {
+		err := shv.gorm.Table("staker_operator").Select("total_stake").Where("staker = ?", staker).Count(&totalRecord).Error
 		if err != nil {
 			log.Error("get stake operator count fail")
 		}
-		queryRoot.Where("operator = ? and staker = ?", operator, staker).Offset((page - 1) * pageSize).Limit(pageSize)
+		queryRoot.Where("staker = ?", staker).Offset((page - 1) * pageSize).Limit(pageSize)
 	} else {
 		err := shv.gorm.Table("staker_operator").Select("total_stake").Count(&totalRecord).Error
 		if err != nil {

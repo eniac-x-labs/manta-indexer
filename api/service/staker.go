@@ -29,10 +29,9 @@ func (h HandlerSvc) ListStakeHolder(params *models.QueryAddressListParams) (*mod
 	}, nil
 }
 
-func (h HandlerSvc) ListStakeOperator(operatorAddress string, params *models.QueryAddressListParams) (*models.StakeOperatorListResponse, error) {
-	operatorAddr := strings.ToLower(operatorAddress)
+func (h HandlerSvc) ListStakeOperator(params *models.QueryAddressListParams) (*models.StakeOperatorListResponse, error) {
 	stakeAddr := strings.ToLower(params.Address)
-	stakerOperatorHolderList, total := h.stakerOperatorView.ListStakerOperator(operatorAddr, stakeAddr, params.Page, params.PageSize, params.Order)
+	stakerOperatorHolderList, total := h.stakerOperatorView.ListStakerOperator(stakeAddr, params.Page, params.PageSize, params.Order)
 	return &models.StakeOperatorListResponse{
 		ListResponse: models.ListResponse{
 			Current: params.Page,

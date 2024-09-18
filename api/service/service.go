@@ -39,7 +39,7 @@ type Service interface {
 	 */
 	GetStakeHolder(staker string) (*worker.StakeStrategy, error)
 	ListStakeHolder(*models.QueryAddressListParams) (*models.StakeHolderListResponse, error)
-	ListStakeOperator(string, *models.QueryAddressListParams) (*models.StakeOperatorListResponse, error)
+	ListStakeOperator(*models.QueryAddressListParams) (*models.StakeOperatorListResponse, error)
 
 	ListStakerDepositStrategy(*models.QueryAddressListParams) (*models.StrategyDepositListResponse, error)
 	ListStakerDelegated(*models.QueryAddressListParams) (*models.StakerDelegatedListResponse, error)

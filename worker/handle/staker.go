@@ -166,7 +166,7 @@ func (sh *StakeHolderHandle) processDelegated() error {
 		if err := sh.db.Transaction(func(tx *database.DB) error {
 			if len(stakerOperatorList) > 0 {
 				if err := tx.StakerOperator.StoreStakerOperator(stakerOperatorList); err != nil {
-					log.Error("update strategy operator handled fail", "err", err)
+					log.Error("store strategy operator handled fail", "err", err)
 					return err
 				}
 			}
