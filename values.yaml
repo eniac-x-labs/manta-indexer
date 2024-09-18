@@ -15,27 +15,46 @@ initContainers:
     image: manta-indexer
     command: ['sh', '-c', 'echo Init container running...']
     env:
-      MANTA_INDEXER_MIGRATIONS_DIR: "./migrations"
-      MANTA_INDEXER_CHAIN_ID: 1
-      MANTA_INDEXER_CHAIN_RPC: "https://eth-holesky.g.alchemy.com/v2/BvSZ5ZfdIwB-5SDXMz8PfGcbICYQqwrl"
-      MANTA_INDEXER_STARTING_HEIGHT: 2222260
-      MANTA_INDEXER_CONFIRMATIONS: 1
-      MANTA_INDEXER_LOOP_INTERVAL: 5s
-      MANTA_INDEXER_BLOCKS_STEP: 300
-      MANTA_INDEXER_HTTP_PORT: 8989
-      MANTA_INDEXER_HTTP_HOST: "0.0.0.0"
-      MANTA_INDEXER_SLAVE_DB_ENABLE: false
-      MANTA_INDEXER_MASTER_DB_HOST: "my-postgres-postgresql"
-      MANTA_INDEXER_MASTER_DB_PORT: 5432
-      MANTA_INDEXER_MASTER_DB_USER: "guoshijiang"
-      MANTA_INDEXER_MASTER_DB_PASSWORD: "DappLink2024!"
-      MANTA_INDEXER_MASTER_DB_NAME: "manta_indexer"
-      MANTA_INDEXER_SLAVE_DB_HOST: "my-postgres-postgresql"
-      MANTA_INDEXER_SLAVE_DB_PORT: 5432
-      MANTA_INDEXER_SLAVE_DB_USER: "guoshijiang"
-      MANTA_INDEXER_SLAVE_DB_PASSWORD: "DappLink2024!"
-      MANTA_INDEXER_SLAVE_DB_NAME: "manta_indexer"
-
+      - name: MANTA_INDEXER_MIGRATIONS_DIR
+        value: "./migrations"
+      - name: MANTA_INDEXER_CHAIN_ID
+        value: "1"
+      - name: MANTA_INDEXER_CHAIN_RPC
+        value: "https://eth-holesky.g.alchemy.com/v2/BvSZ5ZfdIwB-5SDXMz8PfGcbICYQqwrl"
+      - name: MANTA_INDEXER_STARTING_HEIGHT
+        value: "2222260"
+      - name: MANTA_INDEXER_CONFIRMATIONS
+        value: "1"
+      - name: MANTA_INDEXER_LOOP_INTERVAL
+        value: "5s"
+      - name: MANTA_INDEXER_BLOCKS_STEP
+        value: "300"
+      - name: MANTA_INDEXER_HTTP_PORT
+        value: "8989"
+      - name: MANTA_INDEXER_HTTP_HOST
+        value: "0.0.0.0"
+      - name: MANTA_INDEXER_SLAVE_DB_ENABLE
+        value: "false"
+      - name: MANTA_INDEXER_MASTER_DB_HOST
+        value: "my-postgres-postgresql"
+      - name: MANTA_INDEXER_MASTER_DB_PORT
+        value: "5432"
+      - name: MANTA_INDEXER_MASTER_DB_USER
+        value: "guoshijiang"
+      - name: MANTA_INDEXER_MASTER_DB_PASSWORD
+        value: "DappLink2024!"
+      - name: MANTA_INDEXER_MASTER_DB_NAME
+        value: "manta_indexer"
+      - name: MANTA_INDEXER_SLAVE_DB_HOST
+        value: "my-postgres-postgresql"
+      - name: MANTA_INDEXER_SLAVE_DB_PORT
+        value: "5432"
+      - name: MANTA_INDEXER_SLAVE_DB_USER
+        value: "guoshijiang"
+      - name: MANTA_INDEXER_SLAVE_DB_PASSWORD
+        value: "DappLink2024!"
+      - name: MANTA_INDEXER_SLAVE_DB_NAME
+        value: "manta_indexer"
 imagePullSecrets:
   - name: dapplink-sercret
 nameOverride: ""
