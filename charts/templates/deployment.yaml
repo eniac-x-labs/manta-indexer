@@ -103,6 +103,12 @@ spec:
             {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 4001
+            initialDelaySeconds: 3
+            periodSeconds: 10
       initContainers:
         - name: {{ .Release.Name }}-migrate
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
