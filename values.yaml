@@ -29,7 +29,7 @@ initContainers:
       - name: MANTA_INDEXER_BLOCKS_STEP
         value: "300"
       - name: MANTA_INDEXER_HTTP_PORT
-        value: "8989"
+        value: "4001"
       - name: MANTA_INDEXER_HTTP_HOST
         value: "0.0.0.0"
       - name: MANTA_INDEXER_SLAVE_DB_ENABLE
