@@ -21,7 +21,7 @@ import (
 	"github.com/eniac-x-labs/manta-indexer/synchronizer/retry"
 )
 
-var MantaTokenAddress = "0xFEE297254eC9B60d06f6e5af4E154962f9dCcE88"
+var MantaTokenAddress = "0x8d755FA47A9561aE8aC1DeF1c190b72C1Dc5dd10"
 
 type StrategyManager struct {
 	SmAbi    *abi.ABI

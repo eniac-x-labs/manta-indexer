@@ -21,7 +21,7 @@ initContainers:
       - name: MANTA_INDEXER_CHAIN_RPC
         value: "https://eth-holesky.g.alchemy.com/v2/BvSZ5ZfdIwB-5SDXMz8PfGcbICYQqwrl"
       - name: MANTA_INDEXER_STARTING_HEIGHT
-        value: "2222260"
+        value: "2363040"
       - name: MANTA_INDEXER_CONFIRMATIONS
         value: "1"
       - name: MANTA_INDEXER_LOOP_INTERVAL
