@@ -1,14 +1,16 @@
 package service
 
 import (
-	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
-	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
-	"github.com/eniac-x-labs/manta-indexer/database/event/strategies"
+	"math/big"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/log"
 
 	"github.com/eniac-x-labs/manta-indexer/api/models"
+	"github.com/eniac-x-labs/manta-indexer/database/event/finality"
+	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
+	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
+	"github.com/eniac-x-labs/manta-indexer/database/event/strategies"
 	"github.com/eniac-x-labs/manta-indexer/database/worker"
 )
 
@@ -49,6 +51,11 @@ type Service interface {
 	ListStakeHolderClaimReward(*models.QueryAddressListParams) (*models.StakeHolderClaimRewardListResponse, error)
 
 	/*
+	* ============== finality ==============
+	 */
+	GetFinalityVerified(l2BlockNumber *big.Int) (*finality.FinalityVerified, error)
+
+	/*
 	* ============== params check ==============
 	 */
 	QueryListParams(page string, pageSize string, order string) (*models.QueryListParams, error)
@@ -73,6 +80,7 @@ type HandlerSvc struct {
 	operatorSharesIncreasedView operator.OperatorSharesIncreasedView
 	operatorAndStakeRewardView  operator.OperatorAndStakeRewardView
 	operatorClaimRewardView     operator.OperatorClaimRewardView
+	finalityVerifiedView        finality.FinalityVerifiedView
 }
 
 func New(v *Validator,
@@ -92,6 +100,7 @@ func New(v *Validator,
 	operatorAndStakeRewardView operator.OperatorAndStakeRewardView,
 	operatorClaimRewardView operator.OperatorClaimRewardView,
 	strategiesView strategies.StrategiesView,
+	finalityVerifiedView finality.FinalityVerifiedView,
 ) Service {
 	return &HandlerSvc{
 		v:                           v,
@@ -111,6 +120,7 @@ func New(v *Validator,
 		operatorSharesIncreasedView: operatorSharesIncreasedView,
 		operatorAndStakeRewardView:  operatorAndStakeRewardView,
 		operatorClaimRewardView:     operatorClaimRewardView,
+		finalityVerifiedView:        finalityVerifiedView,
 	}
 }
 

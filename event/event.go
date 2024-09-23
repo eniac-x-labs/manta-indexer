@@ -29,15 +29,16 @@ type EventProcessorConfig struct {
 }
 
 type EventProcessor struct {
-	db                *database.DB
-	eventBlocksConfig *EventProcessorConfig
-	resourceCtx       context.Context
-	resourceCancel    context.CancelFunc
-	tasks             tasks.Group
-	delegationManager *contracts.DelegationManager
-	rewardManager     *contracts.RewardManager
-	strategyManager   *contracts.StrategyManager
-	LatestBlockHeader *common.BlockHeader
+	db                  *database.DB
+	eventBlocksConfig   *EventProcessorConfig
+	resourceCtx         context.Context
+	resourceCancel      context.CancelFunc
+	tasks               tasks.Group
+	delegationManager   *contracts.DelegationManager
+	rewardManager       *contracts.RewardManager
+	strategyManager     *contracts.StrategyManager
+	mantaServiceManager *contracts.MantaServiceManager
+	LatestBlockHeader   *common.BlockHeader
 }
 
 func NewEventProcessor(db *database.DB, eventBlocksConfig *EventProcessorConfig, shutdown context.CancelCauseFunc) (*EventProcessor, error) {
@@ -59,6 +60,12 @@ func NewEventProcessor(db *database.DB, eventBlocksConfig *EventProcessorConfig,
 		return nil, err
 	}
 
+	mantaServiceManager, err := contracts.NewMantaServiceManager()
+	if err != nil {
+		log.Error("new manta service manager fail", "err", err)
+		return nil, err
+	}
+
 	latestBlockHeader, err := db.EventBlocks.LatestEventBlockHeader()
 	if err != nil {
 		log.Error("get latest event block header fail", "err", err)
@@ -75,10 +82,11 @@ func NewEventProcessor(db *database.DB, eventBlocksConfig *EventProcessorConfig,
 		tasks: tasks.Group{HandleCrit: func(err error) {
 			shutdown(fmt.Errorf("critical error in bridge processor: %w", err))
 		}},
-		delegationManager: delegationManager,
-		rewardManager:     rewardManager,
-		strategyManager:   strategyManager,
-		LatestBlockHeader: latestBlockHeader,
+		delegationManager:   delegationManager,
+		rewardManager:       rewardManager,
+		strategyManager:     strategyManager,
+		mantaServiceManager: mantaServiceManager,
+		LatestBlockHeader:   latestBlockHeader,
 	}, nil
 }
 
@@ -158,6 +166,12 @@ func (ep *EventProcessor) processEvent() error {
 		err = ep.strategyManager.ProcessStrategyManager(tx, fromHeight, toHeight)
 		if err != nil {
 			log.Error("process strategy manager event fail", "err", err)
+			return err
+		}
+
+		err = ep.mantaServiceManager.ProcessMantaServiceManager(tx, fromHeight, toHeight)
+		if err != nil {
+			log.Error("process manta service manager event fail", "err", err)
 			return err
 		}
 

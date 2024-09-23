@@ -382,3 +382,15 @@ CREATE TABLE IF NOT EXISTS staker_operator (
 );
 CREATE INDEX IF NOT EXISTS staker_operator_staker ON staker_operator(staker);
 
+CREATE TABLE IF NOT EXISTS finality_verified (
+      guid                        VARCHAR PRIMARY KEY,
+      proposer                    VARCHAR NOT NULL,
+      tx_block_number             UINT256 NOT NULL,
+      L1_block_number             UINT256 NOT NULL,
+      L2_block_number             UINT256 NOT NULL,
+      L1_block_hash               VARCHAR NOT NULL,
+      output_root                 VARCHAR NOT NULL,
+      timestamp                   INTEGER NOT NULL UNIQUE CHECK (timestamp > 0)
+    );
+CREATE INDEX IF NOT EXISTS finality_verified_L2_block_number ON finality_verified(L2_block_number);
+
