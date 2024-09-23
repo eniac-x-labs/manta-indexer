@@ -15,6 +15,7 @@ import (
 	"github.com/eniac-x-labs/manta-indexer/config"
 	"github.com/eniac-x-labs/manta-indexer/database/common"
 	"github.com/eniac-x-labs/manta-indexer/database/event"
+	"github.com/eniac-x-labs/manta-indexer/database/event/finality"
 	"github.com/eniac-x-labs/manta-indexer/database/event/operator"
 	"github.com/eniac-x-labs/manta-indexer/database/event/staker"
 	"github.com/eniac-x-labs/manta-indexer/database/event/strategies"
@@ -50,6 +51,7 @@ type DB struct {
 	StakerOperator                   worker.StakerOperatorDB
 	StakeStrategy                    worker.StakeStrategyDB
 	TotalOperator                    worker.TotalOperatorDB
+	FinalityVerified                 finality.FinalityVerifiedDB
 }
 
 func NewDB(ctx context.Context, dbConfig config.DBConfig) (*DB, error) {
@@ -109,6 +111,7 @@ func NewDB(ctx context.Context, dbConfig config.DBConfig) (*DB, error) {
 		StakerOperator:                   worker.NewStakerOperatorDB(gorm),
 		StakeStrategy:                    worker.NewStakeStrategyDB(gorm),
 		TotalOperator:                    worker.NewTotalOperatorDB(gorm),
+		FinalityVerified:                 finality.NewFinalityVerifiedDB(gorm),
 	}
 	return db, nil
 }
@@ -142,6 +145,7 @@ func (db *DB) Transaction(fn func(db *DB) error) error {
 			StakerOperator:                   worker.NewStakerOperatorDB(tx),
 			StakeStrategy:                    worker.NewStakeStrategyDB(tx),
 			TotalOperator:                    worker.NewTotalOperatorDB(tx),
+			FinalityVerified:                 finality.NewFinalityVerifiedDB(tx),
 		}
 		return fn(txDB)
 	})

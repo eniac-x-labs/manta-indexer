@@ -49,6 +49,8 @@ const (
 	StakeHolderClaimRewardListV1Path         = "/api/v1/staker/claim/reward/list"
 	StakeHolderWithdrawalQueuedListV1Path    = "/api/v1/staker/withdrawal/queued/list"
 	StakeHolderWithdrawalCompletedListV1Path = "/api/v1/staker/withdrawal/completed/list"
+
+	FinalityVerifiedV1Path = "/api/v1/finality/verified"
 )
 
 type APIConfig struct {
@@ -87,7 +89,7 @@ func (a *API) initRouter(conf config.ServerConfig, cfg *config.Config) {
 
 	svc := service.New(v, a.db.OperatorRegistered, a.db.OperatorNodeUrlUpdate, a.db.Operators, a.db.StakeStrategy, a.db.StakerOperator, a.db.StrategyDeposit,
 		a.db.WithdrawalQueued, a.db.WithdrawalCompleted, a.db.StakerDelegated, a.db.StakerUndelegated, a.db.StakeHolderClaimReward,
-		a.db.OperatorSharesDecreased, a.db.OperatorSharesIncreased, a.db.OperatorAndStakeReward, a.db.OperatorClaimReward, a.db.Strategies)
+		a.db.OperatorSharesDecreased, a.db.OperatorSharesIncreased, a.db.OperatorAndStakeReward, a.db.OperatorClaimReward, a.db.Strategies, a.db.FinalityVerified)
 	apiRouter := chi.NewRouter()
 	h := routes.NewRoutes(apiRouter, svc)
 
@@ -128,6 +130,8 @@ func (a *API) initRouter(conf config.ServerConfig, cfg *config.Config) {
 	apiRouter.Get(fmt.Sprintf(StakeHolderClaimRewardListV1Path), h.ListStakeHolderClaimRewardHandler)
 	apiRouter.Get(fmt.Sprintf(StakeHolderWithdrawalQueuedListV1Path), h.ListStakeHolderWithdrawalQueuedHandler)
 	apiRouter.Get(fmt.Sprintf(StakeHolderWithdrawalCompletedListV1Path), h.ListStakeHolderWithdrawalCompletedHandler)
+
+	apiRouter.Get(fmt.Sprintf(FinalityVerifiedV1Path), h.GetFinalityVerifiedHandler)
 
 	a.router = apiRouter
 }

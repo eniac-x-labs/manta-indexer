@@ -8,6 +8,8 @@ LDFLAGS := -ldflags "$(LDFLAGSSTRING)"
 DM_ABI_ARTIFACT := ./abis/DelegationManager.sol/DelegationManager.json
 RM_ABI_ARTIFACT := ./abis/RewardManager.sol/RewardManager.json
 SM_ABI_ARTIFACT := ./abis/StrategyManager.sol/StrategyManager.json
+MSM_ABI_ARTIFACT := ./abis/MantaServiceManager.sol/MantaServiceManager.json
+
 
 manta-indexer:
 	env GO111MODULE=on go build -v $(LDFLAGS) ./cmd/manta-indexer
@@ -21,7 +23,7 @@ test:
 lint:
 	golangci-lint run ./...
 
-bindings: binding-dm binding-rm binding-sm
+bindings: binding-dm binding-rm binding-sm binding-msm
 
 binding-dm:
 	 $(eval temp := $(shell mktemp))
@@ -49,6 +51,15 @@ binding-sm:
 	 --out bindings/sm/strategy_manager.go \
 	 --type StrategyManager \
 	 rm $(temp)
+
+ binding-msm:
+	$(eval temp := $(shell mktemp))
+	cat $(MSM_ABI_ARTIFACT) | jq .abi \
+	| abigen --pkg msm \
+	--abi - \
+	--out bindings/msm/manta_service_manager.go \
+	--type MantaServiceManager \
+	rm $(temp)
 
 .PHONY: \
 	 manta-indexer \
